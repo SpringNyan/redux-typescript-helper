@@ -1,111 +1,53 @@
 import produce from "immer";
-import { Reducer as ReduxReducer } from "redux";
+import { BehaviorSubject } from "rxjs";
+import { Store, Reducer as ReduxReducer } from "redux";
+import { Epic as ReduxObservableEpic, StateObservable } from "redux-observable";
 
+import { ModelState } from "./state";
 import { Action } from "./action";
+import { ModelDispatch, createModelDispatch } from "./dispatch";
 import { Reducers } from "./reducer";
 import { Epics } from "./epic";
-import { Model, Models, ExtractModelState } from "./model";
+import { Model, Models, cloneModel } from "./model";
 
-export type StoreState<
-  TModel extends Model<any, any, any, any, any>
-> = ExtractModelState<TModel> &
-  {
-    [K in keyof TModel["models"]]: TModel["models"][K] extends Model<
-      any,
-      any,
-      any,
-      any,
-      any
-    >
-      ? StoreState<TModel["models"][K]>
-      : never
-  };
+export class StoreHelper<TModel extends Model> {
+  private readonly _store: Store;
+  private readonly _model: TModel;
+  private readonly _namespaces: string[];
+  private readonly _epic$: BehaviorSubject<ReduxObservableEpic>;
 
-function createModelState<
-  TDependencies,
-  TModel extends Model<
-    TDependencies,
-    any,
-    Reducers<any, TDependencies>,
-    Epics<any, TDependencies, any, any>,
-    Models<TDependencies>
-  >
->(model: TModel, dependencies: TDependencies): StoreState<TModel> {
-  if (typeof model.state === "function") {
-    return model.state(dependencies);
-  } else {
-    return model.state;
+  constructor(
+    store: Store,
+    model: TModel,
+    namespaces: string[],
+    epic$: BehaviorSubject<ReduxObservableEpic>
+  ) {
+    this._store = store;
+    this._model = model;
+    this._namespaces = namespaces;
+    this._epic$ = epic$;
   }
-}
 
-function initializeModelState<
-  TDependencies,
-  TModel extends Model<
-    TDependencies,
-    any,
-    Reducers<any, TDependencies>,
-    Epics<any, TDependencies, any, any>,
-    Models<TDependencies>
-  >
->(
-  state: StoreState<TModel> | undefined,
-  model: TModel,
-  dependencies: TDependencies
-): StoreState<TModel> {
-  return produce(
-    state === undefined ? createModelState(model, dependencies) : state,
-    (draft) => {
-      for (const key of Object.keys(model.models)) {
-        const subModel = model.models[key];
-        draft[key] = initializeModelState(draft[key], subModel, dependencies);
-      }
+  public getState(): ModelState<TModel> {
+    return this._namespaces.reduce(
+      (state, namespace) => (state != null ? state[namespace] : undefined),
+      this._store.getState()
+    );
+  }
+
+  public get dispatch(): ModelDispatch<TModel> {
+    return createModelDispatch(
+      this._model,
+      this._namespaces,
+      this._store.dispatch.bind(this._store)
+    );
+  }
+
+  public registerModel<T extends Model>(namespace: string, model: T): void {
+    if (this._model.models[namespace] != null) {
+      throw new Error("Model is already existing");
     }
-  );
-}
 
-export function createModelReducer<
-  TDependencies,
-  TModel extends Model<
-    TDependencies,
-    any,
-    Reducers<any, TDependencies>,
-    Epics<any, TDependencies, any, any>,
-    Models<TDependencies>
-  >
->(model: TModel, dependencies: TDependencies): ReduxReducer<any, Action<any>> {
-  return (state: any, action: Action<any>) => {
-    state = initializeModelState(state, model, dependencies);
-    return produce(state, (draft) => {
-      const namespaces = action.type.split("/");
-
-      for (let i = 0; i < namespaces.length - 3; ++i) {
-        draft = draft[namespaces[i]];
-      }
-      const subState =
-        namespaces.length > 1
-          ? draft[namespaces[namespaces.length - 2]]
-          : draft;
-
-      let subModel: Model<
-        TDependencies,
-        any,
-        Reducers<any, TDependencies>,
-        Epics<any, TDependencies, any, any>,
-        Models<TDependencies>
-      > = model;
-      for (let i = 0; i < namespaces.length - 2; ++i) {
-        subModel = model.models[namespaces[i]];
-      }
-      const reducer = model.reducers[namespaces[namespaces.length - 1]];
-
-      const nextState = reducer
-        ? reducer(subState, action, dependencies)
-        : subState;
-      if (namespaces.length > 1) {
-        draft[namespaces[namespaces.length - 2]] = nextState;
-      } else {
-        return nextState;
-      }
-    });
-  };
+    this._model.models[namespace] = cloneModel(model);
+  }
 }

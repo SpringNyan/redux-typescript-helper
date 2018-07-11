@@ -1,5 +1,5 @@
-import { Reducer, Reducers } from "./reducer";
-import { Epic, Epics } from "./epic";
+import { Reducer } from "./reducer";
+import { Epic } from "./epic";
 
 export interface Action<TPayload> {
   type: string;
@@ -14,10 +14,7 @@ export type ExtractActionPayload<
   ? TPayload
   : never;
 
-export type Dispatch<
-  T extends Reducers<any, any> | Epics<any, any, any, any>
-> = {
-  [K in keyof T]: ((
-    payload: ExtractActionPayload<T[K]>
-  ) => Action<ExtractActionPayload<T[K]>>) & { type: string }
+export const actionTypes = {
+  registerModel: "@@REGISTER_MODEL",
+  unregisterModel: "@@UNREGISTER_MODEL"
 };

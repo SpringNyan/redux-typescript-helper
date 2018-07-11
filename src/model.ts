@@ -1,64 +1,65 @@
+import { State } from "./state";
 import { Reducers } from "./reducer";
 import { Epics } from "./epic";
 
-export type ModelState<TDependencies, TState> =
-  | TState
-  | ((dependencies: TDependencies) => TState);
-
-export type ExtractModelState<
-  TModel extends Model<any, any, any, any, any>
-> = TModel extends Model<any, infer TState, any, any, any> ? TState : never;
-
 export interface Model<
-  TDependencies,
-  TState,
-  TReducers extends Reducers<TState, TDependencies>,
-  TEpics extends Epics<TState, TDependencies, TReducers, TEpics>,
-  TModels extends Models<TDependencies>
+  TDependencies = any,
+  TState = any,
+  TReducers extends Reducers<TDependencies, TState> = Reducers<
+    TDependencies,
+    TState
+  >,
+  TEpics extends Epics<TDependencies, TState, TReducers, TEpics> = Epics<
+    TDependencies,
+    TState,
+    TReducers,
+    TEpics
+  >,
+  TModels extends Models<TDependencies> = Models<TDependencies>
 > {
-  state: ModelState<TDependencies, TState>;
+  state: State<TDependencies, TState>;
   reducers: TReducers;
   epics: TEpics;
   models: TModels;
 }
 
 export type Models<TDependencies> = {
-  [key: string]: Model<TDependencies, any, any, any, any>;
+  [key: string]: Model<TDependencies>;
 };
 
 export class ModelFactory<
   TDependencies,
   TState,
-  TReducers extends Reducers<TState, TDependencies>,
-  TEpics extends Epics<TState, TDependencies, TReducers, TEpics>,
+  TReducers extends Reducers<TDependencies, TState>,
+  TEpics extends Epics<TDependencies, TState, any, any>,
   TModels extends Models<TDependencies>
 > {
-  private readonly _state: ModelState<TDependencies, TState>;
-  private _reducers: Reducers<TState, TDependencies> = {};
-  private _epics: Epics<TState, TDependencies, TReducers, TEpics> = {};
+  private readonly _state: State<TDependencies, TState>;
+  private _reducers: Reducers<TDependencies, TState> = {};
+  private _epics: Epics<TDependencies, TState, TReducers, TEpics> = {};
   private _models: Models<TDependencies> = {};
 
-  constructor(state: ModelState<TDependencies, TState>) {
+  constructor(state: State<TDependencies, TState>) {
     this._state = state;
   }
 
-  public reducers<T extends Reducers<TState, TDependencies>>(
+  public reducers<T extends Reducers<TDependencies, TState>>(
     reducers: T
   ): ModelFactory<TDependencies, TState, TReducers & T, TEpics, TModels> {
     this._reducers = {
       ...this._reducers,
-      ...(reducers as Reducers<TState, TDependencies>)
+      ...(reducers as Reducers<TDependencies, TState>)
     };
 
     return this as any;
   }
 
-  public epics<T extends Epics<TState, TDependencies, TReducers, TEpics>>(
+  public epics<T extends Epics<TDependencies, TState, TReducers, TEpics>>(
     epics: T
   ): ModelFactory<TDependencies, TState, TReducers, TEpics & T, TModels> {
     this._epics = {
       ...this._epics,
-      ...(epics as Epics<TState, TDependencies, TReducers, TEpics>)
+      ...(epics as Epics<TDependencies, TState, TReducers, TEpics>)
     };
 
     return this as any;
@@ -73,6 +74,15 @@ export class ModelFactory<
     };
 
     return this as any;
+  }
+
+  public create(): Model<TDependencies, TState, TReducers, TEpics, TModels> {
+    return {
+      state: this._state,
+      reducers: { ...this._reducers },
+      epics: { ...this._epics },
+      models: { ...this._models }
+    } as any;
   }
 }
 
@@ -90,4 +100,13 @@ export function createModelFactoryCreator<TDependencies>(): ModelFactoryCreator<
   TDependencies
 > {
   return createModelFactory;
+}
+
+export function cloneModel<TModel extends Model>(model: TModel): TModel {
+  return {
+    state: model.state,
+    reducers: { ...model.reducers },
+    epics: { ...model.epics },
+    models: { ...model.models }
+  } as any;
 }
