@@ -1,61 +1,82 @@
 import { Observable, merge } from "rxjs";
-import { map, takeUntil, skip, skipWhile } from "rxjs/operators";
+import { map, takeUntil, skip, skipWhile, mergeMap } from "rxjs/operators";
 import {
   Epic as ReduxObservableEpic,
   ActionsObservable,
   StateObservable
 } from "redux-observable";
 
-import { Action, actionTypes } from "./action";
-import { Dispatch, ModelDispatch } from "./dispatch";
+import {
+  actionTypes,
+  Action,
+  ActionHelpers,
+  ModelActionHelpers
+} from "./action";
 import { Reducers } from "./reducer";
 import { Model } from "./model";
 import { getSubObject } from "./util";
 
-export interface EpicContext<
+export interface EffectContext<
   TDependencies,
   TState,
   TReducers extends Reducers<TDependencies, TState>,
-  TEpics extends Epics<TDependencies, TState, TReducers, TEpics>,
+  TEffects extends Effects<TDependencies, TState, TReducers, TEffects>,
   TPayload
 > {
   action$: ActionsObservable<Action<TPayload>>;
-  state$: StateObservable<TState>;
-  dispatch: Dispatch<TReducers & TEpics>;
   rootAction$: ActionsObservable<Action<any>>;
+  state$: StateObservable<TState>;
   rootState$: StateObservable<any>;
-  rootDispatch: Dispatch<any>;
+  actions: ActionHelpers<TReducers & TEffects>;
+  rootActions: ModelActionHelpers<any>;
   dependencies: TDependencies;
 }
 
-export interface Epic<
+export interface Effect<
   TDependencies,
   TState,
   TReducers extends Reducers<TDependencies, TState>,
-  TEpics extends Epics<TDependencies, TState, TReducers, TEpics>,
+  TEffects extends Effects<TDependencies, TState, TReducers, TEffects>,
   TPayload
 > {
   (
-    context: EpicContext<TDependencies, TState, TReducers, TEpics, TPayload>
+    context: EffectContext<
+      TDependencies,
+      TState,
+      TReducers,
+      TEffects,
+      any /* TPayload */
+    >,
+    payload: TPayload
   ): Observable<Action<any>>;
 }
 
-export interface Epics<
+export type EffectWithOperator<
   TDependencies,
   TState,
   TReducers extends Reducers<TDependencies, TState>,
-  TEpics extends Epics<TDependencies, TState, TReducers, TEpics>
+  TEffects extends Effects<TDependencies, TState, TReducers, TEffects>,
+  TPayload
+> = [Effect<TDependencies, TState, TReducers, TEffects, TPayload>, Function];
+
+export interface Effects<
+  TDependencies,
+  TState,
+  TReducers extends Reducers<TDependencies, TState>,
+  TEffects extends Effects<TDependencies, TState, TReducers, TEffects>
 > {
-  [type: string]: Epic<TDependencies, TState, TReducers, TEpics, any>;
+  [type: string]:
+    | Effect<TDependencies, TState, TReducers, TEffects, any>
+    | EffectWithOperator<TDependencies, TState, TReducers, TEffects, any>;
 }
 
-export function registerModelEpics<
+export function registerModelEffects<
   TDependencies,
   TModel extends Model<TDependencies>
 >(
   model: TModel,
   namespaces: string[],
-  rootDispatch: ModelDispatch<Model<TDependencies>>,
+  rootActions: ModelActionHelpers<Model<TDependencies>>,
   rootAction$: ActionsObservable<Action<any>>,
   rootState$: StateObservable<any>,
   dependencies: TDependencies
@@ -64,10 +85,10 @@ export function registerModelEpics<
 
   for (const key of Object.keys(model.models)) {
     const subModel = model.models[key];
-    const subOutputs = registerModelEpics(
+    const subOutputs = registerModelEffects(
       subModel,
       [...namespaces, key],
-      rootDispatch,
+      rootActions,
       rootAction$,
       rootState$,
       dependencies
@@ -90,28 +111,46 @@ export function registerModelEpics<
     rootState$.pipe(takeUntil(takeUntil$)) as any,
     rootState$.value
   );
+
   const state$ = new StateObservable(
     rootState$.pipe(map((state) => getSubObject(state, namespaces))) as any,
     getSubObject(rootState$.value, namespaces)
   );
 
-  const dispatch = getSubObject(rootDispatch, namespaces);
+  const actions = getSubObject(rootActions, namespaces)!;
 
-  for (const key of Object.keys(model.epics)) {
-    const epic = model.epics[key];
+  for (const key of Object.keys(model.effects)) {
+    let effect: Effect<any, any, any, any, any>;
+    let operator: Function = mergeMap;
+
+    const effectWithOperator = model.effects[key];
+    if (Array.isArray(effectWithOperator)) {
+      [effect, operator] = effectWithOperator;
+    } else {
+      effect = effectWithOperator;
+    }
+
     const action$ = rootAction$.ofType([...namespaces, key].join("/"));
 
-    outputs.push(
-      epic({
-        action$,
-        state$,
-        dispatch,
-        rootAction$,
-        rootState$,
-        rootDispatch,
-        dependencies
-      } as any)
+    const output$ = action$.pipe<Action<any>>(
+      operator((action: Action<any>) => {
+        const payload = action.payload;
+        return effect(
+          {
+            action$,
+            rootAction$,
+            state$,
+            rootState$,
+            actions,
+            rootActions,
+            dependencies
+          },
+          payload
+        );
+      })
     );
+
+    outputs.push(output$);
   }
 
   return outputs;
@@ -123,14 +162,14 @@ export function createModelEpic<
 >(
   model: TModel,
   namespaces: string[],
-  dispatch: ModelDispatch<TModel>
+  actions: ModelActionHelpers<TModel>
 ): ReduxObservableEpic<any, Action<any>> {
   return (action$, state$, dependencies) =>
     merge(
-      ...registerModelEpics(
+      ...registerModelEffects(
         model,
         namespaces,
-        dispatch,
+        actions,
         action$,
         state$,
         dependencies

@@ -1,15 +1,15 @@
-import produce from "immer";
 import { BehaviorSubject } from "rxjs";
-import { Store, Reducer as ReduxReducer } from "redux";
-import { Epic as ReduxObservableEpic, StateObservable } from "redux-observable";
+import { Store } from "redux";
+import { Epic as ReduxObservableEpic } from "redux-observable";
 
 import { ModelState } from "./state";
-import { Action, actionTypes } from "./action";
-import { ModelDispatch, createModelDispatch } from "./dispatch";
-import { Reducers } from "./reducer";
-import { Epics, registerModelEpics, createModelEpic } from "./epic";
-import { Model, Models, cloneModel } from "./model";
-import { getSubObject } from "./util";
+import {
+  actionTypes,
+  ModelActionHelpers,
+  createModelActionHelpers
+} from "./action";
+import { createModelEpic } from "./effect";
+import { Model, cloneModel } from "./model";
 
 export class StoreHelper<TModel extends Model> {
   private readonly _store: Store;
@@ -36,12 +36,8 @@ export class StoreHelper<TModel extends Model> {
     );
   }
 
-  public get dispatch(): ModelDispatch<TModel> {
-    return createModelDispatch(
-      this._model,
-      this._namespaces,
-      this._store.dispatch.bind(this._store)
-    );
+  public get actions(): ModelActionHelpers<TModel> {
+    return createModelActionHelpers(this._model, this._namespaces);
   }
 
   public registerModel<T extends Model>(namespace: string, model: T): void {
@@ -54,7 +50,7 @@ export class StoreHelper<TModel extends Model> {
     this._model.models[namespace] = cloneModel(model);
 
     this._epic$.next(
-      createModelEpic(model, namespaces, this.dispatch[namespace])
+      createModelEpic(model, namespaces, this.actions[namespace])
     );
 
     this._store.dispatch({
@@ -62,7 +58,7 @@ export class StoreHelper<TModel extends Model> {
     });
   }
 
-  public unregisterModel<T extends Model>(namespace: string): void {
+  public unregisterModel(namespace: string): void {
     if (this._model.models[namespace] == null) {
       throw new Error("Model is not existing");
     }

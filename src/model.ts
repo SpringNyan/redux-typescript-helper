@@ -1,6 +1,6 @@
 import { State } from "./state";
 import { Reducers } from "./reducer";
-import { Epics } from "./epic";
+import { Effects } from "./effect";
 
 export interface Model<
   TDependencies = any,
@@ -9,17 +9,17 @@ export interface Model<
     TDependencies,
     TState
   >,
-  TEpics extends Epics<TDependencies, TState, TReducers, TEpics> = Epics<
+  TEffects extends Effects<
     TDependencies,
     TState,
     TReducers,
-    TEpics
-  >,
+    TEffects
+  > = Effects<TDependencies, TState, TReducers, TEffects>,
   TModels extends Models<TDependencies> = Models<TDependencies>
 > {
   state: State<TDependencies, TState>;
   reducers: TReducers;
-  epics: TEpics;
+  effects: TEffects;
   models: TModels;
 }
 
@@ -31,12 +31,12 @@ export class ModelFactory<
   TDependencies,
   TState,
   TReducers extends Reducers<TDependencies, TState>,
-  TEpics extends Epics<TDependencies, TState, any, any>,
+  TEffects extends Effects<TDependencies, TState, any, any>,
   TModels extends Models<TDependencies>
 > {
   private readonly _state: State<TDependencies, TState>;
   private _reducers: Reducers<TDependencies, TState> = {};
-  private _epics: Epics<TDependencies, TState, TReducers, TEpics> = {};
+  private _effects: Effects<TDependencies, TState, TReducers, TEffects> = {};
   private _models: Models<TDependencies> = {};
 
   constructor(state: State<TDependencies, TState>) {
@@ -45,7 +45,7 @@ export class ModelFactory<
 
   public reducers<T extends Reducers<TDependencies, TState>>(
     reducers: T
-  ): ModelFactory<TDependencies, TState, TReducers & T, TEpics, TModels> {
+  ): ModelFactory<TDependencies, TState, TReducers & T, TEffects, TModels> {
     this._reducers = {
       ...this._reducers,
       ...(reducers as Reducers<TDependencies, TState>)
@@ -54,12 +54,12 @@ export class ModelFactory<
     return this as any;
   }
 
-  public epics<T extends Epics<TDependencies, TState, TReducers, TEpics>>(
-    epics: T
-  ): ModelFactory<TDependencies, TState, TReducers, TEpics & T, TModels> {
-    this._epics = {
-      ...this._epics,
-      ...(epics as Epics<TDependencies, TState, TReducers, TEpics>)
+  public effects<T extends Effects<TDependencies, TState, TReducers, TEffects>>(
+    effects: T
+  ): ModelFactory<TDependencies, TState, TReducers, TEffects & T, TModels> {
+    this._effects = {
+      ...this._effects,
+      ...(effects as Effects<TDependencies, TState, TReducers, TEffects>)
     };
 
     return this as any;
@@ -67,7 +67,7 @@ export class ModelFactory<
 
   public models<T extends Models<TDependencies>>(
     models: T
-  ): ModelFactory<TDependencies, TState, TReducers, TEpics, TModels & T> {
+  ): ModelFactory<TDependencies, TState, TReducers, TEffects, TModels & T> {
     this._models = {
       ...this._models,
       ...(models as Models<TDependencies>)
@@ -76,13 +76,13 @@ export class ModelFactory<
     return this as any;
   }
 
-  public create(): Model<TDependencies, TState, TReducers, TEpics, TModels> {
+  public create(): Model<TDependencies, TState, TReducers, TEffects, TModels> {
     return {
       state: this._state,
       reducers: { ...this._reducers },
-      epics: { ...this._epics },
+      effects: { ...this._effects },
       models: { ...this._models }
-    } as any;
+    } as Model<TDependencies, TState, TReducers, TEffects, TModels>;
   }
 }
 
@@ -106,7 +106,7 @@ export function cloneModel<TModel extends Model>(model: TModel): TModel {
   return {
     state: model.state,
     reducers: { ...model.reducers },
-    epics: { ...model.epics },
+    effects: { ...model.effects },
     models: { ...model.models }
-  } as any;
+  } as TModel;
 }
