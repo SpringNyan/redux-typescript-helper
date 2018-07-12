@@ -7,7 +7,7 @@ import {
 } from "redux-observable";
 
 import { Action, actionTypes } from "./action";
-import { Dispatch } from "./dispatch";
+import { Dispatch, ModelDispatch } from "./dispatch";
 import { Reducers } from "./reducer";
 import { Model } from "./model";
 import { getSubObject } from "./util";
@@ -55,7 +55,7 @@ export function registerModelEpics<
 >(
   model: TModel,
   namespaces: string[],
-  rootDispatch: Dispatch<any>,
+  rootDispatch: ModelDispatch<Model<TDependencies>>,
   rootAction$: ActionsObservable<Action<any>>,
   rootState$: StateObservable<any>,
   dependencies: TDependencies
@@ -120,9 +120,20 @@ export function registerModelEpics<
 export function createModelEpic<
   TDependencies,
   TModel extends Model<TDependencies>
->(model: TModel): ReduxObservableEpic<any, Action<any>> {
+>(
+  model: TModel,
+  namespaces: string[],
+  dispatch: ModelDispatch<TModel>
+): ReduxObservableEpic<any, Action<any>> {
   return (action$, state$, dependencies) =>
     merge(
-      registerModelEpics(model, [], undefined, action$, state$, dependencies)
+      ...registerModelEpics(
+        model,
+        namespaces,
+        dispatch,
+        action$,
+        state$,
+        dependencies
+      )
     );
 }

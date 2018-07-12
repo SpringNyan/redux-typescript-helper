@@ -4,11 +4,12 @@ import { Store, Reducer as ReduxReducer } from "redux";
 import { Epic as ReduxObservableEpic, StateObservable } from "redux-observable";
 
 import { ModelState } from "./state";
-import { Action } from "./action";
+import { Action, actionTypes } from "./action";
 import { ModelDispatch, createModelDispatch } from "./dispatch";
 import { Reducers } from "./reducer";
-import { Epics } from "./epic";
+import { Epics, registerModelEpics, createModelEpic } from "./epic";
 import { Model, Models, cloneModel } from "./model";
+import { getSubObject } from "./util";
 
 export class StoreHelper<TModel extends Model> {
   private readonly _store: Store;
@@ -48,6 +49,31 @@ export class StoreHelper<TModel extends Model> {
       throw new Error("Model is already existing");
     }
 
+    const namespaces = [...this._namespaces, namespace];
+
     this._model.models[namespace] = cloneModel(model);
+
+    this._epic$.next(
+      createModelEpic(model, namespaces, this.dispatch[namespace])
+    );
+
+    this._store.dispatch({
+      type: `${namespaces.join("/")}/${actionTypes.registerModel}`
+    });
+  }
+
+  public unregisterModel<T extends Model>(namespace: string): void {
+    if (this._model.models[namespace] == null) {
+      throw new Error("Model is not existing");
+    }
+
+    const namespaces = [...this._namespaces, namespace];
+
+    this._store.dispatch({
+      type: `${namespaces.join("/")}/${actionTypes.unregisterModel}`
+    });
+
+    delete this._model.models[namespace];
+    // TODO: delete state, dispatch
   }
 }
