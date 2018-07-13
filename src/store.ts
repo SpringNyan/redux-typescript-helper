@@ -54,7 +54,7 @@ export class StoreHelper<TModel extends Model> {
     );
 
     this._store.dispatch({
-      type: `${namespaces.join("/")}/${actionTypes.registerModel}`
+      type: `${namespaces.join("/")}/${actionTypes.register}`
     });
   }
 
@@ -66,7 +66,7 @@ export class StoreHelper<TModel extends Model> {
     const namespaces = [...this._namespaces, namespace];
 
     this._store.dispatch({
-      type: `${namespaces.join("/")}/${actionTypes.unregisterModel}`
+      type: `${namespaces.join("/")}/${actionTypes.unregister}`
     });
 
     delete this._model.models[namespace];

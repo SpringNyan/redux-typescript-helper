@@ -3,8 +3,8 @@ import { Effect, EffectWithOperator, Effects } from "./effect";
 import { Model } from "./model";
 
 export const actionTypes = {
-  registerModel: "@@REGISTER_MODEL",
-  unregisterModel: "@@UNREGISTER_MODEL"
+  register: "@@REGISTER",
+  unregister: "@@UNREGISTER"
 };
 
 export interface Action<TPayload> {
@@ -22,7 +22,7 @@ export type ExtractActionPayload<
   | Effect<any, any, any, any, infer TPayload>
   | EffectWithOperator<any, any, any, any, infer TPayload>
   ? TPayload
-  : never;
+  : any;
 
 export interface ActionHelper<TPayload> {
   (payload: TPayload): Action<TPayload>;
@@ -34,9 +34,9 @@ export type ActionHelpers<
   T extends Reducers<any, any> | Effects<any, any, any, any>
 > = { [K in keyof T]: ActionHelper<ExtractActionPayload<T[K]>> };
 
-export type ModelActionHelpers<
-  TModel extends Model<any, any, any, any, any>
-> = ActionHelpers<TModel["reducers"] & TModel["effects"]> &
+export type ModelActionHelpers<TModel extends Model> = ActionHelpers<
+  TModel["reducers"] & TModel["effects"]
+> &
   {
     [K in keyof TModel["models"]]: TModel["models"][K] extends Model
       ? ModelActionHelpers<TModel["models"][K]>

@@ -76,7 +76,7 @@ export function registerModelEffects<
 >(
   model: TModel,
   namespaces: string[],
-  rootActions: ModelActionHelpers<Model<TDependencies>>,
+  rootActions: ModelActionHelpers<TModel>,
   rootAction$: ActionsObservable<Action<any>>,
   rootState$: StateObservable<any>,
   dependencies: TDependencies
@@ -100,7 +100,7 @@ export function registerModelEffects<
   const takeUntil$ = rootAction$.pipe(
     skipWhile(
       (action) =>
-        action.type !== `${namespaces.join("/")}/${actionTypes.unregisterModel}`
+        action.type !== `${namespaces.join("/")}/${actionTypes.unregister}`
     ),
     skip(1)
   );

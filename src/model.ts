@@ -14,7 +14,7 @@ export interface Model<
     TState,
     TReducers,
     TEffects
-  > = Effects<TDependencies, TState, TReducers, TEffects>,
+  > = Effects<TDependencies, TState, any, any>,
   TModels extends Models<TDependencies> = Models<TDependencies>
 > {
   state: State<TDependencies, TState>;
