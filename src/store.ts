@@ -113,7 +113,6 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     });
 
     delete this._model.models[namespace];
-    delete this.state[namespace];
 
     // TODO: delete action helpers
   }

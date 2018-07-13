@@ -2,7 +2,7 @@ import produce from "immer";
 import { Reducer as ReduxReducer } from "redux";
 
 import { initializeModelState } from "./state";
-import { Action } from "./action";
+import { Action, actionTypes } from "./action";
 import { Model } from "./model";
 import { getSubObject } from "./util";
 
@@ -23,19 +23,19 @@ export function createModelReducer<
   TModel extends Model<TDependencies>
 >(model: TModel, dependencies: TDependencies): ReduxReducer {
   return ((state: any, action: Action<any>) => {
-    state = initializeModelState(state, model, dependencies);
+    if (state === undefined) {
+      state = initializeModelState(state, model, dependencies);
+    }
 
     return produce(state, (draft) => {
       const namespaces = action.type.split("/");
+      const stateName = namespaces[namespaces.length - 2];
+      const actionType = namespaces[namespaces.length - 1];
 
       const parentState = getSubObject(
         draft,
         namespaces.slice(0, namespaces.length - 2)
       );
-      const subState =
-        namespaces.length > 1 && parentState != null
-          ? parentState[namespaces[namespaces.length - 2]]
-          : parentState;
 
       const subModel = getSubObject<Model>(
         model,
@@ -43,20 +43,53 @@ export function createModelReducer<
         (o, p) => o.models[p]
       );
 
+      if (actionType === actionTypes.register) {
+        if (subModel == null) {
+          throw new Error("Failed to register model: model is not found");
+        }
+        if (parentState == null) {
+          throw new Error(
+            "Failed to register model: parent state is not initialized"
+          );
+        }
+        if (parentState[stateName] !== undefined) {
+          throw new Error(
+            "Failed to register model: state is already existing"
+          );
+        }
+
+        parentState[stateName] = initializeModelState(
+          undefined,
+          subModel,
+          dependencies
+        );
+      } else if (actionType === actionTypes.unregister) {
+        if (parentState == null) {
+          throw new Error(
+            "Failed to unregister model: parent state is not initialized"
+          );
+        }
+
+        delete parentState[stateName];
+      }
+
+      const subState =
+        parentState != null && stateName != null
+          ? parentState[stateName]
+          : parentState;
+
       const subReducer =
-        subModel != null
-          ? subModel.reducers[namespaces[namespaces.length - 1]]
-          : undefined;
+        subModel != null ? subModel.reducers[actionType] : undefined;
 
       if (subReducer != null) {
         if (subState == null) {
-          throw new Error("State must be initialized");
+          throw new Error("Failed to handle action: state must be initialized");
         }
 
-        let nextSubState = subReducer(subState, action.payload, dependencies);
+        const nextSubState = subReducer(subState, action.payload, dependencies);
         if (nextSubState !== undefined) {
-          if (namespaces.length > 1) {
-            parentState[namespaces[namespaces.length - 2]] = nextSubState;
+          if (stateName != null) {
+            parentState[stateName] = nextSubState;
           } else {
             return nextSubState;
           }
