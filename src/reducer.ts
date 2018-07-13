@@ -4,6 +4,7 @@ import { Reducer as ReduxReducer } from "redux";
 import { initializeModelState } from "./state";
 import { Action } from "./action";
 import { Model } from "./model";
+import { getSubObject } from "./util";
 
 export interface Reducer<TDependencies, TState, TPayload> {
   (
@@ -27,23 +28,21 @@ export function createModelReducer<
     return produce(state, (draft) => {
       const namespaces = action.type.split("/");
 
-      const parentState = namespaces
-        .slice(0, namespaces.length - 2)
-        .reduce(
-          (obj, namespace) => (obj != null ? obj[namespace] : undefined),
-          draft
-        );
+      const parentState = getSubObject(
+        draft,
+        namespaces.slice(0, namespaces.length - 2)
+      );
       const subState =
         namespaces.length > 1 && parentState != null
           ? parentState[namespaces[namespaces.length - 2]]
           : parentState;
 
-      const subModel = namespaces
-        .slice(0, namespaces.length - 1)
-        .reduce<Model | undefined>(
-          (obj, namespace) => (obj != null ? obj.models[namespace] : undefined),
-          model
-        );
+      const subModel = getSubObject<Model>(
+        model,
+        namespaces.slice(0, namespaces.length - 1),
+        (o, p) => o.models[p]
+      );
+
       const subReducer =
         subModel != null
           ? subModel.reducers[namespaces[namespaces.length - 1]]

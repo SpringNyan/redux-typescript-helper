@@ -162,9 +162,10 @@ export function createModelEpic<
 >(
   model: TModel,
   namespaces: string[],
-  actions: ModelActionHelpers<TModel>
+  actions: ModelActionHelpers<TModel>,
+  dependencies: TDependencies
 ): ReduxObservableEpic<any, Action<any>> {
-  return (action$, state$, dependencies) =>
+  return (action$, state$) =>
     merge(
       ...registerModelEffects(
         model,

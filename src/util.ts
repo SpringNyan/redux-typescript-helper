@@ -1,9 +1,11 @@
-export function getSubObject<T extends { [key: string]: T }>(
+export function getSubObject<T>(
   obj: T,
-  namespaces: string[]
+  paths: string[],
+  map?: (obj: T, path: string) => T
 ): T | undefined {
-  return namespaces.reduce<T | undefined>(
-    (o, namespace) => (o != null ? o[namespace] : undefined),
+  return paths.reduce<T | undefined>(
+    (o, path) =>
+      o != null ? (map ? map(o, path) : (o as any)[path]) : undefined,
     obj
   );
 }
