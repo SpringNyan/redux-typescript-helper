@@ -53,7 +53,7 @@ export function createModelReducer<
           throw new Error("State must be initialized");
         }
 
-        let nextSubState = subReducer(subState, action, dependencies);
+        let nextSubState = subReducer(subState, action.payload, dependencies);
         if (nextSubState !== undefined) {
           if (namespaces.length > 1) {
             parentState[namespaces[namespaces.length - 2]] = nextSubState;

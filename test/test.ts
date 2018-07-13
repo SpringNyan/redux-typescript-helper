@@ -56,7 +56,7 @@ describe("redux-typescript-helper", () => {
         state.about = "";
       },
       editAbout(state, payload: string, dependencies) {
-        state.about = `env: ${dependencies.system.env} - ${payload}`;
+        state.about = `${dependencies.system.env} - ${payload}`;
       }
     })
     .effects({
@@ -144,6 +144,6 @@ describe("redux-typescript-helper", () => {
 
     expect(storeHelper.state.user.about).eq("");
     store.dispatch(storeHelper.actions.user.editAbout("zzz"));
-    expect(storeHelper.state.user.about).eq("zzz");
+    expect(storeHelper.state.user.about).eq("test - zzz");
   });
 });
