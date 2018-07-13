@@ -121,7 +121,8 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     Object.defineProperty(this, namespace, {
       get: () => {
         return this.namespace(namespace);
-      }
+      },
+      configurable: true
     });
   }
 

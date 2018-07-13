@@ -145,5 +145,31 @@ describe("redux-typescript-helper", () => {
     expect(storeHelper.state.user.about).eq("");
     store.dispatch(storeHelper.actions.user.editAbout("zzz"));
     expect(storeHelper.state.user.about).eq("test - zzz");
+
+    expect(entitiesHelper.state.itemById[1]).eq(undefined);
+    store.dispatch(entitiesHelper.actions.fetchItems({}));
+    await timer(waitTime).toPromise();
+    expect(entitiesHelper.state.itemById[1].title).eq("abc");
+    store.dispatch(entitiesHelper.actions.removeItem(1));
+    expect(entitiesHelper.state.itemById[1]).eq(undefined);
+
+    entitiesHelper.registerModel("temp", entitiesModel);
+    const tempHelper = entitiesHelper.namespace<typeof entitiesModel>("temp");
+
+    expect(entitiesHelper.state.itemById[2].title).eq("def");
+    expect(tempHelper.state.itemById[2]).eq(undefined);
+    store.dispatch(
+      tempHelper.actions.addItem({
+        id: 2,
+        title: "wow",
+        done: false
+      })
+    );
+    expect(entitiesHelper.state.itemById[2].title).eq("def");
+    expect(tempHelper.state.itemById[2].title).eq("wow");
+    expect((entitiesHelper.state as any)["temp"].itemById[2].title).eq("wow");
+
+    entitiesHelper.unregisterModel("temp");
+    expect((entitiesHelper.state as any)["temp"]).eq(undefined);
   });
 });
