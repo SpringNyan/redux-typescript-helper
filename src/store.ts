@@ -43,6 +43,10 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     }
   }
 
+  public get store(): Store {
+    return this._store;
+  }
+
   public get state(): ModelState<TModel> {
     return getSubObject(this._store.getState(), this._namespaces);
   }

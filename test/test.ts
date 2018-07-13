@@ -1,4 +1,6 @@
-import { of, from } from "rxjs";
+import { expect } from "chai";
+
+import { of, from, timer } from "rxjs";
 import { delay, switchMap } from "rxjs/operators";
 import { createStore, applyMiddleware } from "redux";
 import { createEpicMiddleware } from "redux-observable";
@@ -20,6 +22,9 @@ describe("redux-typescript-helper", () => {
     title: string;
     done: boolean;
   }
+
+  const delayTime = 50;
+  const waitTime = delayTime + 10;
 
   const createModelFactory = createModelFactoryCreator<Dependencies>();
 
@@ -67,7 +72,7 @@ describe("redux-typescript-helper", () => {
               token: dependencies.system.hash(payload.password),
               about: ""
             })
-          ).pipe(delay(200));
+          ).pipe(delay(delayTime));
         },
         switchMap
       ]
@@ -94,7 +99,7 @@ describe("redux-typescript-helper", () => {
           actions.clearItems({}),
           actions.addItem({ id: 1, title: "abc", done: false }),
           actions.addItem({ id: 2, title: "def", done: true })
-        ]).pipe(delay(500));
+        ]).pipe(delay(delayTime));
       }
     })
     .create();
@@ -121,4 +126,24 @@ describe("redux-typescript-helper", () => {
   epicMiddleware.run(storeHelperFactory.epic);
 
   const storeHelper = storeHelperFactory.create(store);
+  const userHelper = storeHelper.user;
+  const entitiesHelper = storeHelper.entities;
+
+  it("test", async () => {
+    expect(userHelper.state.isLogin).eq(false);
+    store.dispatch(
+      userHelper.actions.loginRequest({
+        username: "nyan",
+        password: "meow"
+      })
+    );
+    expect(userHelper.state.isLogin).eq(false);
+    await timer(waitTime).toPromise();
+    expect(userHelper.state.isLogin).eq(true);
+    expect(userHelper.state.username).eq("nyan");
+
+    expect(storeHelper.state.user.about).eq("");
+    store.dispatch(storeHelper.actions.user.editAbout("zzz"));
+    expect(storeHelper.state.user.about).eq("zzz");
+  });
 });
