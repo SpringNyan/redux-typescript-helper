@@ -21,8 +21,8 @@ export interface Reducers<TDependencies, TState> {
 export function createModelReducer<
   TDependencies,
   TModel extends Model<TDependencies>
->(model: TModel, dependencies: TDependencies): ReduxReducer<any, Action<any>> {
-  return (state: any, action: Action<any>) => {
+>(model: TModel, dependencies: TDependencies): ReduxReducer {
+  return ((state: any, action: Action<any>) => {
     state = initializeModelState(state, model, dependencies);
 
     return produce(state, (draft) => {
@@ -63,5 +63,5 @@ export function createModelReducer<
         }
       }
     });
-  };
+  }) as ReduxReducer;
 }

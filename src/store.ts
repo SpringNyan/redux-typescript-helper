@@ -144,7 +144,7 @@ export class StoreHelperFactory<
 > {
   private readonly _model: TModel;
   private readonly _dependencies: TDependencies;
-  private readonly _reducer: ReduxReducer<any, Action<any>>;
+  private readonly _reducer: ReduxReducer;
   private readonly _actions: ModelActionHelpers<TModel>;
   private readonly _epic: ReduxObservableEpic;
   private readonly _addEpic$: BehaviorSubject<ReduxObservableEpic>;
@@ -165,7 +165,7 @@ export class StoreHelperFactory<
       );
   }
 
-  public get reducer(): ReduxReducer<any, Action<any>> {
+  public get reducer(): ReduxReducer {
     return this._reducer;
   }
 

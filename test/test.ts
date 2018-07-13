@@ -1,7 +1,9 @@
 import { of, from } from "rxjs";
 import { delay, switchMap } from "rxjs/operators";
+import { createStore, applyMiddleware } from "redux";
+import { createEpicMiddleware } from "redux-observable";
 
-import { createModelFactoryCreator } from "../lib";
+import { createModelFactoryCreator, createStoreHelperFactory } from "../lib";
 
 describe("redux-typescript-helper", () => {
   interface SystemService {
@@ -103,4 +105,20 @@ describe("redux-typescript-helper", () => {
       entities: entitiesModel
     })
     .create();
+
+  const storeHelperFactory = createStoreHelperFactory(rootModel, {
+    system: {
+      env: "test",
+      hash: (str: string) => str
+    }
+  });
+
+  const epicMiddleware = createEpicMiddleware();
+  const store = createStore(
+    storeHelperFactory.reducer,
+    applyMiddleware(epicMiddleware)
+  );
+  epicMiddleware.run(storeHelperFactory.epic);
+
+  const storeHelper = storeHelperFactory.create(store);
 });
