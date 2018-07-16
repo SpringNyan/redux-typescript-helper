@@ -74,7 +74,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
 
   public registerModel<T extends Model>(namespace: string, model: T): void {
     if (this._model.models[namespace] != null) {
-      throw new Error("Model is already existing");
+      throw new Error("Failed to register model: model is already registered");
     }
 
     const namespaces = [...this._namespaces, namespace];
@@ -101,7 +101,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
 
   public unregisterModel(namespace: string): void {
     if (this._model.models[namespace] == null) {
-      throw new Error("Model is not existing");
+      throw new Error("Failed to unregister model: model is not existing");
     }
 
     this._unregisterNamespace(namespace);
@@ -153,13 +153,17 @@ export class StoreHelperFactory<
   private readonly _epic: ReduxObservableEpic;
   private readonly _addEpic$: BehaviorSubject<ReduxObservableEpic>;
 
+  private _store?: Store;
+
   constructor(model: TModel, dependencies: TDependencies) {
     this._model = model;
     this._dependencies = dependencies;
 
     this._reducer = createModelReducer(model, dependencies);
 
-    this._actions = createModelActionHelpers(model, []);
+    this._actions = createModelActionHelpers(model, [], (action) =>
+      this._store!.dispatch(action)
+    );
 
     const initialEpic = createModelEpic(model, [], this._actions, dependencies);
     this._addEpic$ = new BehaviorSubject(initialEpic);
@@ -180,6 +184,12 @@ export class StoreHelperFactory<
   public create(
     store: Store
   ): StoreHelperWithNamespaces<TDependencies, TModel> {
+    if (this._store != null) {
+      throw new Error("Store helper is already created");
+    }
+
+    this._store = store;
+
     return new StoreHelper(
       store,
       this._model,

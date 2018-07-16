@@ -1,3 +1,5 @@
+import { Dispatch } from "redux";
+
 import { Reducer, Reducers } from "./reducer";
 import { Effect, EffectWithOperator, Effects } from "./effect";
 import { Model } from "./model";
@@ -24,10 +26,29 @@ export type ExtractActionPayload<
   ? TPayload
   : any;
 
-export interface ActionHelper<TPayload> {
-  (payload: TPayload): Action<TPayload>;
-  type: string;
-  is(action: Action<any>): action is Action<TPayload>;
+export class ActionHelper<TPayload> {
+  public readonly type: string;
+  private readonly _dispatch: Dispatch;
+
+  constructor(type: string, dispatch: Dispatch) {
+    this.type = type;
+    this._dispatch = dispatch;
+  }
+
+  public create(payload: TPayload): Action<TPayload> {
+    return {
+      type: this.type,
+      payload
+    };
+  }
+
+  public dispatch(payload: TPayload): Action<TPayload> {
+    return this._dispatch(this.create(payload));
+  }
+
+  public is(action: any): action is Action<TPayload> {
+    return action.type === this.type;
+  }
 }
 
 export type ActionHelpers<
@@ -43,34 +64,23 @@ export type ModelActionHelpers<TModel extends Model> = ActionHelpers<
       : never
   };
 
-function createActionHelper<TPayload>(type: string): ActionHelper<TPayload> {
-  const helper = ((payload: TPayload): Action<TPayload> => ({
-    type,
-    payload
-  })) as ActionHelper<TPayload>;
-
-  helper.type = type;
-  helper.is = (action: Action<any>): action is Action<TPayload> =>
-    action.type === type;
-
-  return helper;
-}
-
 export function createModelActionHelpers<TModel extends Model>(
   model: TModel,
-  namespaces: string[]
+  namespaces: string[],
+  dispatch: Dispatch
 ): ModelActionHelpers<TModel> {
   return new Proxy(
     {},
     {
       get(_target, key: string) {
         if (key in model.reducers || key in model.effects) {
-          return createActionHelper([...namespaces, key].join("/"));
+          return new ActionHelper([...namespaces, key].join("/"), dispatch);
         } else if (key in model.models) {
-          return createModelActionHelpers(model.models[key], [
-            ...namespaces,
-            key
-          ]);
+          return createModelActionHelpers(
+            model.models[key],
+            [...namespaces, key],
+            dispatch
+          );
         } else {
           return undefined;
         }

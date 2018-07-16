@@ -32,6 +32,7 @@ export declare class StoreHelperFactory<TDependencies, TModel extends Model<TDep
     private readonly _actions;
     private readonly _epic;
     private readonly _addEpic$;
+    private _store?;
     constructor(model: TModel, dependencies: TDependencies);
     readonly reducer: ReduxReducer;
     readonly epic: ReduxObservableEpic;

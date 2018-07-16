@@ -66,7 +66,7 @@ describe("redux-typescript-helper", () => {
           payload: { username: string; password: string }
         ) => {
           return of(
-            actions.login({
+            actions.login.create({
               id: 233,
               username: payload.username,
               token: dependencies.system.hash(payload.password),
@@ -96,9 +96,9 @@ describe("redux-typescript-helper", () => {
     .effects({
       fetchItems({ actions }) {
         return from([
-          actions.clearItems({}),
-          actions.addItem({ id: 1, title: "abc", done: false }),
-          actions.addItem({ id: 2, title: "def", done: true })
+          actions.clearItems.create({}),
+          actions.addItem.create({ id: 1, title: "abc", done: false }),
+          actions.addItem.create({ id: 2, title: "def", done: true })
         ]).pipe(delay(delayTime));
       }
     })
@@ -131,26 +131,24 @@ describe("redux-typescript-helper", () => {
 
   it("test", async () => {
     expect(userHelper.state.isLogin).eq(false);
-    store.dispatch(
-      userHelper.actions.loginRequest({
-        username: "nyan",
-        password: "meow"
-      })
-    );
+    userHelper.actions.loginRequest.dispatch({
+      username: "nyan",
+      password: "meow"
+    });
     expect(userHelper.state.isLogin).eq(false);
     await timer(waitTime).toPromise();
     expect(userHelper.state.isLogin).eq(true);
     expect(userHelper.state.username).eq("nyan");
 
     expect(storeHelper.state.user.about).eq("");
-    store.dispatch(storeHelper.actions.user.editAbout("zzz"));
+    storeHelper.actions.user.editAbout.dispatch("zzz");
     expect(storeHelper.state.user.about).eq("test - zzz");
 
     expect(entitiesHelper.state.itemById[1]).eq(undefined);
-    store.dispatch(entitiesHelper.actions.fetchItems({}));
+    entitiesHelper.actions.fetchItems.dispatch({});
     await timer(waitTime).toPromise();
     expect(entitiesHelper.state.itemById[1].title).eq("abc");
-    store.dispatch(entitiesHelper.actions.removeItem(1));
+    entitiesHelper.actions.removeItem.dispatch(1);
     expect(entitiesHelper.state.itemById[1]).eq(undefined);
 
     entitiesHelper.registerModel("temp", entitiesModel);
@@ -158,13 +156,11 @@ describe("redux-typescript-helper", () => {
 
     expect(entitiesHelper.state.itemById[2].title).eq("def");
     expect(tempHelper.state.itemById[2]).eq(undefined);
-    store.dispatch(
-      tempHelper.actions.addItem({
-        id: 2,
-        title: "wow",
-        done: false
-      })
-    );
+    tempHelper.actions.addItem.dispatch({
+      id: 2,
+      title: "wow",
+      done: false
+    });
     expect(entitiesHelper.state.itemById[2].title).eq("def");
     expect(tempHelper.state.itemById[2].title).eq("wow");
     expect((entitiesHelper.state as any)["temp"].itemById[2].title).eq("wow");
