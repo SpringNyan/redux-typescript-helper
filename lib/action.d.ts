@@ -10,7 +10,7 @@ export interface Action<TPayload> {
     type: string;
     payload: TPayload;
 }
-export declare type ExtractActionPayload<T extends Reducer<any, any, any> | Effect<any, any, any, any, any> | EffectWithOperator<any, any, any, any, any>> = T extends Reducer<any, any, infer TPayload> | Effect<any, any, any, any, infer TPayload> | EffectWithOperator<any, any, any, any, infer TPayload> ? TPayload : any;
+export declare type ExtractActionPayload<T extends Reducer<any, any, any> | Effect<any, any, any, any, any, any> | EffectWithOperator<any, any, any, any, any, any>> = T extends Reducer<any, any, infer TPayload> | Effect<any, any, any, any, any, infer TPayload> | EffectWithOperator<any, any, any, any, any, infer TPayload> ? TPayload : any;
 export declare class ActionHelper<TPayload> {
     readonly type: string;
     private readonly _dispatch;
@@ -19,7 +19,7 @@ export declare class ActionHelper<TPayload> {
     dispatch(payload: TPayload): Action<TPayload>;
     is(action: any): action is Action<TPayload>;
 }
-export declare type ActionHelpers<T extends Reducers<any, any> | Effects<any, any, any, any>> = {
+export declare type ActionHelpers<T extends Reducers<any, any> | Effects<any, any, any, any, any>> = {
     [K in keyof T]: ActionHelper<ExtractActionPayload<T[K]>>;
 };
 export declare type ModelActionHelpers<TModel extends Model> = ActionHelpers<TModel["reducers"] & TModel["effects"]> & {
