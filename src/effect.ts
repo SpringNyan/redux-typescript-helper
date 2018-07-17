@@ -1,5 +1,6 @@
 import { Observable, OperatorFunction, merge } from "rxjs";
 import { map, takeUntil, skip, skipWhile, mergeMap } from "rxjs/operators";
+import { Dispatch } from "redux";
 import {
   Epic as ReduxObservableEpic,
   ActionsObservable,
@@ -223,4 +224,19 @@ export function createModelEpic<
         dependencies
       )
     );
+}
+
+export function asyncEffect(
+  asyncFn: (dispatch: Dispatch<Action<any>>) => Promise<void>
+): Observable<Action<any>> {
+  return new Observable((subscribe) => {
+    const dispatch: Dispatch<Action<any>> = (action) => {
+      subscribe.next(action);
+      return action;
+    };
+    asyncFn(dispatch).then(
+      () => subscribe.complete(),
+      (reason) => subscribe.error(reason)
+    );
+  });
 }
