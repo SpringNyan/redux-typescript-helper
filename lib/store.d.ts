@@ -3,6 +3,7 @@ import { Store, Reducer as ReduxReducer } from "redux";
 import { Epic as ReduxObservableEpic } from "redux-observable";
 import { ModelState } from "./state";
 import { ModelActionHelpers } from "./action";
+import { ModelGetters } from "./selector";
 import { Model } from "./model";
 export declare class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     private readonly _store;
@@ -10,11 +11,13 @@ export declare class StoreHelper<TDependencies, TModel extends Model<TDependenci
     private readonly _dependencies;
     private readonly _namespaces;
     private readonly _actions;
+    private readonly _getters;
     private readonly _addEpic$;
-    constructor(store: Store, model: TModel, namespaces: string[], actions: ModelActionHelpers<TModel>, addEpic$: BehaviorSubject<ReduxObservableEpic>, dependencies: TDependencies);
+    constructor(store: Store, model: TModel, namespaces: string[], actions: ModelActionHelpers<TModel>, getters: ModelGetters<TModel>, addEpic$: BehaviorSubject<ReduxObservableEpic>, dependencies: TDependencies);
     readonly store: Store;
     readonly state: ModelState<TModel>;
     readonly actions: ModelActionHelpers<TModel>;
+    readonly getters: ModelGetters<TModel>;
     namespace<K extends Extract<keyof TModel["models"], string>>(namespace: K): StoreHelperWithNamespaces<TDependencies, TModel["models"][K]>;
     namespace<T extends Model<TDependencies>>(namespace: string): StoreHelperWithNamespaces<TDependencies, T>;
     registerModel<T extends Model>(namespace: string, model: T): void;
@@ -30,6 +33,7 @@ export declare class StoreHelperFactory<TDependencies, TModel extends Model<TDep
     private readonly _dependencies;
     private readonly _reducer;
     private readonly _actions;
+    private readonly _getters;
     private readonly _epic;
     private readonly _addEpic$;
     private _store?;
