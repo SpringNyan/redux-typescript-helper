@@ -12,6 +12,7 @@ import {
   ActionHelpers,
   ModelActionHelpers
 } from "./action";
+import { Selectors, Getters, ModelGetters } from "./selector";
 import { Reducers } from "./reducer";
 import { Model } from "./model";
 import { getSubObject } from "./util";
@@ -19,8 +20,15 @@ import { getSubObject } from "./util";
 export interface EffectContext<
   TDependencies,
   TState,
+  TSelectors extends Selectors<TDependencies, TState>,
   TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<TDependencies, TState, TReducers, TEffects>,
+  TEffects extends Effects<
+    TDependencies,
+    TState,
+    TSelectors,
+    TReducers,
+    TEffects
+  >,
   TPayload
 > {
   action$: ActionsObservable<Action<TPayload>>;
@@ -29,20 +37,30 @@ export interface EffectContext<
   rootState$: StateObservable<any>;
   actions: ActionHelpers<TReducers & TEffects>;
   rootActions: ModelActionHelpers<any>;
+  getters: Getters<TSelectors>;
+  rootGetters: ModelGetters<any>;
   dependencies: TDependencies;
 }
 
 export interface Effect<
   TDependencies,
   TState,
+  TSelectors extends Selectors<TDependencies, TState>,
   TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<TDependencies, TState, TReducers, TEffects>,
+  TEffects extends Effects<
+    TDependencies,
+    TState,
+    TSelectors,
+    TReducers,
+    TEffects
+  >,
   TPayload
 > {
   (
     context: EffectContext<
       TDependencies,
       TState,
+      TSelectors,
       TReducers,
       TEffects,
       any /* TPayload */
@@ -54,23 +72,44 @@ export interface Effect<
 export type EffectWithOperator<
   TDependencies,
   TState,
+  TSelectors extends Selectors<TDependencies, TState>,
   TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<TDependencies, TState, TReducers, TEffects>,
+  TEffects extends Effects<
+    TDependencies,
+    TState,
+    TSelectors,
+    TReducers,
+    TEffects
+  >,
   TPayload
 > = [
-  Effect<TDependencies, TState, TReducers, TEffects, TPayload>,
+  Effect<TDependencies, TState, TSelectors, TReducers, TEffects, TPayload>,
   (...args: any[]) => OperatorFunction<Action<TPayload>, Action<TPayload>>
 ];
 
 export interface Effects<
   TDependencies,
   TState,
+  TSelectors extends Selectors<TDependencies, TState>,
   TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<TDependencies, TState, TReducers, TEffects>
+  TEffects extends Effects<
+    TDependencies,
+    TState,
+    TSelectors,
+    TReducers,
+    TEffects
+  >
 > {
   [type: string]:
-    | Effect<TDependencies, TState, TReducers, TEffects, any>
-    | EffectWithOperator<TDependencies, TState, TReducers, TEffects, any>;
+    | Effect<TDependencies, TState, TSelectors, TReducers, TEffects, any>
+    | EffectWithOperator<
+        TDependencies,
+        TState,
+        TSelectors,
+        TReducers,
+        TEffects,
+        any
+      >;
 }
 
 export function registerModelEffects<
@@ -80,6 +119,7 @@ export function registerModelEffects<
   model: TModel,
   namespaces: string[],
   rootActions: ModelActionHelpers<TModel>,
+  rootGetters: ModelGetters<TModel>,
   rootAction$: ActionsObservable<Action<any>>,
   rootState$: StateObservable<any>,
   dependencies: TDependencies
@@ -92,6 +132,7 @@ export function registerModelEffects<
       subModel,
       [...namespaces, key],
       rootActions,
+      rootGetters,
       rootAction$,
       rootState$,
       dependencies
@@ -119,9 +160,10 @@ export function registerModelEffects<
   );
 
   const actions = getSubObject(rootActions, namespaces)!;
+  const getters = getSubObject(rootGetters, namespaces)!;
 
   for (const key of Object.keys(model.effects)) {
-    let effect: Effect<any, any, any, any, any>;
+    let effect: Effect<any, any, any, any, any, any>;
     let operator = mergeMap;
 
     const effectWithOperator = model.effects[key];
@@ -144,6 +186,8 @@ export function registerModelEffects<
             rootState$,
             actions,
             rootActions,
+            getters,
+            rootGetters,
             dependencies
           },
           payload
@@ -164,6 +208,7 @@ export function createModelEpic<
   model: TModel,
   namespaces: string[],
   actions: ModelActionHelpers<TModel>,
+  getters: ModelGetters<TModel>,
   dependencies: TDependencies
 ): ReduxObservableEpic<any, Action<any>> {
   return (action$, state$) =>
@@ -172,6 +217,7 @@ export function createModelEpic<
         model,
         namespaces,
         actions,
+        getters,
         action$,
         state$,
         dependencies

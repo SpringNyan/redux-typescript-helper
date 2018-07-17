@@ -17,12 +17,12 @@ export interface Action<TPayload> {
 export type ExtractActionPayload<
   T extends
     | Reducer<any, any, any>
-    | Effect<any, any, any, any, any>
-    | EffectWithOperator<any, any, any, any, any>
+    | Effect<any, any, any, any, any, any>
+    | EffectWithOperator<any, any, any, any, any, any>
 > = T extends
   | Reducer<any, any, infer TPayload>
-  | Effect<any, any, any, any, infer TPayload>
-  | EffectWithOperator<any, any, any, any, infer TPayload>
+  | Effect<any, any, any, any, any, infer TPayload>
+  | EffectWithOperator<any, any, any, any, any, infer TPayload>
   ? TPayload
   : any;
 
@@ -52,7 +52,7 @@ export class ActionHelper<TPayload> {
 }
 
 export type ActionHelpers<
-  T extends Reducers<any, any> | Effects<any, any, any, any>
+  T extends Reducers<any, any> | Effects<any, any, any, any, any>
 > = { [K in keyof T]: ActionHelper<ExtractActionPayload<T[K]>> };
 
 export type ModelActionHelpers<TModel extends Model> = ActionHelpers<

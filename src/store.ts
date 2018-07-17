@@ -10,6 +10,7 @@ import {
   ModelActionHelpers,
   createModelActionHelpers
 } from "./action";
+import { ModelGetters, createModelGetters } from "./selector";
 import { createModelReducer } from "./reducer";
 import { createModelEpic } from "./effect";
 import { Model, cloneModel } from "./model";
@@ -21,6 +22,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
   private readonly _dependencies: TDependencies;
   private readonly _namespaces: string[];
   private readonly _actions: ModelActionHelpers<TModel>;
+  private readonly _getters: ModelGetters<TModel>;
   private readonly _addEpic$: BehaviorSubject<ReduxObservableEpic>;
 
   constructor(
@@ -28,6 +30,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     model: TModel,
     namespaces: string[],
     actions: ModelActionHelpers<TModel>,
+    getters: ModelGetters<TModel>,
     addEpic$: BehaviorSubject<ReduxObservableEpic>,
     dependencies: TDependencies
   ) {
@@ -35,6 +38,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     this._model = model;
     this._namespaces = namespaces;
     this._actions = actions;
+    this._getters = getters;
     this._addEpic$ = addEpic$;
     this._dependencies = dependencies;
 
@@ -55,6 +59,10 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     return this._actions;
   }
 
+  public get getters(): ModelGetters<TModel> {
+    return this._getters;
+  }
+
   public namespace<K extends Extract<keyof TModel["models"], string>>(
     namespace: K
   ): StoreHelperWithNamespaces<TDependencies, TModel["models"][K]>;
@@ -67,6 +75,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
       this._model.models[namespace],
       [...this._namespaces, namespace],
       this._actions[namespace],
+      this._getters[namespace],
       this._addEpic$,
       this._dependencies
     );
@@ -81,13 +90,14 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
 
     this._model.models[namespace] = cloneModel(model);
 
-    // TODO: add action helpers
+    // TODO: support action helpers
 
     this._addEpic$.next(
       createModelEpic(
         model,
         namespaces,
         this.actions[namespace],
+        this.getters[namespace],
         this._dependencies
       )
     );
@@ -150,6 +160,7 @@ export class StoreHelperFactory<
   private readonly _dependencies: TDependencies;
   private readonly _reducer: ReduxReducer;
   private readonly _actions: ModelActionHelpers<TModel>;
+  private readonly _getters: ModelGetters<TModel>;
   private readonly _epic: ReduxObservableEpic;
   private readonly _addEpic$: BehaviorSubject<ReduxObservableEpic>;
 
@@ -164,8 +175,20 @@ export class StoreHelperFactory<
     this._actions = createModelActionHelpers(model, [], (action) =>
       this._store!.dispatch(action)
     );
+    this._getters = createModelGetters(
+      model,
+      [],
+      () => this._store!.getState(),
+      this._dependencies
+    );
 
-    const initialEpic = createModelEpic(model, [], this._actions, dependencies);
+    const initialEpic = createModelEpic(
+      model,
+      [],
+      this._actions,
+      this._getters,
+      dependencies
+    );
     this._addEpic$ = new BehaviorSubject(initialEpic);
     this._epic = (action$, state$, epicDependencies) =>
       this._addEpic$.pipe(
@@ -195,6 +218,7 @@ export class StoreHelperFactory<
       this._model,
       [],
       this._actions,
+      this._getters,
       this._addEpic$,
       this._dependencies
     ) as StoreHelperWithNamespaces<TDependencies, TModel>;

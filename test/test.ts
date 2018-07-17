@@ -35,6 +35,11 @@ describe("redux-typescript-helper", () => {
     about: "",
     isLogin: false
   })
+    .selectors({
+      idAndName(state) {
+        return `${state.id} - ${state.username}`;
+      }
+    })
     .reducers({
       login(
         state,
@@ -75,13 +80,23 @@ describe("redux-typescript-helper", () => {
           ).pipe(delay(delayTime));
         },
         switchMap
-      ]
+      ],
+      setDefaultAbout({ actions, getters }) {
+        return of(actions.editAbout.create(getters.idAndName));
+      }
     })
     .create();
 
   const entitiesModel = createModelFactory({
     itemById: {} as { [id: number]: Item }
   })
+    .selectors({
+      doneItems(state) {
+        return Object.keys(state.itemById)
+          .map((key) => state.itemById[parseInt(key)])
+          .filter((item) => item.done);
+      }
+    })
     .reducers({
       addItem(state, payload: Item) {
         state.itemById[payload.id] = payload;
@@ -144,10 +159,14 @@ describe("redux-typescript-helper", () => {
     storeHelper.actions.user.editAbout.dispatch("zzz");
     expect(storeHelper.state.user.about).eq("test - zzz");
 
+    storeHelper.actions.user.setDefaultAbout.dispatch({});
+    expect(storeHelper.state.user.about).eq("test - 233 - nyan");
+
     expect(entitiesHelper.state.itemById[1]).eq(undefined);
     entitiesHelper.actions.fetchItems.dispatch({});
     await timer(waitTime).toPromise();
     expect(entitiesHelper.state.itemById[1].title).eq("abc");
+    expect(entitiesHelper.getters.doneItems[0].id).eq(2);
     entitiesHelper.actions.removeItem.dispatch(1);
     expect(entitiesHelper.state.itemById[1]).eq(undefined);
 
