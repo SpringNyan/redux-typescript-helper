@@ -1,4 +1,4 @@
-import { Observable, merge } from "rxjs";
+import { Observable, OperatorFunction, merge } from "rxjs";
 import { map, takeUntil, skip, skipWhile, mergeMap } from "rxjs/operators";
 import {
   Epic as ReduxObservableEpic,
@@ -57,7 +57,10 @@ export type EffectWithOperator<
   TReducers extends Reducers<TDependencies, TState>,
   TEffects extends Effects<TDependencies, TState, TReducers, TEffects>,
   TPayload
-> = [Effect<TDependencies, TState, TReducers, TEffects, TPayload>, Function];
+> = [
+  Effect<TDependencies, TState, TReducers, TEffects, TPayload>,
+  (...args: any[]) => OperatorFunction<Action<TPayload>, Action<TPayload>>
+];
 
 export interface Effects<
   TDependencies,
@@ -97,11 +100,9 @@ export function registerModelEffects<
     outputs.push(...subOutputs);
   }
 
+  const unregisterType = `${namespaces.join("/")}/${actionTypes.unregister}`;
   const takeUntil$ = rootAction$.pipe(
-    skipWhile(
-      (action) =>
-        action.type !== `${namespaces.join("/")}/${actionTypes.unregister}`
-    ),
+    skipWhile((action) => action.type !== unregisterType),
     skip(1)
   );
 
@@ -121,7 +122,7 @@ export function registerModelEffects<
 
   for (const key of Object.keys(model.effects)) {
     let effect: Effect<any, any, any, any, any>;
-    let operator: Function = mergeMap;
+    let operator = mergeMap;
 
     const effectWithOperator = model.effects[key];
     if (Array.isArray(effectWithOperator)) {
@@ -133,7 +134,7 @@ export function registerModelEffects<
     const action$ = rootAction$.ofType([...namespaces, key].join("/"));
 
     const output$ = action$.pipe<Action<any>>(
-      operator((action: Action<any>) => {
+      operator((action) => {
         const payload = action.payload;
         return effect(
           {

@@ -1,4 +1,4 @@
-import { Observable } from "rxjs";
+import { Observable, OperatorFunction } from "rxjs";
 import { Epic as ReduxObservableEpic, ActionsObservable, StateObservable } from "redux-observable";
 import { Action, ActionHelpers, ModelActionHelpers } from "./action";
 import { Reducers } from "./reducer";
@@ -15,7 +15,7 @@ export interface EffectContext<TDependencies, TState, TReducers extends Reducers
 export interface Effect<TDependencies, TState, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TReducers, TEffects>, TPayload> {
     (context: EffectContext<TDependencies, TState, TReducers, TEffects, any>, payload: TPayload): Observable<Action<any>>;
 }
-export declare type EffectWithOperator<TDependencies, TState, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TReducers, TEffects>, TPayload> = [Effect<TDependencies, TState, TReducers, TEffects, TPayload>, Function];
+export declare type EffectWithOperator<TDependencies, TState, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TReducers, TEffects>, TPayload> = [Effect<TDependencies, TState, TReducers, TEffects, TPayload>, (...args: any[]) => OperatorFunction<Action<TPayload>, Action<TPayload>>];
 export interface Effects<TDependencies, TState, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TReducers, TEffects>> {
     [type: string]: Effect<TDependencies, TState, TReducers, TEffects, any> | EffectWithOperator<TDependencies, TState, TReducers, TEffects, any>;
 }
