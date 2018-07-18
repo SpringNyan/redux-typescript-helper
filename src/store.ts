@@ -5,7 +5,6 @@ import { Epic as ReduxObservableEpic } from "redux-observable";
 
 import { ModelState } from "./state";
 import {
-  Action,
   actionTypes,
   ModelActionHelpers,
   createModelActionHelpers

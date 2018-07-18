@@ -1,5 +1,5 @@
 import { Observable, OperatorFunction, merge } from "rxjs";
-import { map, takeUntil, skip, skipWhile, mergeMap } from "rxjs/operators";
+import { map, takeUntil, mergeMap, filter } from "rxjs/operators";
 import { Dispatch } from "redux";
 import {
   Epic as ReduxObservableEpic,
@@ -144,8 +144,7 @@ export function registerModelEffects<
 
   const unregisterType = `${namespaces.join("/")}/${actionTypes.unregister}`;
   const takeUntil$ = rootAction$.pipe(
-    skipWhile((action) => action.type !== unregisterType),
-    skip(1)
+    filter((action) => action.type === unregisterType)
   );
 
   rootAction$ = new ActionsObservable(rootAction$.pipe(takeUntil(takeUntil$)));

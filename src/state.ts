@@ -1,5 +1,3 @@
-import produce from "immer";
-
 import { Model } from "./model";
 
 export type State<TDependencies, TState> =
@@ -36,10 +34,23 @@ export function initializeModelState<
     }
   }
 
-  return produce(state!, (draft) => {
-    for (const key of Object.keys(model.models)) {
-      const subModel = model.models[key];
-      draft[key] = initializeModelState(draft[key], subModel, dependencies);
+  let mutated = false;
+  const subStates: { [key: string]: any } = {};
+  for (const key of Object.keys(model.models)) {
+    const subModel = model.models[key];
+    const subState = initializeModelState(state![key], subModel, dependencies);
+    if (state![key] !== subState) {
+      subStates[key] = subState;
+      mutated = true;
     }
-  });
+  }
+
+  if (mutated) {
+    return {
+      ...(state as { [key: string]: any }),
+      ...subStates
+    } as ModelState<TModel>;
+  } else {
+    return state!;
+  }
 }
