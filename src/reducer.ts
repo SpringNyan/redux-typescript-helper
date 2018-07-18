@@ -23,9 +23,7 @@ export function createModelReducer<
   TModel extends Model<TDependencies>
 >(model: TModel, dependencies: TDependencies): ReduxReducer {
   return ((state: any, action: Action<any>) => {
-    if (state === undefined) {
-      state = initializeModelState(state, model, dependencies);
-    }
+    state = initializeModelState(state, model, dependencies);
 
     return produce(state, (draft) => {
       const namespaces = action.type.split("/");
@@ -43,34 +41,10 @@ export function createModelReducer<
         (o, p) => o.models[p]
       );
 
-      if (actionType === actionTypes.register) {
-        if (subModel == null) {
-          throw new Error("Failed to register model: model is not found");
+      if (actionType === actionTypes.unregister) {
+        if (parentState != null) {
+          delete parentState[stateName];
         }
-        if (parentState == null) {
-          throw new Error(
-            "Failed to register model: parent state is not initialized"
-          );
-        }
-        if (parentState[stateName] !== undefined) {
-          throw new Error(
-            "Failed to register model: state is already existing"
-          );
-        }
-
-        parentState[stateName] = initializeModelState(
-          undefined,
-          subModel,
-          dependencies
-        );
-      } else if (actionType === actionTypes.unregister) {
-        if (parentState == null) {
-          throw new Error(
-            "Failed to unregister model: parent state is not initialized"
-          );
-        }
-
-        delete parentState[stateName];
       }
 
       const subState =
