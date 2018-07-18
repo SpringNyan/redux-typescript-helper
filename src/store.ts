@@ -89,7 +89,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
 
     this._model.models[namespace] = cloneModel(model);
 
-    // TODO: support action helpers
+    // TODO: handle ES5 action helpers / getters
 
     this._addEpic$.next(
       createModelEpic(
@@ -118,12 +118,15 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     const namespaces = [...this._namespaces, namespace];
 
     this._store.dispatch({
+      type: `${namespaces.join("/")}/${actionTypes.effectEnd}`
+    });
+    this._store.dispatch({
       type: `${namespaces.join("/")}/${actionTypes.unregister}`
     });
 
     delete this._model.models[namespace];
 
-    // TODO: delete action helpers
+    // TODO: handle ES5 action helpers / getters
   }
 
   private _registerNamespace(namespace: string): void {
