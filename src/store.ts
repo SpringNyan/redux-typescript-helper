@@ -148,7 +148,7 @@ export type StoreHelperWithNamespaces<
   TModel extends Model<TDependencies>
 > = StoreHelper<TDependencies, TModel> &
   {
-    [K in keyof TModel["models"]]: StoreHelper<
+    [K in keyof TModel["models"]]: StoreHelperWithNamespaces<
       TDependencies,
       TModel["models"][K]
     >

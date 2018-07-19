@@ -26,7 +26,7 @@ export declare class StoreHelper<TDependencies, TModel extends Model<TDependenci
     private _unregisterNamespace;
 }
 export declare type StoreHelperWithNamespaces<TDependencies, TModel extends Model<TDependencies>> = StoreHelper<TDependencies, TModel> & {
-    [K in keyof TModel["models"]]: StoreHelper<TDependencies, TModel["models"][K]>;
+    [K in keyof TModel["models"]]: StoreHelperWithNamespaces<TDependencies, TModel["models"][K]>;
 };
 export declare class StoreHelperFactory<TDependencies, TModel extends Model<TDependencies>> {
     private readonly _model;
