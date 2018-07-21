@@ -1,7 +1,7 @@
 import { State } from "./state";
 import { Selectors } from "./selector";
 import { Reducers } from "./reducer";
-import { Effects } from "./effect";
+import { Effects, Epic } from "./effect";
 
 export interface Model<
   TDependencies = any,
@@ -27,6 +27,7 @@ export interface Model<
   selectors: TSelectors;
   reducers: TReducers;
   effects: TEffects;
+  epics: Array<Epic<TDependencies, TState, any, any, any>>;
   models: TModels;
 }
 
@@ -52,6 +53,9 @@ export class ModelFactory<
     TReducers,
     TEffects
   > = {};
+  private _epics: Array<
+    Epic<TDependencies, TState, TSelectors, TReducers, TEffects>
+  > = [];
   private _models: Models<TDependencies> = {};
 
   constructor(state: State<TDependencies, TState>) {
@@ -120,6 +124,21 @@ export class ModelFactory<
     return this as any;
   }
 
+  public epics(
+    epics: Array<Epic<TDependencies, TState, TSelectors, TReducers, TEffects>>
+  ): ModelFactory<
+    TDependencies,
+    TState,
+    TSelectors,
+    TReducers,
+    TEffects,
+    TModels
+  > {
+    this._epics = [...this._epics, ...epics];
+
+    return this as any;
+  }
+
   public models<T extends Models<TDependencies>>(
     models: T
   ): ModelFactory<
@@ -151,6 +170,7 @@ export class ModelFactory<
       selectors: { ...this._selectors },
       reducers: { ...this._reducers },
       effects: { ...this._effects },
+      epics: [...this._epics],
       models: { ...this._models }
     } as Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>;
   }
@@ -178,6 +198,7 @@ export function cloneModel<TModel extends Model>(model: TModel): TModel {
     selectors: { ...model.selectors },
     reducers: { ...model.reducers },
     effects: { ...model.effects },
+    epics: [...model.epics],
     models: { ...model.models }
   } as TModel;
 }

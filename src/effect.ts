@@ -113,6 +113,31 @@ export interface Effects<
       >;
 }
 
+export interface Epic<
+  TDependencies,
+  TState,
+  TSelectors extends Selectors<TDependencies, TState>,
+  TReducers extends Reducers<TDependencies, TState>,
+  TEffects extends Effects<
+    TDependencies,
+    TState,
+    TSelectors,
+    TReducers,
+    TEffects
+  >
+> {
+  (
+    context: EffectContext<
+      TDependencies,
+      TState,
+      TSelectors,
+      TReducers,
+      TEffects,
+      any
+    >
+  ): Observable<Action<any>>;
+}
+
 export function registerModelEffects<
   TDependencies,
   TModel extends Model<TDependencies>
@@ -194,6 +219,29 @@ export function registerModelEffects<
         );
       })
     );
+
+    outputs.push(output$);
+  }
+
+  const namespacePrefix = namespaces.join("/");
+  for (const epic of model.epics) {
+    const action$ = new ActionsObservable(
+      rootAction$.pipe(
+        filter((action) => action.type.lastIndexOf(namespacePrefix, 0) === 0)
+      )
+    );
+
+    const output$ = epic({
+      action$,
+      rootAction$,
+      state$,
+      rootState$,
+      actions,
+      rootActions,
+      getters,
+      rootGetters,
+      dependencies
+    });
 
     outputs.push(output$);
   }

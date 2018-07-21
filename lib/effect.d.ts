@@ -23,6 +23,9 @@ export declare type EffectWithOperator<TDependencies, TState, TSelectors extends
 export interface Effects<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects>> {
     [type: string]: Effect<TDependencies, TState, TSelectors, TReducers, TEffects, any> | EffectWithOperator<TDependencies, TState, TSelectors, TReducers, TEffects, any>;
 }
+export interface Epic<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects>> {
+    (context: EffectContext<TDependencies, TState, TSelectors, TReducers, TEffects, any>): Observable<Action<any>>;
+}
 export declare function registerModelEffects<TDependencies, TModel extends Model<TDependencies>>(model: TModel, namespaces: string[], rootActions: ModelActionHelpers<TModel>, rootGetters: ModelGetters<TModel>, rootAction$: ActionsObservable<Action<any>>, rootState$: StateObservable<any>, dependencies: TDependencies): Observable<Action<any>>[];
 export declare function createModelEpic<TDependencies, TModel extends Model<TDependencies>>(model: TModel, namespaces: string[], actions: ModelActionHelpers<TModel>, getters: ModelGetters<TModel>, dependencies: TDependencies): ReduxObservableEpic<any, Action<any>>;
 export declare function asyncEffect(asyncFn: (dispatch: Dispatch<Action<any>>) => Promise<void>): Observable<Action<any>>;
