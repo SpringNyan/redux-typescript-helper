@@ -40,8 +40,13 @@ describe("redux-typescript-helper", () => {
     isLogin: false
   })
     .selectors({
-      idAndName(state) {
+      idAndName({ state }) {
         return `${state.id} - ${state.username}`;
+      }
+    })
+    .selectors({
+      idAndNameAndAbout({ state, getters }) {
+        return `${getters.idAndName} - ${state.about}`;
       }
     })
     .reducers({
@@ -95,7 +100,7 @@ describe("redux-typescript-helper", () => {
     itemById: {} as { [id: number]: Item }
   })
     .selectors({
-      doneItems(state) {
+      doneItems({ state }) {
         return Object.keys(state.itemById)
           .map((key) => state.itemById[parseInt(key)])
           .filter((item) => item.done);
@@ -171,6 +176,7 @@ describe("redux-typescript-helper", () => {
 
     storeHelper.actions.user.setDefaultAbout.dispatch({});
     expect(storeHelper.state.user.about).eq("test - 233 - nyan");
+    expect(storeHelper.getters.user.idAndNameAndAbout).eq("233 - nyan - test - 233 - nyan");
 
     expect(entitiesHelper.state.itemById[998]).eq(undefined);
     entitiesHelper.actions.addItemAsync.dispatch({

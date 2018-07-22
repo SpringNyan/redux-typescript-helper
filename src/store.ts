@@ -181,6 +181,7 @@ export class StoreHelperFactory<
       model,
       [],
       () => this._store!.getState(),
+      null,
       this._dependencies
     );
 

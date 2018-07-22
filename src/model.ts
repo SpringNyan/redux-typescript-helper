@@ -6,9 +6,10 @@ import { Effects, Epic } from "./effect";
 export interface Model<
   TDependencies = any,
   TState = any,
-  TSelectors extends Selectors<TDependencies, TState> = Selectors<
+  TSelectors extends Selectors<TDependencies, TState, TSelectors> = Selectors<
     TDependencies,
-    TState
+    TState,
+    TSelectors
   >,
   TReducers extends Reducers<TDependencies, TState> = Reducers<
     TDependencies,
@@ -38,13 +39,13 @@ export type Models<TDependencies> = {
 export class ModelFactory<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState>,
+  TSelectors extends Selectors<TDependencies, TState, TSelectors>,
   TReducers extends Reducers<TDependencies, TState>,
   TEffects extends Effects<TDependencies, TState, any, any, any>,
   TModels extends Models<TDependencies>
 > {
   private readonly _state: State<TDependencies, TState>;
-  private _selectors: Selectors<TDependencies, TState> = {};
+  private _selectors: Selectors<TDependencies, TState, TSelectors> = {};
   private _reducers: Reducers<TDependencies, TState> = {};
   private _effects: Effects<
     TDependencies,
@@ -62,7 +63,7 @@ export class ModelFactory<
     this._state = state;
   }
 
-  public selectors<T extends Selectors<TDependencies, TState>>(
+  public selectors<T extends Selectors<TDependencies, TState, TSelectors>>(
     selectors: T
   ): ModelFactory<
     TDependencies,
@@ -74,7 +75,7 @@ export class ModelFactory<
   > {
     this._selectors = {
       ...this._selectors,
-      ...(selectors as Selectors<TDependencies, TState>)
+      ...(selectors as Selectors<TDependencies, TState, TSelectors>)
     };
 
     return this as any;

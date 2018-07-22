@@ -21,7 +21,7 @@ import { getSubObject } from "./util";
 export interface EffectContext<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState>,
+  TSelectors extends Selectors<TDependencies, TState, TSelectors>,
   TReducers extends Reducers<TDependencies, TState>,
   TEffects extends Effects<
     TDependencies,
@@ -46,7 +46,7 @@ export interface EffectContext<
 export interface Effect<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState>,
+  TSelectors extends Selectors<TDependencies, TState, TSelectors>,
   TReducers extends Reducers<TDependencies, TState>,
   TEffects extends Effects<
     TDependencies,
@@ -73,7 +73,7 @@ export interface Effect<
 export type EffectWithOperator<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState>,
+  TSelectors extends Selectors<TDependencies, TState, TSelectors>,
   TReducers extends Reducers<TDependencies, TState>,
   TEffects extends Effects<
     TDependencies,
@@ -91,7 +91,7 @@ export type EffectWithOperator<
 export interface Effects<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState>,
+  TSelectors extends Selectors<TDependencies, TState, TSelectors>,
   TReducers extends Reducers<TDependencies, TState>,
   TEffects extends Effects<
     TDependencies,
@@ -116,7 +116,7 @@ export interface Effects<
 export interface Epic<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState>,
+  TSelectors extends Selectors<TDependencies, TState, TSelectors>,
   TReducers extends Reducers<TDependencies, TState>,
   TEffects extends Effects<
     TDependencies,
