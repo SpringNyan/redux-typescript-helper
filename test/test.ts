@@ -32,13 +32,13 @@ describe("redux-typescript-helper", () => {
 
   const createModelFactory = createModelFactoryCreator<Dependencies>();
 
-  const userModel = createModelFactory({
+  const userModel = createModelFactory(() => ({
     id: 0,
     username: "",
     token: "",
     about: "",
     isLogin: false
-  })
+  }))
     .selectors({
       idAndName({ state }) {
         return `${state.id} - ${state.username}`;
@@ -176,7 +176,9 @@ describe("redux-typescript-helper", () => {
 
     storeHelper.actions.user.setDefaultAbout.dispatch({});
     expect(storeHelper.state.user.about).eq("test - 233 - nyan");
-    expect(storeHelper.getters.user.idAndNameAndAbout).eq("233 - nyan - test - 233 - nyan");
+    expect(storeHelper.getters.user.idAndNameAndAbout).eq(
+      "233 - nyan - test - 233 - nyan"
+    );
 
     expect(entitiesHelper.state.itemById[998]).eq(undefined);
     entitiesHelper.actions.addItemAsync.dispatch({

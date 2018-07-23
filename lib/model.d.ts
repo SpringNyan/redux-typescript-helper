@@ -28,6 +28,6 @@ export declare class ModelFactory<TDependencies, TState, TSelectors extends Sele
     models<T extends Models<TDependencies>>(models: T): ModelFactory<TDependencies, TState, TSelectors, TReducers, TEffects, TModels & T>;
     create(): Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>;
 }
-export declare type ModelFactoryCreator<TDependencies> = <TState>(state: TState) => ModelFactory<TDependencies, TState, {}, {}, {}, {}>;
+export declare type ModelFactoryCreator<TDependencies> = <TState>(state: State<TDependencies, TState>) => ModelFactory<TDependencies, TState, {}, {}, {}, {}>;
 export declare function createModelFactoryCreator<TDependencies>(): ModelFactoryCreator<TDependencies>;
 export declare function cloneModel<TModel extends Model>(model: TModel): TModel;

@@ -178,13 +178,13 @@ export class ModelFactory<
 }
 
 function createModelFactory<TDependencies, TState>(
-  state: TState
+  state: State<TDependencies, TState>
 ): ModelFactory<TDependencies, TState, {}, {}, {}, {}> {
   return new ModelFactory<TDependencies, TState, {}, {}, {}, {}>(state);
 }
 
 export type ModelFactoryCreator<TDependencies> = <TState>(
-  state: TState
+  state: State<TDependencies, TState>
 ) => ModelFactory<TDependencies, TState, {}, {}, {}, {}>;
 
 export function createModelFactoryCreator<TDependencies>(): ModelFactoryCreator<
