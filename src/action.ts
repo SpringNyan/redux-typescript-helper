@@ -27,29 +27,28 @@ export type ExtractActionPayload<
   ? TPayload
   : any;
 
-export class ActionHelper<TPayload> {
-  public readonly type: string;
-  private readonly _dispatch: Dispatch;
+export interface ActionHelper<TPayload> {
+  (payload: TPayload): Action<TPayload>;
+  type: string;
+  is(action: any): action is Action<TPayload>;
+}
 
-  constructor(type: string, dispatch: Dispatch) {
-    this.type = type;
-    this._dispatch = dispatch;
-  }
+function isAction(this: ActionHelper<any>, action: any): action is Action<any> {
+  return action != null && action.type === this.type;
+}
 
-  public create(payload: TPayload): Action<TPayload> {
-    return {
-      type: this.type,
-      payload
-    };
-  }
+export function createActionHelper<TPayload>(
+  type: string
+): ActionHelper<TPayload> {
+  const actionHelper = ((payload: TPayload) => ({
+    type,
+    payload
+  })) as ActionHelper<TPayload>;
 
-  public dispatch(payload: TPayload): Action<TPayload> {
-    return this._dispatch(this.create(payload));
-  }
+  actionHelper.type = type;
+  actionHelper.is = isAction;
 
-  public is(action: any): action is Action<TPayload> {
-    return action.type === this.type;
-  }
+  return actionHelper;
 }
 
 export type ActionHelpers<
@@ -65,27 +64,33 @@ export type ModelActionHelpers<TModel extends Model> = ActionHelpers<
       : never
   };
 
-export function createModelActionHelpers<TModel extends Model>(
+export function getModelActionHelpers<TModel extends Model>(
   model: TModel,
-  namespaces: string[],
-  dispatch: Dispatch
+  namespaces: string[]
 ): ModelActionHelpers<TModel> {
-  return new Proxy(
-    {},
-    {
-      get(_target, key: string) {
-        if (key in model.reducers || key in model.effects) {
-          return new ActionHelper([...namespaces, key].join("/"), dispatch);
-        } else if (key in model.models) {
-          return createModelActionHelpers(
-            model.models[key],
-            [...namespaces, key],
-            dispatch
-          );
-        } else {
-          return undefined;
-        }
-      }
+  const modelWithCache = model as TModel & {
+    _actions: ModelActionHelpers<TModel>;
+  };
+
+  if (modelWithCache._actions == null) {
+    const actions = {} as any;
+
+    for (const key of [
+      ...Object.keys(model.reducers),
+      ...Object.keys(model.effects)
+    ]) {
+      actions[key] = createActionHelper([...namespaces, key].join("/"));
     }
-  ) as ModelActionHelpers<TModel>;
+
+    for (const key of Object.keys(model.models)) {
+      actions[key] = getModelActionHelpers(model.models[key], [
+        ...namespaces,
+        key
+      ]);
+    }
+
+    modelWithCache._actions = actions;
+  }
+
+  return modelWithCache._actions;
 }
