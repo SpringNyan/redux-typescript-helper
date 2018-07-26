@@ -64,33 +64,25 @@ export type ModelActionHelpers<TModel extends Model> = ActionHelpers<
       : never
   };
 
-export function getModelActionHelpers<TModel extends Model>(
+export function createModelActionHelpers<TModel extends Model>(
   model: TModel,
   namespaces: string[]
 ): ModelActionHelpers<TModel> {
-  const modelWithCache = model as TModel & {
-    _actions: ModelActionHelpers<TModel>;
-  };
+  const actions = {} as any;
 
-  if (modelWithCache._actions == null) {
-    const actions = {} as any;
-
-    for (const key of [
-      ...Object.keys(model.reducers),
-      ...Object.keys(model.effects)
-    ]) {
-      actions[key] = createActionHelper([...namespaces, key].join("/"));
-    }
-
-    for (const key of Object.keys(model.models)) {
-      actions[key] = getModelActionHelpers(model.models[key], [
-        ...namespaces,
-        key
-      ]);
-    }
-
-    modelWithCache._actions = actions;
+  for (const key of [
+    ...Object.keys(model.reducers),
+    ...Object.keys(model.effects)
+  ]) {
+    actions[key] = createActionHelper([...namespaces, key].join("/"));
   }
 
-  return modelWithCache._actions;
+  for (const key of Object.keys(model.models)) {
+    actions[key] = createModelActionHelpers(model.models[key], [
+      ...namespaces,
+      key
+    ]);
+  }
+
+  return actions;
 }
