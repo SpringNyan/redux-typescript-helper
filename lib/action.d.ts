@@ -3,7 +3,7 @@ import { Effect, EffectWithOperator, Effects } from "./effect";
 import { Model } from "./model";
 export declare const actionTypes: {
     register: string;
-    effectEnd: string;
+    cancel: string;
     unregister: string;
 };
 export interface Action<TPayload> {

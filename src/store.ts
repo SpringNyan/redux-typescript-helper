@@ -131,7 +131,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     const namespaces = [...this._namespaces, namespace];
 
     this._store.dispatch({
-      type: `${namespaces.join("/")}/${actionTypes.effectEnd}`
+      type: `${namespaces.join("/")}/${actionTypes.cancel}`
     });
     this._store.dispatch({
       type: `${namespaces.join("/")}/${actionTypes.unregister}`

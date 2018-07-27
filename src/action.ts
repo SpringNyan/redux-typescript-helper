@@ -6,7 +6,7 @@ import { Model } from "./model";
 
 export const actionTypes = {
   register: "@@REGISTER",
-  effectEnd: "@@EFFECT_END",
+  cancel: "@@CANCEL",
   unregister: "@@UNREGISTER"
 };
 
