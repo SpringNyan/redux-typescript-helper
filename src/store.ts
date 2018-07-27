@@ -22,6 +22,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
   private readonly _namespaces: string[];
   private readonly _actions: ModelActionHelpers<TModel>;
   private readonly _getters: ModelGetters<TModel>;
+  private readonly _rootGetters: ModelGetters<any>;
   private readonly _addEpic$: BehaviorSubject<ReduxObservableEpic>;
 
   constructor(
@@ -30,6 +31,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     namespaces: string[],
     actions: ModelActionHelpers<TModel>,
     getters: ModelGetters<TModel>,
+    rootGetters: ModelGetters<any>,
     addEpic$: BehaviorSubject<ReduxObservableEpic>,
     dependencies: TDependencies
   ) {
@@ -38,6 +40,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     this._namespaces = namespaces;
     this._actions = actions;
     this._getters = getters;
+    this._rootGetters = rootGetters;
     this._addEpic$ = addEpic$;
     this._dependencies = dependencies;
 
@@ -75,6 +78,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
       [...this._namespaces, namespace],
       this._actions[namespace],
       this._getters[namespace],
+      this._rootGetters,
       this._addEpic$,
       this._dependencies
     );
@@ -92,8 +96,13 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
       model,
       namespaces
     ) as any;
-
-    // TODO: handle ES5 getters
+    this._getters[namespace] = createModelGetters(
+      model,
+      () => this._store.getState(),
+      this._dependencies,
+      namespaces,
+      this._rootGetters
+    ) as any;
 
     this._addEpic$.next(
       createModelEpic(
@@ -130,8 +139,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
 
     delete this._model.models[namespace];
     delete this._actions[namespace];
-
-    // TODO: handle ES5 getters
+    delete this._getters[namespace];
   }
 
   private _registerNamespace(namespace: string): void {
@@ -182,10 +190,10 @@ export class StoreHelperFactory<
     this._actions = createModelActionHelpers(model, []);
     this._getters = createModelGetters(
       model,
-      [],
       () => this._store!.getState(),
-      null,
-      this._dependencies
+      this._dependencies,
+      [],
+      null
     );
 
     const initialEpic = createModelEpic(
@@ -224,6 +232,7 @@ export class StoreHelperFactory<
       this._model,
       [],
       this._actions,
+      this._getters,
       this._getters,
       this._addEpic$,
       this._dependencies

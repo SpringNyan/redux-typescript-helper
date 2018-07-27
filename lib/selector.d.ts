@@ -19,4 +19,4 @@ export declare type Getters<T extends Selectors<any, any, any>> = {
 export declare type ModelGetters<TModel extends Model> = Getters<TModel["selectors"]> & {
     [K in keyof TModel["models"]]: TModel["models"][K] extends Model ? ModelGetters<TModel["models"][K]> : never;
 };
-export declare function createModelGetters<TDependencies, TModel extends Model<TDependencies>>(model: TModel, namespaces: string[], getState: () => any, rootGetters: ModelGetters<any> | null, dependencies: TDependencies): ModelGetters<TModel>;
+export declare function createModelGetters<TDependencies, TModel extends Model<TDependencies>>(model: TModel, getState: () => any, dependencies: TDependencies, namespaces: string[], rootGetters: ModelGetters<any> | null): ModelGetters<TModel>;

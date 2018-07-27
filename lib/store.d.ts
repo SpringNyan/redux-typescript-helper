@@ -12,8 +12,9 @@ export declare class StoreHelper<TDependencies, TModel extends Model<TDependenci
     private readonly _namespaces;
     private readonly _actions;
     private readonly _getters;
+    private readonly _rootGetters;
     private readonly _addEpic$;
-    constructor(store: Store, model: TModel, namespaces: string[], actions: ModelActionHelpers<TModel>, getters: ModelGetters<TModel>, addEpic$: BehaviorSubject<ReduxObservableEpic>, dependencies: TDependencies);
+    constructor(store: Store, model: TModel, namespaces: string[], actions: ModelActionHelpers<TModel>, getters: ModelGetters<TModel>, rootGetters: ModelGetters<any>, addEpic$: BehaviorSubject<ReduxObservableEpic>, dependencies: TDependencies);
     readonly store: Store;
     readonly state: ModelState<TModel>;
     readonly actions: ModelActionHelpers<TModel>;
