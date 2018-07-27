@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import { of, from, timer } from "rxjs";
+import { of, from, timer, empty } from "rxjs";
 import { delay, switchMap } from "rxjs/operators";
 import { createStore, applyMiddleware } from "redux";
 import { createEpicMiddleware } from "redux-observable";
@@ -80,7 +80,7 @@ describe("redux-typescript-helper", () => {
           payload: { username: string; password: string }
         ) => {
           return of(
-            actions.login.create({
+            actions.login({
               id: 233,
               username: payload.username,
               token: dependencies.system.hash(payload.password),
@@ -91,13 +91,14 @@ describe("redux-typescript-helper", () => {
         switchMap
       ],
       setDefaultAbout({ actions, getters }) {
-        return of(actions.editAbout.create(getters.idAndName));
+        return of(actions.editAbout(getters.idAndName));
       }
     })
     .create();
 
   const entitiesModel = createModelFactory({
-    itemById: {} as { [id: number]: Item }
+    itemById: {} as { [id: number]: Item },
+    count: 0
   })
     .selectors({
       doneItems({ state }) {
@@ -115,20 +116,35 @@ describe("redux-typescript-helper", () => {
       },
       clearItems(state) {
         state.itemById = {};
+      },
+      increaseCount(state) {
+        return {
+          ...state,
+          count: state.count + 1
+        };
       }
     })
     .effects({
       fetchItems({ actions }) {
         return from([
-          actions.clearItems.create({}),
-          actions.addItem.create({ id: 1, title: "abc", done: false }),
-          actions.addItem.create({ id: 2, title: "def", done: true })
+          actions.clearItems({}),
+          actions.addItem({ id: 1, title: "abc", done: false }),
+          actions.addItem({ id: 2, title: "def", done: true })
         ]).pipe(delay(delayTime));
       },
       addItemAsync({ actions }, payload: Item) {
         return asyncEffect(async (dispatch) => {
           await timer(delayTime);
-          dispatch(actions.addItem.create(payload));
+          dispatch(actions.addItem(payload));
+        });
+      },
+      increaseWithError({ actions }) {
+        return asyncEffect(async (dispatch) => {
+          dispatch(actions.increaseCount({}));
+          if (0 === 0) {
+            throw new Error("error!");
+          }
+          dispatch(actions.increaseCount({}));
         });
       }
     })
@@ -141,12 +157,18 @@ describe("redux-typescript-helper", () => {
     })
     .create();
 
-  const storeHelperFactory = createStoreHelperFactory(rootModel, {
-    system: {
-      env: "test",
-      hash: (str: string) => str
+  const storeHelperFactory = createStoreHelperFactory(
+    rootModel,
+    {
+      system: {
+        env: "test",
+        hash: (str: string) => str
+      }
+    },
+    {
+      epicErrorHandler: (err) => empty()
     }
-  });
+  );
 
   const epicMiddleware = createEpicMiddleware();
   const store = createStore(
@@ -161,56 +183,78 @@ describe("redux-typescript-helper", () => {
 
   it("test", async () => {
     expect(userHelper.state.isLogin).eq(false);
-    userHelper.actions.loginRequest.dispatch({
-      username: "nyan",
-      password: "meow"
-    });
+    store.dispatch(
+      userHelper.actions.loginRequest({
+        username: "nyan",
+        password: "meow"
+      })
+    );
     expect(userHelper.state.isLogin).eq(false);
     await timer(waitTime).toPromise();
     expect(userHelper.state.isLogin).eq(true);
     expect(userHelper.state.username).eq("nyan");
 
     expect(storeHelper.state.user.about).eq("");
-    storeHelper.actions.user.editAbout.dispatch("zzz");
+    store.dispatch(storeHelper.actions.user.editAbout("zzz"));
     expect(storeHelper.state.user.about).eq("test - zzz");
 
-    storeHelper.actions.user.setDefaultAbout.dispatch({});
+    store.dispatch(storeHelper.actions.user.setDefaultAbout({}));
     expect(storeHelper.state.user.about).eq("test - 233 - nyan");
     expect(storeHelper.getters.user.idAndNameAndAbout).eq(
       "233 - nyan - test - 233 - nyan"
     );
 
     expect(entitiesHelper.state.itemById[998]).eq(undefined);
-    entitiesHelper.actions.addItemAsync.dispatch({
-      id: 998,
-      title: "only 998",
-      done: false
-    });
+    store.dispatch(
+      entitiesHelper.actions.addItemAsync({
+        id: 998,
+        title: "only 998",
+        done: false
+      })
+    );
     expect(entitiesHelper.state.itemById[998]).eq(undefined);
     await timer(waitTime).toPromise();
     expect(entitiesHelper.state.itemById[998].title).eq("only 998");
 
     expect(entitiesHelper.state.itemById[1]).eq(undefined);
-    entitiesHelper.actions.fetchItems.dispatch({});
+    store.dispatch(entitiesHelper.actions.fetchItems({}));
     await timer(waitTime).toPromise();
     expect(entitiesHelper.state.itemById[1].title).eq("abc");
     expect(entitiesHelper.getters.doneItems[0].id).eq(2);
-    entitiesHelper.actions.removeItem.dispatch(1);
+    store.dispatch(entitiesHelper.actions.removeItem(1));
     expect(entitiesHelper.state.itemById[1]).eq(undefined);
+
+    expect(entitiesHelper.state.count).eq(0);
+    store.dispatch(entitiesHelper.actions.increaseCount({}));
+    expect(entitiesHelper.state.count).eq(1);
+    store.dispatch(entitiesHelper.actions.increaseWithError({}));
+    expect(entitiesHelper.state.count).eq(2);
+    store.dispatch(entitiesHelper.actions.increaseWithError({}));
+    expect(entitiesHelper.state.count).eq(3);
 
     entitiesHelper.registerModel("temp", entitiesModel);
     const tempHelper = entitiesHelper.namespace<typeof entitiesModel>("temp");
 
     expect(entitiesHelper.state.itemById[2].title).eq("def");
     expect(tempHelper.state.itemById[2]).eq(undefined);
-    tempHelper.actions.addItem.dispatch({
-      id: 2,
-      title: "wow",
-      done: false
-    });
+    store.dispatch(
+      tempHelper.actions.addItem({
+        id: 2,
+        title: "wow",
+        done: false
+      })
+    );
     expect(entitiesHelper.state.itemById[2].title).eq("def");
     expect(tempHelper.state.itemById[2].title).eq("wow");
     expect((entitiesHelper.state as any)["temp"].itemById[2].title).eq("wow");
+    store.dispatch(
+      (entitiesHelper.actions as any)["temp"].addItem({
+        id: 2,
+        title: "orz",
+        done: true
+      })
+    );
+    expect(tempHelper.state.itemById[2].title).eq("orz");
 
     entitiesHelper.unregisterModel("temp");
     expect((entitiesHelper.state as any)["temp"]).eq(undefined);

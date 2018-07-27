@@ -50,48 +50,48 @@ export function createModelGetters<
   TModel extends Model<TDependencies>
 >(
   model: TModel,
-  namespaces: string[],
   getState: () => any,
-  rootGetters: ModelGetters<any> | null,
-  dependencies: TDependencies
+  dependencies: TDependencies,
+  namespaces: string[],
+  rootGetters: ModelGetters<any> | null
 ): ModelGetters<TModel> {
   if (rootGetters == null && namespaces.length > 0) {
     throw new Error("rootGetters is required for creating sub model getters");
   }
 
-  const modelGetters: any = new Proxy(
-    {},
-    {
-      get(_target, key: string) {
-        if (rootGetters == null) {
-          rootGetters = modelGetters;
-        }
+  const getters = {} as any;
+  if (rootGetters == null) {
+    rootGetters = getters;
+  }
 
-        if (key in model.selectors) {
-          const rootState = getState();
-          const state = getSubObject(rootState, namespaces);
+  for (const key of Object.keys(model.selectors)) {
+    Object.defineProperty(getters, key, {
+      get() {
+        const rootState = getState();
+        const state = getSubObject(rootState, namespaces);
 
-          return model.selectors[key]({
-            state,
-            rootState,
-            getters: modelGetters,
-            rootGetters: rootGetters!,
-            dependencies
-          });
-        } else if (key in model.models) {
-          return createModelGetters(
-            model.models[key],
-            [...namespaces, key],
-            getState,
-            rootGetters,
-            dependencies
-          );
-        } else {
-          return undefined;
-        }
-      }
-    }
-  );
+        return model.selectors[key]({
+          state,
+          rootState,
+          getters,
+          rootGetters: rootGetters!,
+          dependencies
+        });
+      },
+      enumerable: true,
+      configurable: true
+    });
+  }
 
-  return modelGetters;
+  for (const key of Object.keys(model.models)) {
+    getters[key] = createModelGetters(
+      model.models[key],
+      getState,
+      dependencies,
+      [...namespaces, key],
+      rootGetters
+    );
+  }
+
+  return getters;
 }

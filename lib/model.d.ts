@@ -1,7 +1,7 @@
 import { State } from "./state";
 import { Selectors } from "./selector";
 import { Reducers } from "./reducer";
-import { Effects, Epic } from "./effect";
+import { Effects, Epic } from "./epic";
 export interface Model<TDependencies = any, TState = any, TSelectors extends Selectors<TDependencies, TState, TSelectors> = Selectors<TDependencies, TState, TSelectors>, TReducers extends Reducers<TDependencies, TState> = Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects> = Effects<TDependencies, TState, any, any, any>, TModels extends Models<TDependencies> = Models<TDependencies>> {
     state: State<TDependencies, TState>;
     selectors: TSelectors;
