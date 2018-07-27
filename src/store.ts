@@ -1,4 +1,4 @@
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, Observable } from "rxjs";
 import { mergeMap } from "rxjs/operators";
 import { Store, Reducer as ReduxReducer } from "redux";
 import { Epic as ReduxObservableEpic } from "redux-observable";
@@ -7,13 +7,21 @@ import { ModelState } from "./state";
 import {
   actionTypes,
   ModelActionHelpers,
-  createModelActionHelpers
+  createModelActionHelpers,
+  Action
 } from "./action";
 import { ModelGetters, createModelGetters } from "./selector";
 import { createModelReducer } from "./reducer";
-import { createModelEpic } from "./effect";
+import { createModelRootEpic } from "./epic";
 import { Model, cloneModel } from "./model";
 import { getSubObject } from "./util";
+
+export interface StoreHelperOptions {
+  epicErrorHandler?: (
+    err: any,
+    caught: Observable<Action<any>>
+  ) => Observable<Action<any>>;
+}
 
 export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
   private readonly _store: Store;
@@ -24,6 +32,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
   private readonly _getters: ModelGetters<TModel>;
   private readonly _rootGetters: ModelGetters<any>;
   private readonly _addEpic$: BehaviorSubject<ReduxObservableEpic>;
+  private readonly _options: StoreHelperOptions;
 
   private readonly _subStoreHelpers: {
     [namespace: string]: StoreHelper<TDependencies, any>;
@@ -37,7 +46,8 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     getters: ModelGetters<TModel>,
     rootGetters: ModelGetters<any>,
     addEpic$: BehaviorSubject<ReduxObservableEpic>,
-    dependencies: TDependencies
+    dependencies: TDependencies,
+    options: StoreHelperOptions
   ) {
     this._store = store;
     this._model = model;
@@ -47,6 +57,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     this._rootGetters = rootGetters;
     this._addEpic$ = addEpic$;
     this._dependencies = dependencies;
+    this._options = options;
 
     for (const namespace of Object.keys(model.models)) {
       this._registerSubStoreHelper(namespace);
@@ -100,12 +111,13 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     ) as any;
 
     this._addEpic$.next(
-      createModelEpic(
+      createModelRootEpic(
         model,
         namespaces,
         this.actions[namespace],
         this.getters[namespace],
-        this._dependencies
+        this._dependencies,
+        { errorHandler: this._options.epicErrorHandler }
       )
     );
 
@@ -146,7 +158,8 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
       this._getters[namespace],
       this._rootGetters,
       this._addEpic$,
-      this._dependencies
+      this._dependencies,
+      this._options
     );
 
     Object.defineProperty(this, namespace, {
@@ -186,12 +199,18 @@ export class StoreHelperFactory<
   private readonly _getters: ModelGetters<TModel>;
   private readonly _epic: ReduxObservableEpic;
   private readonly _addEpic$: BehaviorSubject<ReduxObservableEpic>;
+  private readonly _options: StoreHelperOptions;
 
   private _store?: Store;
 
-  constructor(model: TModel, dependencies: TDependencies) {
+  constructor(
+    model: TModel,
+    dependencies: TDependencies,
+    options: StoreHelperOptions
+  ) {
     this._model = model;
     this._dependencies = dependencies;
+    this._options = options;
 
     this._reducer = createModelReducer(model, dependencies);
 
@@ -204,12 +223,13 @@ export class StoreHelperFactory<
       null
     );
 
-    const initialEpic = createModelEpic(
+    const initialEpic = createModelRootEpic(
       model,
       [],
       this._actions,
       this._getters,
-      dependencies
+      dependencies,
+      { errorHandler: this._options.epicErrorHandler }
     );
     this._addEpic$ = new BehaviorSubject(initialEpic);
     this._epic = (action$, state$, epicDependencies) =>
@@ -243,7 +263,8 @@ export class StoreHelperFactory<
       this._getters,
       this._getters,
       this._addEpic$,
-      this._dependencies
+      this._dependencies,
+      this._options
     ) as StoreHelperWithNamespaces<TDependencies, TModel>;
   }
 }
@@ -253,7 +274,12 @@ export function createStoreHelperFactory<
   TModel extends Model<TDependencies>
 >(
   model: TModel,
-  dependencies: TDependencies
+  dependencies: TDependencies,
+  options?: StoreHelperOptions
 ): StoreHelperFactory<TDependencies, TModel> {
-  return new StoreHelperFactory(model, dependencies);
+  if (options == null) {
+    options = {};
+  }
+
+  return new StoreHelperFactory(model, dependencies, options);
 }

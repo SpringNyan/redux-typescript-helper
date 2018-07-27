@@ -1,7 +1,7 @@
 import { State } from "./state";
 import { Selectors } from "./selector";
 import { Reducers } from "./reducer";
-import { Effects, Epic } from "./effect";
+import { Effects, Epic } from "./epic";
 
 export interface Model<
   TDependencies = any,

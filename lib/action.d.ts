@@ -1,9 +1,9 @@
 import { Reducer, Reducers } from "./reducer";
-import { Effect, EffectWithOperator, Effects } from "./effect";
+import { Effect, EffectWithOperator, Effects } from "./epic";
 import { Model } from "./model";
 export declare const actionTypes: {
     register: string;
-    cancel: string;
+    epicEnd: string;
     unregister: string;
 };
 export interface Action<TPayload> {

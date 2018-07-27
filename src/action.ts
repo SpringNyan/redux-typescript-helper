@@ -1,5 +1,5 @@
 import { Reducer, Reducers } from "./reducer";
-import { Effect, EffectWithOperator, Effects } from "./effect";
+import { Effect, EffectWithOperator, Effects } from "./epic";
 import { Model } from "./model";
 
 export const actionTypes = {
