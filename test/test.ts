@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import { of, from, timer } from "rxjs";
+import { of, from, timer, empty } from "rxjs";
 import { delay, switchMap } from "rxjs/operators";
 import { createStore, applyMiddleware } from "redux";
 import { createEpicMiddleware } from "redux-observable";
@@ -97,7 +97,8 @@ describe("redux-typescript-helper", () => {
     .create();
 
   const entitiesModel = createModelFactory({
-    itemById: {} as { [id: number]: Item }
+    itemById: {} as { [id: number]: Item },
+    count: 0
   })
     .selectors({
       doneItems({ state }) {
@@ -115,6 +116,12 @@ describe("redux-typescript-helper", () => {
       },
       clearItems(state) {
         state.itemById = {};
+      },
+      increaseCount(state) {
+        return {
+          ...state,
+          count: state.count + 1
+        };
       }
     })
     .effects({
@@ -130,6 +137,15 @@ describe("redux-typescript-helper", () => {
           await timer(delayTime);
           dispatch(actions.addItem(payload));
         });
+      },
+      increaseWithError({ actions }) {
+        return asyncEffect(async (dispatch) => {
+          dispatch(actions.increaseCount({}));
+          if (0 === 0) {
+            throw new Error("error!");
+          }
+          dispatch(actions.increaseCount({}));
+        });
       }
     })
     .create();
@@ -141,12 +157,18 @@ describe("redux-typescript-helper", () => {
     })
     .create();
 
-  const storeHelperFactory = createStoreHelperFactory(rootModel, {
-    system: {
-      env: "test",
-      hash: (str: string) => str
+  const storeHelperFactory = createStoreHelperFactory(
+    rootModel,
+    {
+      system: {
+        env: "test",
+        hash: (str: string) => str
+      }
+    },
+    {
+      epicErrorHandler: (err) => empty()
     }
-  });
+  );
 
   const epicMiddleware = createEpicMiddleware();
   const store = createStore(
@@ -201,6 +223,14 @@ describe("redux-typescript-helper", () => {
     expect(entitiesHelper.getters.doneItems[0].id).eq(2);
     store.dispatch(entitiesHelper.actions.removeItem(1));
     expect(entitiesHelper.state.itemById[1]).eq(undefined);
+
+    expect(entitiesHelper.state.count).eq(0);
+    store.dispatch(entitiesHelper.actions.increaseCount({}));
+    expect(entitiesHelper.state.count).eq(1);
+    store.dispatch(entitiesHelper.actions.increaseWithError({}));
+    expect(entitiesHelper.state.count).eq(2);
+    store.dispatch(entitiesHelper.actions.increaseWithError({}));
+    expect(entitiesHelper.state.count).eq(3);
 
     entitiesHelper.registerModel("temp", entitiesModel);
     const tempHelper = entitiesHelper.namespace<typeof entitiesModel>("temp");
