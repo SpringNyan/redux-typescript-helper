@@ -25,6 +25,10 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
   private readonly _rootGetters: ModelGetters<any>;
   private readonly _addEpic$: BehaviorSubject<ReduxObservableEpic>;
 
+  private readonly _subStoreHelpers: {
+    [namespace: string]: StoreHelper<TDependencies, any>;
+  } = {};
+
   constructor(
     store: Store,
     model: TModel,
@@ -45,7 +49,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     this._dependencies = dependencies;
 
     for (const namespace of Object.keys(model.models)) {
-      this._registerNamespace(namespace);
+      this._registerSubStoreHelper(namespace);
     }
   }
 
@@ -72,16 +76,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     namespace: string
   ): StoreHelperWithNamespaces<TDependencies, T>;
   public namespace(namespace: string): StoreHelper<TDependencies, any> {
-    return new StoreHelper(
-      this._store,
-      this._model.models[namespace],
-      [...this._namespaces, namespace],
-      this._actions[namespace],
-      this._getters[namespace],
-      this._rootGetters,
-      this._addEpic$,
-      this._dependencies
-    );
+    return this._subStoreHelpers[namespace];
   }
 
   public registerModel<T extends Model>(namespace: string, model: T): void {
@@ -118,7 +113,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
       type: `${namespaces.join("/")}/${actionTypes.register}`
     });
 
-    this._registerNamespace(namespace);
+    this._registerSubStoreHelper(namespace);
   }
 
   public unregisterModel(namespace: string): void {
@@ -126,7 +121,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
       throw new Error("Failed to unregister model: model is not existing");
     }
 
-    this._unregisterNamespace(namespace);
+    this._unregisterSubStoreHelper(namespace);
 
     const namespaces = [...this._namespaces, namespace];
 
@@ -142,7 +137,18 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     delete this._getters[namespace];
   }
 
-  private _registerNamespace(namespace: string): void {
+  private _registerSubStoreHelper(namespace: string): void {
+    this._subStoreHelpers[namespace] = new StoreHelper(
+      this._store,
+      this._model.models[namespace],
+      [...this._namespaces, namespace],
+      this._actions[namespace],
+      this._getters[namespace],
+      this._rootGetters,
+      this._addEpic$,
+      this._dependencies
+    );
+
     Object.defineProperty(this, namespace, {
       get: () => {
         return this.namespace(namespace);
@@ -152,8 +158,9 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     });
   }
 
-  private _unregisterNamespace(namespace: string): void {
+  private _unregisterSubStoreHelper(namespace: string): void {
     delete (this as any)[namespace];
+    delete this._subStoreHelpers[namespace];
   }
 }
 

@@ -14,6 +14,7 @@ export declare class StoreHelper<TDependencies, TModel extends Model<TDependenci
     private readonly _getters;
     private readonly _rootGetters;
     private readonly _addEpic$;
+    private readonly _subStoreHelpers;
     constructor(store: Store, model: TModel, namespaces: string[], actions: ModelActionHelpers<TModel>, getters: ModelGetters<TModel>, rootGetters: ModelGetters<any>, addEpic$: BehaviorSubject<ReduxObservableEpic>, dependencies: TDependencies);
     readonly store: Store;
     readonly state: ModelState<TModel>;
@@ -23,8 +24,8 @@ export declare class StoreHelper<TDependencies, TModel extends Model<TDependenci
     namespace<T extends Model<TDependencies>>(namespace: string): StoreHelperWithNamespaces<TDependencies, T>;
     registerModel<T extends Model>(namespace: string, model: T): void;
     unregisterModel(namespace: string): void;
-    private _registerNamespace;
-    private _unregisterNamespace;
+    private _registerSubStoreHelper;
+    private _unregisterSubStoreHelper;
 }
 export declare type StoreHelperWithNamespaces<TDependencies, TModel extends Model<TDependencies>> = StoreHelper<TDependencies, TModel> & {
     [K in keyof TModel["models"]]: StoreHelperWithNamespaces<TDependencies, TModel["models"][K]>;
