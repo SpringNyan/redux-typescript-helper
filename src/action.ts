@@ -1,12 +1,10 @@
-import { Dispatch } from "redux";
-
 import { Reducer, Reducers } from "./reducer";
 import { Effect, EffectWithOperator, Effects } from "./effect";
 import { Model } from "./model";
 
 export const actionTypes = {
   register: "@@REGISTER",
-  cancel: "@@CANCEL",
+  epicEnd: "@@EPIC_END",
   unregister: "@@UNREGISTER"
 };
 
