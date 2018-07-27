@@ -147,6 +147,7 @@ export class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
       get: () => {
         return this.namespace(namespace);
       },
+      enumerable: true,
       configurable: true
     });
   }

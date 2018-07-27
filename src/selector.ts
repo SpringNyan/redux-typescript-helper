@@ -77,7 +77,9 @@ export function createModelGetters<
           rootGetters: rootGetters!,
           dependencies
         });
-      }
+      },
+      enumerable: true,
+      configurable: true
     });
   }
 
