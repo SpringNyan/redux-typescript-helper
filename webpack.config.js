@@ -9,5 +9,12 @@ module.exports = {
     library: "redux-typescript-helper",
     libraryTarget: "umd"
   },
-  externals: ["redux", "redux-observable", "immer", "rxjs", "rxjs/operators"]
+  externals: [
+    "redux",
+    "redux-observable",
+    "immer",
+    "rxjs",
+    "rxjs/operators",
+    "reselect"
+  ]
 };
