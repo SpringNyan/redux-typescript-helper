@@ -1,5 +1,7 @@
+import { createSelector } from "reselect";
+
 import { State } from "./state";
-import { Selectors } from "./selector";
+import { Selectors, SelectorCreator } from "./selector";
 import { Reducers } from "./reducer";
 import { Effects, Epic } from "./epic";
 
@@ -64,7 +66,11 @@ export class ModelFactory<
   }
 
   public selectors<T extends Selectors<TDependencies, TState, TSelectors>>(
-    selectors: T
+    selectors:
+      | T
+      | ((
+          selectorCreator: SelectorCreator<TDependencies, TState, TSelectors>
+        ) => T)
   ): ModelFactory<
     TDependencies,
     TState,
@@ -73,6 +79,10 @@ export class ModelFactory<
     TEffects,
     TModels
   > {
+    if (typeof selectors === "function") {
+      selectors = selectors(createSelector);
+    }
+
     this._selectors = {
       ...this._selectors,
       ...(selectors as Selectors<TDependencies, TState, TSelectors>)

@@ -100,11 +100,16 @@ describe("redux-typescript-helper", () => {
     itemById: {} as { [id: number]: Item },
     count: 0
   })
+    .selectors((createSelector) => ({
+      allItems: createSelector(
+        ({ state }) => state.itemById,
+        (itemById) =>
+          Object.keys(itemById).map((key) => itemById[parseInt(key)])
+      )
+    }))
     .selectors({
-      doneItems({ state }) {
-        return Object.keys(state.itemById)
-          .map((key) => state.itemById[parseInt(key)])
-          .filter((item) => item.done);
+      doneItems({ getters }) {
+        return getters.allItems.filter((item) => item.done);
       }
     })
     .reducers({

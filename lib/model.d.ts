@@ -1,5 +1,5 @@
 import { State } from "./state";
-import { Selectors } from "./selector";
+import { Selectors, SelectorCreator } from "./selector";
 import { Reducers } from "./reducer";
 import { Effects, Epic } from "./epic";
 export interface Model<TDependencies = any, TState = any, TSelectors extends Selectors<TDependencies, TState, TSelectors> = Selectors<TDependencies, TState, TSelectors>, TReducers extends Reducers<TDependencies, TState> = Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects> = Effects<TDependencies, TState, any, any, any>, TModels extends Models<TDependencies> = Models<TDependencies>> {
@@ -21,7 +21,7 @@ export declare class ModelFactory<TDependencies, TState, TSelectors extends Sele
     private _epics;
     private _models;
     constructor(state: State<TDependencies, TState>);
-    selectors<T extends Selectors<TDependencies, TState, TSelectors>>(selectors: T): ModelFactory<TDependencies, TState, TSelectors & T, TReducers, TEffects, TModels>;
+    selectors<T extends Selectors<TDependencies, TState, TSelectors>>(selectors: T | ((selectorCreator: SelectorCreator<TDependencies, TState, TSelectors>) => T)): ModelFactory<TDependencies, TState, TSelectors & T, TReducers, TEffects, TModels>;
     reducers<T extends Reducers<TDependencies, TState>>(reducers: T): ModelFactory<TDependencies, TState, TSelectors, TReducers & T, TEffects, TModels>;
     effects<T extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects>>(effects: T): ModelFactory<TDependencies, TState, TSelectors, TReducers, TEffects & T, TModels>;
     epics(epics: Array<Epic<TDependencies, TState, TSelectors, TReducers, TEffects>>): ModelFactory<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>;
