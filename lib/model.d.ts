@@ -30,4 +30,3 @@ export declare class ModelFactory<TDependencies, TState, TSelectors extends Sele
 }
 export declare type ModelFactoryCreator<TDependencies> = <TState>(state: State<TDependencies, TState>) => ModelFactory<TDependencies, TState, {}, {}, {}, {}>;
 export declare function createModelFactoryCreator<TDependencies>(): ModelFactoryCreator<TDependencies>;
-export declare function cloneModel<TModel extends Model>(model: TModel): TModel;

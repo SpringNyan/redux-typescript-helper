@@ -1,4 +1,4 @@
-import { BehaviorSubject, Observable } from "rxjs";
+import { Observable } from "rxjs";
 import { Store, Reducer as ReduxReducer } from "redux";
 import { Epic as ReduxObservableEpic } from "redux-observable";
 import { ModelState } from "./state";
@@ -8,28 +8,16 @@ import { Model } from "./model";
 export interface StoreHelperOptions {
     epicErrorHandler?: (err: any, caught: Observable<Action<any>>) => Observable<Action<any>>;
 }
-export declare class StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
-    private readonly _store;
-    private readonly _model;
-    private readonly _dependencies;
-    private readonly _namespaces;
-    private readonly _actions;
-    private readonly _getters;
-    private readonly _rootGetters;
-    private readonly _addEpic$;
-    private readonly _options;
-    private readonly _subStoreHelpers;
-    constructor(store: Store, model: TModel, namespaces: string[], actions: ModelActionHelpers<TModel>, getters: ModelGetters<TModel>, rootGetters: ModelGetters<any>, addEpic$: BehaviorSubject<ReduxObservableEpic>, dependencies: TDependencies, options: StoreHelperOptions);
-    readonly store: Store;
-    readonly state: ModelState<TModel>;
-    readonly actions: ModelActionHelpers<TModel>;
-    readonly getters: ModelGetters<TModel>;
+export interface StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
+    store: Store;
+    state: ModelState<TModel>;
+    actions: ModelActionHelpers<TModel>;
+    getters: ModelGetters<TModel>;
     namespace<K extends Extract<keyof TModel["models"], string>>(namespace: K): StoreHelperWithNamespaces<TDependencies, TModel["models"][K]>;
     namespace<T extends Model<TDependencies>>(namespace: string): StoreHelperWithNamespaces<TDependencies, T>;
+    namespace(namespace: string): StoreHelper<TDependencies, any>;
     registerModel<T extends Model>(namespace: string, model: T): void;
     unregisterModel(namespace: string): void;
-    private _registerSubStoreHelper;
-    private _unregisterSubStoreHelper;
 }
 export declare type StoreHelperWithNamespaces<TDependencies, TModel extends Model<TDependencies>> = StoreHelper<TDependencies, TModel> & {
     [K in keyof TModel["models"]]: StoreHelperWithNamespaces<TDependencies, TModel["models"][K]>;
