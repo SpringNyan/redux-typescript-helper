@@ -1,6 +1,6 @@
 {
   "name": "redux-typescript-helper",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Helper for Redux with TypeScript",
   "authors": "SpringNyan",
   "license": "MIT",
@@ -24,8 +24,8 @@
     "redux-observable": "^1.0.0",
     "reselect": "^3.0.1",
     "rxjs": "^6.2.2",
-    "typescript": "^2.9.2",
-    "webpack": "^4.16.2",
+    "typescript": "^3.0.1",
+    "webpack": "^4.16.4",
     "webpack-cli": "^3.1.0"
   },
   "scripts": {

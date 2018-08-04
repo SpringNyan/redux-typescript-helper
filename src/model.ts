@@ -202,14 +202,3 @@ export function createModelFactoryCreator<TDependencies>(): ModelFactoryCreator<
 > {
   return createModelFactory;
 }
-
-export function cloneModel<TModel extends Model>(model: TModel): TModel {
-  return {
-    state: model.state,
-    selectors: { ...model.selectors },
-    reducers: { ...model.reducers },
-    effects: { ...model.effects },
-    epics: [...model.epics],
-    models: { ...model.models }
-  } as TModel;
-}
