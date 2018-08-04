@@ -19,6 +19,10 @@ import { ModelGetters } from "./selector";
 import { Effect } from "./epic";
 import { Model } from "./model";
 
+export type StoreHelperDependencies<TDependencies> = TDependencies & {
+  storeHelper: StoreHelper<TDependencies, any>;
+};
+
 export interface StoreHelperOptions {
   epicErrorHandler?: (
     err: any,
@@ -63,7 +67,7 @@ export class StoreHelperFactory<
   TModel extends Model<TDependencies>
 > {
   private readonly _model: TModel;
-  private readonly _dependencies: TDependencies;
+  private readonly _dependencies: StoreHelperDependencies<TDependencies>;
   private readonly _reducer: ReduxReducer;
   private readonly _actions: ModelActionHelpers<TModel>;
   private readonly _getters: ModelGetters<TModel>;
@@ -79,8 +83,18 @@ export class StoreHelperFactory<
     options: StoreHelperOptions
   ) {
     this._model = model;
-    this._dependencies = dependencies;
     this._options = options;
+
+    this._dependencies = {} as StoreHelperDependencies<TDependencies>;
+    for (const key of Object.keys(dependencies)) {
+      Object.defineProperty(this._dependencies, key, {
+        get: () => {
+          return (dependencies as any)[key];
+        },
+        enumerable: true,
+        configurable: true
+      });
+    }
 
     this._reducer = createModelReducer(model, dependencies);
 
@@ -98,7 +112,7 @@ export class StoreHelperFactory<
       [],
       this._actions,
       this._getters,
-      dependencies,
+      this._dependencies,
       { errorHandler: this._options.epicErrorHandler }
     );
     this._addEpic$ = new BehaviorSubject(initialEpic);
@@ -125,7 +139,7 @@ export class StoreHelperFactory<
 
     this._store = store;
 
-    return new _StoreHelper(
+    const storeHelper = new _StoreHelper(
       store,
       this._model,
       [],
@@ -136,6 +150,10 @@ export class StoreHelperFactory<
       this._dependencies,
       this._options
     ) as any;
+
+    this._dependencies.storeHelper = storeHelper;
+
+    return storeHelper;
   }
 }
 
@@ -158,7 +176,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
   implements StoreHelper<TDependencies, TModel> {
   private readonly _store: Store;
   private readonly _model: TModel;
-  private readonly _dependencies: TDependencies;
+  private readonly _dependencies: StoreHelperDependencies<TDependencies>;
   private readonly _namespaces: string[];
   private readonly _actions: ModelActionHelpers<TModel>;
   private readonly _getters: ModelGetters<TModel>;
@@ -178,7 +196,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     getters: ModelGetters<TModel>,
     rootGetters: ModelGetters<any>,
     addEpic$: BehaviorSubject<ReduxObservableEpic>,
-    dependencies: TDependencies,
+    dependencies: StoreHelperDependencies<TDependencies>,
     options: StoreHelperOptions
   ) {
     this._store = store;
@@ -339,7 +357,7 @@ function registerModelEpics<TDependencies, TModel extends Model<TDependencies>>(
   rootGetters: ModelGetters<TModel>,
   rootAction$: ActionsObservable<Action<any>>,
   rootState$: StateObservable<any>,
-  dependencies: TDependencies
+  dependencies: StoreHelperDependencies<TDependencies>
 ): Observable<Action<any>>[] {
   const outputs: Observable<Action<any>>[] = [];
 
@@ -455,7 +473,7 @@ function createModelRootEpic<
   namespaces: string[],
   actions: ModelActionHelpers<TModel>,
   getters: ModelGetters<TModel>,
-  dependencies: TDependencies,
+  dependencies: StoreHelperDependencies<TDependencies>,
   options: CreateModelRootEpicOptions
 ): ReduxObservableEpic<any, Action<any>> {
   return (action$, state$) =>
@@ -537,7 +555,7 @@ function createModelReducer<TDependencies, TModel extends Model<TDependencies>>(
 function createModelGetters<TDependencies, TModel extends Model<TDependencies>>(
   model: TModel,
   getState: () => any,
-  dependencies: TDependencies,
+  dependencies: StoreHelperDependencies<TDependencies>,
   namespaces: string[],
   rootGetters: ModelGetters<any> | null
 ): ModelGetters<TModel> {

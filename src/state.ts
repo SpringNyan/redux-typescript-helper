@@ -1,8 +1,9 @@
 import { Model } from "./model";
+import { StoreHelperDependencies } from "./store";
 
 export type State<TDependencies, TState> =
   | TState
-  | ((dependencies: TDependencies) => TState);
+  | ((dependencies: StoreHelperDependencies<TDependencies>) => TState);
 
 export type ExtractState<T extends State<any, any> | Model> = T extends
   | State<any, infer TState>

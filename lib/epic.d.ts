@@ -4,6 +4,7 @@ import { ActionsObservable, StateObservable } from "redux-observable";
 import { Action, ActionHelpers, ModelActionHelpers } from "./action";
 import { Selectors, Getters, ModelGetters } from "./selector";
 import { Reducers } from "./reducer";
+import { StoreHelperDependencies } from "./store";
 export interface EpicContext<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, TSelectors>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects>, TPayload> {
     action$: ActionsObservable<Action<TPayload>>;
     rootAction$: ActionsObservable<Action<any>>;
@@ -13,7 +14,7 @@ export interface EpicContext<TDependencies, TState, TSelectors extends Selectors
     rootActions: ModelActionHelpers<any>;
     getters: Getters<TSelectors>;
     rootGetters: ModelGetters<any>;
-    dependencies: TDependencies;
+    dependencies: StoreHelperDependencies<TDependencies>;
 }
 export interface Epic<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, TSelectors>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects>> {
     (context: EpicContext<TDependencies, TState, TSelectors, TReducers, TEffects, any>): Observable<Action<any>>;

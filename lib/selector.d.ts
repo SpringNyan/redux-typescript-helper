@@ -1,10 +1,11 @@
 import { Model } from "./model";
+import { StoreHelperDependencies } from "./store";
 export interface SelectorContext<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, TSelectors>> {
     state: TState;
     rootState: any;
     getters: Getters<TSelectors>;
     rootGetters: ModelGetters<any>;
-    dependencies: TDependencies;
+    dependencies: StoreHelperDependencies<TDependencies>;
 }
 export interface Selector<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, TSelectors>, TResult> {
     (context: SelectorContext<TDependencies, TState, TSelectors>): TResult;

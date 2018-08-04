@@ -40,6 +40,10 @@ describe("redux-typescript-helper", () => {
     isLogin: false
   }))
     .selectors({
+      id({ dependencies }): number {
+        return dependencies.storeHelper.namespace<typeof userModel>("user")
+          .state.id;
+      },
       idAndName({ state }) {
         return `${state.id} - ${state.username}`;
       }
@@ -208,6 +212,8 @@ describe("redux-typescript-helper", () => {
     expect(storeHelper.getters.user.idAndNameAndAbout).eq(
       "233 - nyan - test - 233 - nyan"
     );
+
+    expect(storeHelper.getters.user.id).eq(storeHelper.state.user.id);
 
     expect(entitiesHelper.state.itemById[998]).eq(undefined);
     store.dispatch(

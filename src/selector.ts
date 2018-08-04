@@ -1,4 +1,5 @@
 import { Model } from "./model";
+import { StoreHelperDependencies } from "./store";
 
 export interface SelectorContext<
   TDependencies,
@@ -9,7 +10,7 @@ export interface SelectorContext<
   rootState: any;
   getters: Getters<TSelectors>;
   rootGetters: ModelGetters<any>;
-  dependencies: TDependencies;
+  dependencies: StoreHelperDependencies<TDependencies>;
 }
 
 export interface Selector<

@@ -5,6 +5,9 @@ import { ModelState } from "./state";
 import { ModelActionHelpers, Action } from "./action";
 import { ModelGetters } from "./selector";
 import { Model } from "./model";
+export declare type StoreHelperDependencies<TDependencies> = TDependencies & {
+    storeHelper: StoreHelper<TDependencies, any>;
+};
 export interface StoreHelperOptions {
     epicErrorHandler?: (err: any, caught: Observable<Action<any>>) => Observable<Action<any>>;
 }

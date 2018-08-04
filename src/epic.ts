@@ -5,6 +5,7 @@ import { ActionsObservable, StateObservable } from "redux-observable";
 import { Action, ActionHelpers, ModelActionHelpers } from "./action";
 import { Selectors, Getters, ModelGetters } from "./selector";
 import { Reducers } from "./reducer";
+import { StoreHelperDependencies } from "./store";
 
 export interface EpicContext<
   TDependencies,
@@ -28,7 +29,7 @@ export interface EpicContext<
   rootActions: ModelActionHelpers<any>;
   getters: Getters<TSelectors>;
   rootGetters: ModelGetters<any>;
-  dependencies: TDependencies;
+  dependencies: StoreHelperDependencies<TDependencies>;
 }
 
 export interface Epic<
