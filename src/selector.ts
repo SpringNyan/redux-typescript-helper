@@ -1,5 +1,4 @@
 import { Model } from "./model";
-import { getSubObject } from "./util";
 
 export interface SelectorContext<
   TDependencies,
@@ -115,54 +114,3 @@ export type ModelGetters<TModel extends Model> = Getters<TModel["selectors"]> &
       ? ModelGetters<TModel["models"][K]>
       : never
   };
-
-export function createModelGetters<
-  TDependencies,
-  TModel extends Model<TDependencies>
->(
-  model: TModel,
-  getState: () => any,
-  dependencies: TDependencies,
-  namespaces: string[],
-  rootGetters: ModelGetters<any> | null
-): ModelGetters<TModel> {
-  if (rootGetters == null && namespaces.length > 0) {
-    throw new Error("rootGetters is required for creating sub model getters");
-  }
-
-  const getters = {} as any;
-  if (rootGetters == null) {
-    rootGetters = getters;
-  }
-
-  for (const key of Object.keys(model.selectors)) {
-    Object.defineProperty(getters, key, {
-      get() {
-        const rootState = getState();
-        const state = getSubObject(rootState, namespaces);
-
-        return model.selectors[key]({
-          state,
-          rootState,
-          getters,
-          rootGetters: rootGetters!,
-          dependencies
-        });
-      },
-      enumerable: true,
-      configurable: true
-    });
-  }
-
-  for (const key of Object.keys(model.models)) {
-    getters[key] = createModelGetters(
-      model.models[key],
-      getState,
-      dependencies,
-      [...namespaces, key],
-      rootGetters
-    );
-  }
-
-  return getters;
-}

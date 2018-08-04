@@ -15,10 +15,12 @@ export interface Action<TPayload> {
 
 export type ExtractActionPayload<
   T extends
+    | Action<any>
     | Reducer<any, any, any>
     | Effect<any, any, any, any, any, any>
     | EffectWithOperator<any, any, any, any, any, any>
 > = T extends
+  | Action<infer TPayload>
   | Reducer<any, any, infer TPayload>
   | Effect<any, any, any, any, any, infer TPayload>
   | EffectWithOperator<any, any, any, any, any, infer TPayload>
@@ -61,26 +63,3 @@ export type ModelActionHelpers<TModel extends Model> = ActionHelpers<
       ? ModelActionHelpers<TModel["models"][K]>
       : never
   };
-
-export function createModelActionHelpers<TModel extends Model>(
-  model: TModel,
-  namespaces: string[]
-): ModelActionHelpers<TModel> {
-  const actions = {} as any;
-
-  for (const key of [
-    ...Object.keys(model.reducers),
-    ...Object.keys(model.effects)
-  ]) {
-    actions[key] = createActionHelper([...namespaces, key].join("/"));
-  }
-
-  for (const key of Object.keys(model.models)) {
-    actions[key] = createModelActionHelpers(model.models[key], [
-      ...namespaces,
-      key
-    ]);
-  }
-
-  return actions;
-}
