@@ -1,5 +1,5 @@
 import { Observable, OperatorFunction } from "rxjs";
-import { Dispatch } from "redux";
+import { Action as ReduxAction, Dispatch } from "redux";
 import { ActionsObservable, StateObservable } from "redux-observable";
 
 import { Action, ActionHelpers, ModelActionHelpers } from "./action";
@@ -22,7 +22,7 @@ export interface EpicContext<
   TPayload
 > {
   action$: ActionsObservable<Action<TPayload>>;
-  rootAction$: ActionsObservable<Action<any>>;
+  rootAction$: ActionsObservable<ReduxAction>;
   state$: StateObservable<TState>;
   rootState$: StateObservable<any>;
   actions: ActionHelpers<TReducers & TEffects>;
@@ -54,7 +54,7 @@ export interface Epic<
       TEffects,
       any
     >
-  ): Observable<Action<any>>;
+  ): Observable<ReduxAction>;
 }
 
 export interface Effect<
@@ -81,7 +81,7 @@ export interface Effect<
       any
     >,
     payload: TPayload
-  ): Observable<Action<any>>;
+  ): Observable<ReduxAction>;
 }
 
 export type EffectWithOperator<
@@ -128,10 +128,10 @@ export interface Effects<
 }
 
 export function asyncEffect(
-  asyncFn: (dispatch: Dispatch<Action<any>>) => Promise<void>
-): Observable<Action<any>> {
+  asyncFn: (dispatch: Dispatch<ReduxAction>) => Promise<void>
+): Observable<ReduxAction> {
   return new Observable((subscribe) => {
-    const dispatch: Dispatch<Action<any>> = (action) => {
+    const dispatch: Dispatch<ReduxAction> = (action) => {
       subscribe.next(action);
       return action;
     };

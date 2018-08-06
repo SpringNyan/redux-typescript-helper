@@ -1,7 +1,7 @@
 import produce from "immer";
 import { BehaviorSubject, Observable, merge } from "rxjs";
 import { map, mergeMap, filter, takeUntil, catchError } from "rxjs/operators";
-import { Store, Reducer as ReduxReducer } from "redux";
+import { Action as ReduxAction, Reducer as ReduxReducer, Store } from "redux";
 import {
   Epic as ReduxObservableEpic,
   ActionsObservable,
@@ -26,8 +26,8 @@ export type StoreHelperDependencies<TDependencies> = TDependencies & {
 export interface StoreHelperOptions {
   epicErrorHandler?: (
     err: any,
-    caught: Observable<Action<any>>
-  ) => Observable<Action<any>>;
+    caught: Observable<ReduxAction>
+  ) => Observable<ReduxAction>;
 }
 
 export interface StoreHelper<
@@ -355,11 +355,11 @@ function registerModelEpics<TDependencies, TModel extends Model<TDependencies>>(
   namespaces: string[],
   rootActions: ModelActionHelpers<TModel>,
   rootGetters: ModelGetters<TModel>,
-  rootAction$: ActionsObservable<Action<any>>,
+  rootAction$: ActionsObservable<ReduxAction>,
   rootState$: StateObservable<any>,
   dependencies: StoreHelperDependencies<TDependencies>
-): Observable<Action<any>>[] {
-  const outputs: Observable<Action<any>>[] = [];
+): Observable<ReduxAction>[] {
+  const outputs: Observable<ReduxAction>[] = [];
 
   for (const key of Object.keys(model.models)) {
     const subModel = model.models[key];
@@ -407,9 +407,11 @@ function registerModelEpics<TDependencies, TModel extends Model<TDependencies>>(
       effect = effectWithOperator;
     }
 
-    const action$ = rootAction$.ofType([...namespaces, key].join("/"));
+    const action$ = rootAction$.ofType<Action<any>>(
+      [...namespaces, key].join("/")
+    );
 
-    const output$ = action$.pipe<Action<any>>(
+    const output$ = action$.pipe(
       operator((action) => {
         const payload = action.payload;
         return effect(
@@ -436,7 +438,11 @@ function registerModelEpics<TDependencies, TModel extends Model<TDependencies>>(
   for (const epic of model.epics) {
     const action$ = new ActionsObservable(
       rootAction$.pipe(
-        filter((action) => action.type.lastIndexOf(namespacePrefix, 0) === 0)
+        filter(
+          (action): action is Action<any> =>
+            typeof action.type === "string" &&
+            action.type.lastIndexOf(namespacePrefix, 0) === 0
+        )
       )
     );
 
@@ -461,8 +467,8 @@ function registerModelEpics<TDependencies, TModel extends Model<TDependencies>>(
 interface CreateModelRootEpicOptions {
   errorHandler?: (
     err: any,
-    caught: Observable<Action<any>>
-  ) => Observable<Action<any>>;
+    caught: Observable<ReduxAction>
+  ) => Observable<ReduxAction>;
 }
 
 function createModelRootEpic<
@@ -475,7 +481,7 @@ function createModelRootEpic<
   getters: ModelGetters<TModel>,
   dependencies: StoreHelperDependencies<TDependencies>,
   options: CreateModelRootEpicOptions
-): ReduxObservableEpic<any, Action<any>> {
+): ReduxObservableEpic<ReduxAction, ReduxAction> {
   return (action$, state$) =>
     merge(
       ...registerModelEpics(

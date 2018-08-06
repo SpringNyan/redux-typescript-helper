@@ -1,15 +1,15 @@
 import { Observable } from "rxjs";
-import { Store, Reducer as ReduxReducer } from "redux";
+import { Action as ReduxAction, Reducer as ReduxReducer, Store } from "redux";
 import { Epic as ReduxObservableEpic } from "redux-observable";
 import { ModelState } from "./state";
-import { ModelActionHelpers, Action } from "./action";
+import { ModelActionHelpers } from "./action";
 import { ModelGetters } from "./selector";
 import { Model } from "./model";
 export declare type StoreHelperDependencies<TDependencies> = TDependencies & {
     storeHelper: StoreHelper<TDependencies, any>;
 };
 export interface StoreHelperOptions {
-    epicErrorHandler?: (err: any, caught: Observable<Action<any>>) => Observable<Action<any>>;
+    epicErrorHandler?: (err: any, caught: Observable<ReduxAction>) => Observable<ReduxAction>;
 }
 export interface StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
     store: Store;
