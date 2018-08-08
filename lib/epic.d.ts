@@ -1,29 +1,29 @@
 import { Observable, OperatorFunction } from "rxjs";
 import { Action as ReduxAction, Dispatch } from "redux";
 import { ActionsObservable, StateObservable } from "redux-observable";
-import { Action, ActionHelpers, ModelActionHelpers } from "./action";
-import { Selectors, Getters, ModelGetters } from "./selector";
+import { Action, ActionHelpers } from "./action";
+import { Selectors, Getters } from "./selector";
 import { Reducers } from "./reducer";
 import { StoreHelperDependencies } from "./store";
-export interface EpicContext<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, TSelectors>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects>, TPayload> {
+export interface EpicContext<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any>, TPayload> {
     action$: ActionsObservable<Action<TPayload>>;
     rootAction$: ActionsObservable<ReduxAction>;
     state$: StateObservable<TState>;
-    rootState$: StateObservable<any>;
+    rootState$: StateObservable<unknown>;
     actions: ActionHelpers<TReducers & TEffects>;
-    rootActions: ModelActionHelpers<any>;
+    rootActions: {};
     getters: Getters<TSelectors>;
-    rootGetters: ModelGetters<any>;
+    rootGetters: {};
     dependencies: StoreHelperDependencies<TDependencies>;
 }
-export interface Epic<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, TSelectors>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects>> {
-    (context: EpicContext<TDependencies, TState, TSelectors, TReducers, TEffects, any>): Observable<ReduxAction>;
+export interface Epic<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any>> {
+    (context: EpicContext<TDependencies, TState, TSelectors, TReducers, TEffects, unknown>): Observable<ReduxAction>;
 }
-export interface Effect<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, TSelectors>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects>, TPayload> {
-    (context: EpicContext<TDependencies, TState, TSelectors, TReducers, TEffects, any>, payload: TPayload): Observable<ReduxAction>;
+export interface Effect<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any>, TPayload> {
+    (context: EpicContext<TDependencies, TState, TSelectors, TReducers, TEffects, unknown>, payload: TPayload): Observable<ReduxAction>;
 }
-export declare type EffectWithOperator<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, TSelectors>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects>, TPayload> = [Effect<TDependencies, TState, TSelectors, TReducers, TEffects, TPayload>, (...args: any[]) => OperatorFunction<Action<TPayload>, Action<TPayload>>];
-export interface Effects<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, TSelectors>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects>> {
+export declare type EffectWithOperator<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any>, TPayload> = [Effect<TDependencies, TState, TSelectors, TReducers, TEffects, TPayload>, (...args: any[]) => OperatorFunction<Action<TPayload>, Action<TPayload>>];
+export interface Effects<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any>> {
     [type: string]: Effect<TDependencies, TState, TSelectors, TReducers, TEffects, any> | EffectWithOperator<TDependencies, TState, TSelectors, TReducers, TEffects, any>;
 }
 export declare function asyncEffect(asyncFn: (dispatch: Dispatch<ReduxAction>) => Promise<void>): Observable<ReduxAction>;

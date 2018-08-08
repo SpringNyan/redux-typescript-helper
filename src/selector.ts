@@ -4,19 +4,19 @@ import { StoreHelperDependencies } from "./store";
 export interface SelectorContext<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, TSelectors>
+  TSelectors extends Selectors<TDependencies, TState, any>
 > {
   state: TState;
-  rootState: any;
+  rootState: unknown;
   getters: Getters<TSelectors>;
-  rootGetters: ModelGetters<any>;
+  rootGetters: {};
   dependencies: StoreHelperDependencies<TDependencies>;
 }
 
 export interface Selector<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, TSelectors>,
+  TSelectors extends Selectors<TDependencies, TState, any>,
   TResult
 > {
   (context: SelectorContext<TDependencies, TState, TSelectors>): TResult;
@@ -25,7 +25,7 @@ export interface Selector<
 export interface SelectorCreator<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, TSelectors>
+  TSelectors extends Selectors<TDependencies, TState, any>
 > {
   <T1, TResult>(
     selector1: Selector<TDependencies, TState, TSelectors, T1>,
@@ -96,22 +96,31 @@ export interface SelectorCreator<
 export interface Selectors<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, TSelectors>
+  TSelectors extends Selectors<TDependencies, TState, any>
 > {
   [name: string]: Selector<TDependencies, TState, TSelectors, any>;
 }
 
 export type ExtractSelectorResult<
   T extends Selector<any, any, any, any>
-> = T extends Selector<any, any, any, infer TResult> ? TResult : any;
+> = T extends Selector<any, any, any, infer TResult> ? TResult : never;
 
 export type Getters<T extends Selectors<any, any, any>> = {
   [K in keyof T]: ExtractSelectorResult<T[K]>
 };
 
-export type ModelGetters<TModel extends Model> = Getters<TModel["selectors"]> &
+export type ModelGetters<
+  TModel extends Model<any, any, any, any, any, any>
+> = Getters<TModel["selectors"]> &
   {
-    [K in keyof TModel["models"]]: TModel["models"][K] extends Model
+    [K in keyof TModel["models"]]: TModel["models"][K] extends Model<
+      any,
+      any,
+      any,
+      any,
+      any,
+      any
+    >
       ? ModelGetters<TModel["models"][K]>
       : never
   };

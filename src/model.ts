@@ -8,22 +8,22 @@ import { Effects, Epic } from "./epic";
 export interface Model<
   TDependencies = any,
   TState = any,
-  TSelectors extends Selectors<TDependencies, TState, TSelectors> = Selectors<
+  TSelectors extends Selectors<TDependencies, TState, any> = Selectors<
     TDependencies,
     TState,
-    TSelectors
+    any
   >,
   TReducers extends Reducers<TDependencies, TState> = Reducers<
     TDependencies,
     TState
   >,
-  TEffects extends Effects<
+  TEffects extends Effects<TDependencies, TState, any, any, any> = Effects<
     TDependencies,
     TState,
-    TSelectors,
-    TReducers,
-    TEffects
-  > = Effects<TDependencies, TState, any, any, any>,
+    any,
+    any,
+    any
+  >,
   TModels extends Models<TDependencies> = Models<TDependencies>
 > {
   state: State<TDependencies, TState>;
@@ -41,7 +41,7 @@ export type Models<TDependencies> = {
 export class ModelFactory<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, TSelectors>,
+  TSelectors extends Selectors<TDependencies, TState, any>,
   TReducers extends Reducers<TDependencies, TState>,
   TEffects extends Effects<TDependencies, TState, any, any, any>,
   TModels extends Models<TDependencies>

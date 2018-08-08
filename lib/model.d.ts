@@ -2,7 +2,7 @@ import { State } from "./state";
 import { Selectors, SelectorCreator } from "./selector";
 import { Reducers } from "./reducer";
 import { Effects, Epic } from "./epic";
-export interface Model<TDependencies = any, TState = any, TSelectors extends Selectors<TDependencies, TState, TSelectors> = Selectors<TDependencies, TState, TSelectors>, TReducers extends Reducers<TDependencies, TState> = Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects> = Effects<TDependencies, TState, any, any, any>, TModels extends Models<TDependencies> = Models<TDependencies>> {
+export interface Model<TDependencies = any, TState = any, TSelectors extends Selectors<TDependencies, TState, any> = Selectors<TDependencies, TState, any>, TReducers extends Reducers<TDependencies, TState> = Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any> = Effects<TDependencies, TState, any, any, any>, TModels extends Models<TDependencies> = Models<TDependencies>> {
     state: State<TDependencies, TState>;
     selectors: TSelectors;
     reducers: TReducers;
@@ -13,7 +13,7 @@ export interface Model<TDependencies = any, TState = any, TSelectors extends Sel
 export declare type Models<TDependencies> = {
     [key: string]: Model<TDependencies>;
 };
-export declare class ModelFactory<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, TSelectors>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any>, TModels extends Models<TDependencies>> {
+export declare class ModelFactory<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any>, TModels extends Models<TDependencies>> {
     private readonly _state;
     private _selectors;
     private _reducers;

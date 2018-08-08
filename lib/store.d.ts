@@ -6,7 +6,7 @@ import { ModelActionHelpers } from "./action";
 import { ModelGetters } from "./selector";
 import { Model } from "./model";
 export declare type StoreHelperDependencies<TDependencies> = TDependencies & {
-    storeHelper: StoreHelper<TDependencies, any>;
+    storeHelper: StoreHelper<TDependencies, Model<TDependencies>>;
 };
 export interface StoreHelperOptions {
     epicErrorHandler?: (err: any, caught: Observable<ReduxAction>) => Observable<ReduxAction>;
@@ -18,8 +18,7 @@ export interface StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     getters: ModelGetters<TModel>;
     namespace<K extends Extract<keyof TModel["models"], string>>(namespace: K): StoreHelperWithNamespaces<TDependencies, TModel["models"][K]>;
     namespace<T extends Model<TDependencies>>(namespace: string): StoreHelperWithNamespaces<TDependencies, T>;
-    namespace(namespace: string): StoreHelper<TDependencies, any>;
-    registerModel<T extends Model>(namespace: string, model: T): void;
+    registerModel<T extends Model<TDependencies>>(namespace: string, model: T): void;
     unregisterModel(namespace: string): void;
 }
 export declare type StoreHelperWithNamespaces<TDependencies, TModel extends Model<TDependencies>> = StoreHelper<TDependencies, TModel> & {

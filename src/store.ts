@@ -20,7 +20,7 @@ import { Effect } from "./epic";
 import { Model } from "./model";
 
 export type StoreHelperDependencies<TDependencies> = TDependencies & {
-  storeHelper: StoreHelper<TDependencies, any>;
+  storeHelper: StoreHelper<TDependencies, Model<TDependencies>>;
 };
 
 export interface StoreHelperOptions {
@@ -45,9 +45,11 @@ export interface StoreHelper<
   namespace<T extends Model<TDependencies>>(
     namespace: string
   ): StoreHelperWithNamespaces<TDependencies, T>;
-  namespace(namespace: string): StoreHelper<TDependencies, any>;
 
-  registerModel<T extends Model>(namespace: string, model: T): void;
+  registerModel<T extends Model<TDependencies>>(
+    namespace: string,
+    model: T
+  ): void;
   unregisterModel(namespace: string): void;
 }
 
@@ -89,7 +91,7 @@ export class StoreHelperFactory<
     for (const key of Object.keys(dependencies)) {
       Object.defineProperty(this._dependencies, key, {
         get: () => {
-          return (dependencies as any)[key];
+          return dependencies[key as keyof TDependencies];
         },
         enumerable: true,
         configurable: true
@@ -149,11 +151,11 @@ export class StoreHelperFactory<
       this._addEpic$,
       this._dependencies,
       this._options
-    ) as any;
+    );
 
     this._dependencies.storeHelper = storeHelper;
 
-    return storeHelper;
+    return storeHelper as any;
   }
 }
 
@@ -180,12 +182,12 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
   private readonly _namespaces: string[];
   private readonly _actions: ModelActionHelpers<TModel>;
   private readonly _getters: ModelGetters<TModel>;
-  private readonly _rootGetters: ModelGetters<any>;
+  private readonly _rootGetters: ModelGetters<Model<TDependencies>>;
   private readonly _addEpic$: BehaviorSubject<ReduxObservableEpic>;
   private readonly _options: StoreHelperOptions;
 
   private readonly _subStoreHelpers: {
-    [namespace: string]: StoreHelper<TDependencies, any>;
+    [namespace: string]: StoreHelper<TDependencies, Model<TDependencies>>;
   } = {};
 
   constructor(
@@ -194,7 +196,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     namespaces: string[],
     actions: ModelActionHelpers<TModel>,
     getters: ModelGetters<TModel>,
-    rootGetters: ModelGetters<any>,
+    rootGetters: ModelGetters<Model<TDependencies>>,
     addEpic$: BehaviorSubject<ReduxObservableEpic>,
     dependencies: StoreHelperDependencies<TDependencies>,
     options: StoreHelperOptions
@@ -236,7 +238,9 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
   public namespace<T extends Model<TDependencies>>(
     namespace: string
   ): StoreHelperWithNamespaces<TDependencies, T>;
-  public namespace(namespace: string): StoreHelper<TDependencies, any> {
+  public namespace(
+    namespace: string
+  ): StoreHelper<TDependencies, Model<TDependencies>> {
     return this._subStoreHelpers[namespace];
   }
 
@@ -393,7 +397,7 @@ function registerModelEpics<TDependencies, TModel extends Model<TDependencies>>(
     getSubProperty(rootState$.value, namespaces)
   );
 
-  const actions = getSubProperty(rootActions, namespaces)!;
+  const actions: any = getSubProperty(rootActions, namespaces)!;
   const getters = getSubProperty(rootGetters, namespaces)!;
 
   for (const key of Object.keys(model.effects)) {

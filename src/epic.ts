@@ -2,48 +2,36 @@ import { Observable, OperatorFunction } from "rxjs";
 import { Action as ReduxAction, Dispatch } from "redux";
 import { ActionsObservable, StateObservable } from "redux-observable";
 
-import { Action, ActionHelpers, ModelActionHelpers } from "./action";
-import { Selectors, Getters, ModelGetters } from "./selector";
+import { Action, ActionHelpers } from "./action";
+import { Selectors, Getters } from "./selector";
 import { Reducers } from "./reducer";
 import { StoreHelperDependencies } from "./store";
 
 export interface EpicContext<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, TSelectors>,
+  TSelectors extends Selectors<TDependencies, TState, any>,
   TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<
-    TDependencies,
-    TState,
-    TSelectors,
-    TReducers,
-    TEffects
-  >,
+  TEffects extends Effects<TDependencies, TState, any, any, any>,
   TPayload
 > {
   action$: ActionsObservable<Action<TPayload>>;
   rootAction$: ActionsObservable<ReduxAction>;
   state$: StateObservable<TState>;
-  rootState$: StateObservable<any>;
+  rootState$: StateObservable<unknown>;
   actions: ActionHelpers<TReducers & TEffects>;
-  rootActions: ModelActionHelpers<any>;
+  rootActions: {};
   getters: Getters<TSelectors>;
-  rootGetters: ModelGetters<any>;
+  rootGetters: {};
   dependencies: StoreHelperDependencies<TDependencies>;
 }
 
 export interface Epic<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, TSelectors>,
+  TSelectors extends Selectors<TDependencies, TState, any>,
   TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<
-    TDependencies,
-    TState,
-    TSelectors,
-    TReducers,
-    TEffects
-  >
+  TEffects extends Effects<TDependencies, TState, any, any, any>
 > {
   (
     context: EpicContext<
@@ -52,7 +40,7 @@ export interface Epic<
       TSelectors,
       TReducers,
       TEffects,
-      any
+      unknown
     >
   ): Observable<ReduxAction>;
 }
@@ -60,15 +48,9 @@ export interface Epic<
 export interface Effect<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, TSelectors>,
+  TSelectors extends Selectors<TDependencies, TState, any>,
   TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<
-    TDependencies,
-    TState,
-    TSelectors,
-    TReducers,
-    TEffects
-  >,
+  TEffects extends Effects<TDependencies, TState, any, any, any>,
   TPayload
 > {
   (
@@ -78,7 +60,7 @@ export interface Effect<
       TSelectors,
       TReducers,
       TEffects,
-      any
+      unknown
     >,
     payload: TPayload
   ): Observable<ReduxAction>;
@@ -87,15 +69,9 @@ export interface Effect<
 export type EffectWithOperator<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, TSelectors>,
+  TSelectors extends Selectors<TDependencies, TState, any>,
   TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<
-    TDependencies,
-    TState,
-    TSelectors,
-    TReducers,
-    TEffects
-  >,
+  TEffects extends Effects<TDependencies, TState, any, any, any>,
   TPayload
 > = [
   Effect<TDependencies, TState, TSelectors, TReducers, TEffects, TPayload>,
@@ -105,15 +81,9 @@ export type EffectWithOperator<
 export interface Effects<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, TSelectors>,
+  TSelectors extends Selectors<TDependencies, TState, any>,
   TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<
-    TDependencies,
-    TState,
-    TSelectors,
-    TReducers,
-    TEffects
-  >
+  TEffects extends Effects<TDependencies, TState, any, any, any>
 > {
   [type: string]:
     | Effect<TDependencies, TState, TSelectors, TReducers, TEffects, any>

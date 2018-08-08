@@ -10,7 +10,7 @@ export interface Action<TPayload> {
     type: string;
     payload: TPayload;
 }
-export declare type ExtractActionPayload<T extends Action<any> | Reducer<any, any, any> | Effect<any, any, any, any, any, any> | EffectWithOperator<any, any, any, any, any, any>> = T extends Action<infer TPayload> | Reducer<any, any, infer TPayload> | Effect<any, any, any, any, any, infer TPayload> | EffectWithOperator<any, any, any, any, any, infer TPayload> ? TPayload : any;
+export declare type ExtractActionPayload<T extends Action<any> | Reducer<any, any, any> | Effect<any, any, any, any, any, any> | EffectWithOperator<any, any, any, any, any, any>> = T extends Action<infer TPayload> | Reducer<any, any, infer TPayload> | Effect<any, any, any, any, any, infer TPayload> | EffectWithOperator<any, any, any, any, any, infer TPayload> ? TPayload : never;
 export interface ActionHelper<TPayload> {
     (payload: TPayload): Action<TPayload>;
     type: string;
@@ -20,6 +20,6 @@ export declare function createActionHelper<TPayload>(type: string): ActionHelper
 export declare type ActionHelpers<T extends Reducers<any, any> | Effects<any, any, any, any, any>> = {
     [K in keyof T]: ActionHelper<ExtractActionPayload<T[K]>>;
 };
-export declare type ModelActionHelpers<TModel extends Model> = ActionHelpers<TModel["reducers"] & TModel["effects"]> & {
-    [K in keyof TModel["models"]]: TModel["models"][K] extends Model ? ModelActionHelpers<TModel["models"][K]> : never;
+export declare type ModelActionHelpers<TModel extends Model<any, any, any, any, any, any>> = ActionHelpers<TModel["reducers"] & TModel["effects"]> & {
+    [K in keyof TModel["models"]]: TModel["models"][K] extends Model<any, any, any, any, any, any> ? ModelActionHelpers<TModel["models"][K]> : never;
 };
