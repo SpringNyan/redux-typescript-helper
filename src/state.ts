@@ -1,4 +1,4 @@
-import { Model } from "./model";
+import { Model, Models } from "./model";
 import { StoreHelperDependencies } from "./store";
 
 export type State<TDependencies, TState> =
@@ -15,16 +15,10 @@ export type ExtractState<
 
 export type ModelState<
   TModel extends Model<any, any, any, any, any, any>
-> = ExtractState<TModel> &
-  {
-    [K in keyof TModel["models"]]: TModel["models"][K] extends Model<
-      any,
-      any,
-      any,
-      any,
-      any,
-      any
-    >
-      ? ModelState<TModel["models"][K]>
-      : never
-  };
+> = ExtractState<TModel> & ModelsState<TModel["models"]>;
+
+export type ModelsState<TModels extends Models<any>> = {
+  [K in keyof TModels]: TModels[K] extends Model<any, any, any, any, any, any>
+    ? ModelState<TModels[K]>
+    : never
+};

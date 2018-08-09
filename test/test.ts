@@ -164,6 +164,12 @@ describe("redux-typescript-helper", () => {
       user: userModel,
       entities: entitiesModel
     })
+    .selectors({
+      username: ({ state }) => state.user.username
+    })
+    .effects({
+      increaseCount: ({ actions }) => of(actions.entities.increaseCount({}))
+    })
     .create();
 
   const storeHelperFactory = createStoreHelperFactory(

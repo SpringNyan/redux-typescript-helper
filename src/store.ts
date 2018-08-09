@@ -401,7 +401,7 @@ function registerModelEpics<TDependencies, TModel extends Model<TDependencies>>(
   const getters = getSubProperty(rootGetters, namespaces)!;
 
   for (const key of Object.keys(model.effects)) {
-    let effect: Effect<any, any, any, any, any, any>;
+    let effect: Effect<any, any, any, any, any, any, any>;
     let operator = mergeMap;
 
     const effectWithOperator = model.effects[key];

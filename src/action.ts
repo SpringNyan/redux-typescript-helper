@@ -1,6 +1,6 @@
 import { Reducer, Reducers } from "./reducer";
 import { Effect, EffectWithOperator, Effects } from "./epic";
-import { Model } from "./model";
+import { Model, Models } from "./model";
 
 export const actionTypes = {
   register: "@@REGISTER",
@@ -17,13 +17,13 @@ export type ExtractActionPayload<
   T extends
     | Action<any>
     | Reducer<any, any, any>
-    | Effect<any, any, any, any, any, any>
-    | EffectWithOperator<any, any, any, any, any, any>
+    | Effect<any, any, any, any, any, any, any>
+    | EffectWithOperator<any, any, any, any, any, any, any>
 > = T extends
   | Action<infer TPayload>
   | Reducer<any, any, infer TPayload>
-  | Effect<any, any, any, any, any, infer TPayload>
-  | EffectWithOperator<any, any, any, any, any, infer TPayload>
+  | Effect<any, any, any, any, any, any, infer TPayload>
+  | EffectWithOperator<any, any, any, any, any, any, infer TPayload>
   ? TPayload
   : never;
 
@@ -52,21 +52,16 @@ export function createActionHelper<TPayload>(
 }
 
 export type ActionHelpers<
-  T extends Reducers<any, any> | Effects<any, any, any, any, any>
+  T extends Reducers<any, any> | Effects<any, any, any, any, any, any>
 > = { [K in keyof T]: ActionHelper<ExtractActionPayload<T[K]>> };
 
 export type ModelActionHelpers<
   TModel extends Model<any, any, any, any, any, any>
 > = ActionHelpers<TModel["reducers"] & TModel["effects"]> &
-  {
-    [K in keyof TModel["models"]]: TModel["models"][K] extends Model<
-      any,
-      any,
-      any,
-      any,
-      any,
-      any
-    >
-      ? ModelActionHelpers<TModel["models"][K]>
-      : never
-  };
+  ModelsActionHelpers<TModel["models"]>;
+
+export type ModelsActionHelpers<TModels extends Models<any>> = {
+  [K in keyof TModels]: TModels[K] extends Model<any, any, any, any, any, any>
+    ? ModelActionHelpers<TModels[K]>
+    : never
+};

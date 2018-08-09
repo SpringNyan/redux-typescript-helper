@@ -2,36 +2,39 @@ import { Observable, OperatorFunction } from "rxjs";
 import { Action as ReduxAction, Dispatch } from "redux";
 import { ActionsObservable, StateObservable } from "redux-observable";
 
-import { Action, ActionHelpers } from "./action";
-import { Selectors, Getters } from "./selector";
+import { ModelsState } from "./state";
+import { Action, ActionHelpers, ModelsActionHelpers } from "./action";
+import { Selectors, Getters, ModelsGetters } from "./selector";
 import { Reducers } from "./reducer";
+import { Models } from "./model";
 import { StoreHelperDependencies } from "./store";
 
 export interface EpicContext<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, any>,
+  TSelectors extends Selectors<TDependencies, TState, any, any>,
   TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<TDependencies, TState, any, any, any>,
-  TPayload
+  TEffects extends Effects<TDependencies, TState, any, any, any, any>,
+  TModels extends Models<TDependencies>
 > {
-  action$: ActionsObservable<Action<TPayload>>;
+  action$: ActionsObservable<Action<unknown>>;
   rootAction$: ActionsObservable<ReduxAction>;
-  state$: StateObservable<TState>;
+  state$: StateObservable<TState & ModelsState<TModels>>;
   rootState$: StateObservable<unknown>;
-  actions: ActionHelpers<TReducers & TEffects>;
-  rootActions: {};
-  getters: Getters<TSelectors>;
-  rootGetters: {};
+  actions: ActionHelpers<TReducers & TEffects> & ModelsActionHelpers<TModels>;
+  rootActions: unknown;
+  getters: Getters<TSelectors> & ModelsGetters<TModels>;
+  rootGetters: unknown;
   dependencies: StoreHelperDependencies<TDependencies>;
 }
 
 export interface Epic<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, any>,
+  TSelectors extends Selectors<TDependencies, TState, any, any>,
   TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<TDependencies, TState, any, any, any>
+  TEffects extends Effects<TDependencies, TState, any, any, any, any>,
+  TModels extends Models<TDependencies>
 > {
   (
     context: EpicContext<
@@ -40,7 +43,7 @@ export interface Epic<
       TSelectors,
       TReducers,
       TEffects,
-      unknown
+      TModels
     >
   ): Observable<ReduxAction>;
 }
@@ -48,9 +51,10 @@ export interface Epic<
 export interface Effect<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, any>,
+  TSelectors extends Selectors<TDependencies, TState, any, any>,
   TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<TDependencies, TState, any, any, any>,
+  TEffects extends Effects<TDependencies, TState, any, any, any, any>,
+  TModels extends Models<TDependencies>,
   TPayload
 > {
   (
@@ -60,7 +64,7 @@ export interface Effect<
       TSelectors,
       TReducers,
       TEffects,
-      unknown
+      TModels
     >,
     payload: TPayload
   ): Observable<ReduxAction>;
@@ -69,30 +73,49 @@ export interface Effect<
 export type EffectWithOperator<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, any>,
+  TSelectors extends Selectors<TDependencies, TState, any, any>,
   TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<TDependencies, TState, any, any, any>,
+  TEffects extends Effects<TDependencies, TState, any, any, any, any>,
+  TModels extends Models<TDependencies>,
   TPayload
 > = [
-  Effect<TDependencies, TState, TSelectors, TReducers, TEffects, TPayload>,
+  Effect<
+    TDependencies,
+    TState,
+    TSelectors,
+    TReducers,
+    TEffects,
+    TModels,
+    TPayload
+  >,
   (...args: any[]) => OperatorFunction<Action<TPayload>, Action<TPayload>>
 ];
 
 export interface Effects<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, any>,
+  TSelectors extends Selectors<TDependencies, TState, any, any>,
   TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<TDependencies, TState, any, any, any>
+  TEffects extends Effects<TDependencies, TState, any, any, any, any>,
+  TModels extends Models<TDependencies>
 > {
   [type: string]:
-    | Effect<TDependencies, TState, TSelectors, TReducers, TEffects, any>
+    | Effect<
+        TDependencies,
+        TState,
+        TSelectors,
+        TReducers,
+        TEffects,
+        TModels,
+        any
+      >
     | EffectWithOperator<
         TDependencies,
         TState,
         TSelectors,
         TReducers,
         TEffects,
+        TModels,
         any
       >;
 }

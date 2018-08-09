@@ -8,18 +8,20 @@ import { Effects, Epic } from "./epic";
 export interface Model<
   TDependencies = any,
   TState = any,
-  TSelectors extends Selectors<TDependencies, TState, any> = Selectors<
+  TSelectors extends Selectors<TDependencies, TState, any, any> = Selectors<
     TDependencies,
     TState,
+    any,
     any
   >,
   TReducers extends Reducers<TDependencies, TState> = Reducers<
     TDependencies,
     TState
   >,
-  TEffects extends Effects<TDependencies, TState, any, any, any> = Effects<
+  TEffects extends Effects<TDependencies, TState, any, any, any, any> = Effects<
     TDependencies,
     TState,
+    any,
     any,
     any,
     any
@@ -30,7 +32,7 @@ export interface Model<
   selectors: TSelectors;
   reducers: TReducers;
   effects: TEffects;
-  epics: Array<Epic<TDependencies, TState, any, any, any>>;
+  epics: Array<Epic<TDependencies, TState, any, any, any, any>>;
   models: TModels;
 }
 
@@ -41,23 +43,29 @@ export type Models<TDependencies> = {
 export class ModelFactory<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState, any>,
+  TSelectors extends Selectors<TDependencies, TState, any, any>,
   TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<TDependencies, TState, any, any, any>,
+  TEffects extends Effects<TDependencies, TState, any, any, any, any>,
   TModels extends Models<TDependencies>
 > {
   private readonly _state: State<TDependencies, TState>;
-  private _selectors: Selectors<TDependencies, TState, TSelectors> = {};
+  private _selectors: Selectors<
+    TDependencies,
+    TState,
+    TSelectors,
+    TModels
+  > = {};
   private _reducers: Reducers<TDependencies, TState> = {};
   private _effects: Effects<
     TDependencies,
     TState,
     TSelectors,
     TReducers,
-    TEffects
+    TEffects,
+    TModels
   > = {};
   private _epics: Array<
-    Epic<TDependencies, TState, TSelectors, TReducers, TEffects>
+    Epic<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>
   > = [];
   private _models: Models<TDependencies> = {};
 
@@ -65,11 +73,18 @@ export class ModelFactory<
     this._state = state;
   }
 
-  public selectors<T extends Selectors<TDependencies, TState, TSelectors>>(
+  public selectors<
+    T extends Selectors<TDependencies, TState, TSelectors, TModels>
+  >(
     selectors:
       | T
       | ((
-          selectorCreator: SelectorCreator<TDependencies, TState, TSelectors>
+          selectorCreator: SelectorCreator<
+            TDependencies,
+            TState,
+            TSelectors,
+            TModels
+          >
         ) => T)
   ): ModelFactory<
     TDependencies,
@@ -85,7 +100,7 @@ export class ModelFactory<
 
     this._selectors = {
       ...this._selectors,
-      ...(selectors as Selectors<TDependencies, TState, TSelectors>)
+      ...(selectors as Selectors<TDependencies, TState, TSelectors, TModels>)
     };
 
     return this as any;
@@ -110,7 +125,14 @@ export class ModelFactory<
   }
 
   public effects<
-    T extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects>
+    T extends Effects<
+      TDependencies,
+      TState,
+      TSelectors,
+      TReducers,
+      TEffects,
+      TModels
+    >
   >(
     effects: T
   ): ModelFactory<
@@ -128,7 +150,8 @@ export class ModelFactory<
         TState,
         TSelectors,
         TReducers,
-        TEffects
+        TEffects,
+        TModels
       >)
     };
 
@@ -136,7 +159,9 @@ export class ModelFactory<
   }
 
   public epics(
-    epics: Array<Epic<TDependencies, TState, TSelectors, TReducers, TEffects>>
+    epics: Array<
+      Epic<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>
+    >
   ): ModelFactory<
     TDependencies,
     TState,
