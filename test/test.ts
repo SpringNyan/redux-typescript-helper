@@ -83,6 +83,8 @@ describe("redux-typescript-helper", () => {
           { actions, dependencies },
           payload: { username: string; password: string }
         ) => {
+          expect(actions.namespace).eq("user");
+
           return of(
             actions.login({
               id: 233,

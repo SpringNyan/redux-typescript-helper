@@ -335,7 +335,9 @@ function createModelActionHelpers<TModel extends Model>(
   model: TModel,
   namespaces: string[]
 ): ModelActionHelpers<TModel> {
-  const actions = {} as any;
+  const actions = {
+    namespace: namespaces.join("/")
+  } as any;
 
   for (const key of [
     ...Object.keys(model.reducers),

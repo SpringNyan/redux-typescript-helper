@@ -1,6 +1,6 @@
 {
   "name": "redux-typescript-helper",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "Helper for Redux with TypeScript",
   "authors": "SpringNyan",
   "license": "MIT",

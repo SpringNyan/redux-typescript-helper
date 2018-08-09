@@ -53,7 +53,9 @@ export function createActionHelper<TPayload>(
 
 export type ActionHelpers<
   T extends Reducers<any, any> | Effects<any, any, any, any, any, any>
-> = { [K in keyof T]: ActionHelper<ExtractActionPayload<T[K]>> };
+> = { [K in keyof T]: ActionHelper<ExtractActionPayload<T[K]>> } & {
+  namespace: string;
+};
 
 export type ModelActionHelpers<
   TModel extends Model<any, any, any, any, any, any>
