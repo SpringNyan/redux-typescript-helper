@@ -12,7 +12,7 @@ export interface EpicContext<TDependencies, TState, TSelectors extends Selectors
     rootAction$: ActionsObservable<ReduxAction>;
     state$: StateObservable<TState & ModelsState<TModels>>;
     rootState$: StateObservable<unknown>;
-    actions: ActionHelpers<TReducers & TEffects> & ModelsActionHelpers<TModels>;
+    actions: ActionHelpers<TReducers> & ActionHelpers<TEffects> & ModelsActionHelpers<TModels>;
     rootActions: unknown;
     getters: Getters<TSelectors> & ModelsGetters<TModels>;
     rootGetters: unknown;

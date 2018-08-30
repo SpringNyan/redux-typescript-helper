@@ -59,7 +59,8 @@ export type ActionHelpers<
 
 export type ModelActionHelpers<
   TModel extends Model<any, any, any, any, any, any>
-> = ActionHelpers<TModel["reducers"] & TModel["effects"]> &
+> = ActionHelpers<TModel["reducers"]> &
+  ActionHelpers<TModel["effects"]> &
   ModelsActionHelpers<TModel["models"]>;
 
 export type ModelsActionHelpers<TModels extends Models<any>> = {
