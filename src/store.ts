@@ -146,6 +146,7 @@ export class StoreHelperFactory<
       this._model,
       [],
       this._actions,
+      this._actions,
       this._getters,
       this._getters,
       this._addEpic$,
@@ -181,6 +182,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
   private readonly _dependencies: StoreHelperDependencies<TDependencies>;
   private readonly _namespaces: string[];
   private readonly _actions: ModelActionHelpers<TModel>;
+  private readonly _rootActions: ModelActionHelpers<Model<TDependencies>>;
   private readonly _getters: ModelGetters<TModel>;
   private readonly _rootGetters: ModelGetters<Model<TDependencies>>;
   private readonly _addEpic$: BehaviorSubject<ReduxObservableEpic>;
@@ -195,6 +197,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     model: TModel,
     namespaces: string[],
     actions: ModelActionHelpers<TModel>,
+    rootActions: ModelActionHelpers<Model<TDependencies>>,
     getters: ModelGetters<TModel>,
     rootGetters: ModelGetters<Model<TDependencies>>,
     addEpic$: BehaviorSubject<ReduxObservableEpic>,
@@ -205,6 +208,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     this._model = model;
     this._namespaces = namespaces;
     this._actions = actions;
+    this._rootActions = rootActions;
     this._getters = getters;
     this._rootGetters = rootGetters;
     this._addEpic$ = addEpic$;
@@ -268,8 +272,8 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
       createModelRootEpic(
         model,
         namespaces,
-        this.actions[namespace],
-        this.getters[namespace],
+        this._rootActions,
+        this._rootGetters,
         this._dependencies,
         { errorHandler: this._options.epicErrorHandler }
       )
@@ -309,6 +313,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
       this._model.models[namespace],
       [...this._namespaces, namespace],
       this._actions[namespace],
+      this._rootActions,
       this._getters[namespace],
       this._rootGetters,
       this._addEpic$,
@@ -483,20 +488,20 @@ function createModelRootEpic<
 >(
   model: TModel,
   namespaces: string[],
-  actions: ModelActionHelpers<TModel>,
-  getters: ModelGetters<TModel>,
+  rootActions: ModelActionHelpers<Model<TDependencies>>,
+  rootGetters: ModelGetters<Model<TDependencies>>,
   dependencies: StoreHelperDependencies<TDependencies>,
   options: CreateModelRootEpicOptions
 ): ReduxObservableEpic<ReduxAction, ReduxAction> {
-  return (action$, state$) =>
+  return (rootAction$, rootState$) =>
     merge(
       ...registerModelEpics(
         model,
         namespaces,
-        actions,
-        getters,
-        action$,
-        state$,
+        rootActions,
+        rootGetters,
+        rootAction$,
+        rootState$,
         dependencies
       ).map(
         (epic) =>
