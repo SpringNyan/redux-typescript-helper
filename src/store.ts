@@ -24,12 +24,12 @@ import {
 } from "./action";
 import { ModelGetters } from "./selector";
 import { Effect } from "./epic";
-import { Model } from "./model";
+import { Model, ExtractDynamicModel } from "./model";
 
 export type StoreHelperDependencies<TDependencies> = TDependencies & {
   $storeHelper: StoreHelper<
     TDependencies,
-    Model<TDependencies, unknown, {}, {}, {}, {}>
+    Model<TDependencies, unknown, {}, {}, {}, {}, never>
   >;
 };
 
@@ -170,20 +170,13 @@ interface StoreHelperInternal<
   namespace<K extends Extract<keyof TModel["models"], string>>(
     namespace: K
   ): StoreHelper<TDependencies, TModel["models"][K]>;
-  namespace<
-    T extends Model<TDependencies> = Model<
-      TDependencies,
-      unknown,
-      {},
-      {},
-      {},
-      {}
-    >
-  >(
+  namespace<T extends ExtractDynamicModel<TModel>>(
     namespace: string
-  ): StoreHelper<TDependencies, T>;
+  ): T extends Model<any, any, any, any, any, any, any>
+    ? StoreHelper<TDependencies, T>
+    : never;
 
-  registerModel<T extends Model<TDependencies>>(
+  registerModel<T extends ExtractDynamicModel<TModel>>(
     namespace: string,
     model: T
   ): void;
@@ -251,16 +244,9 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
   public namespace<K extends Extract<keyof TModel["models"], string>>(
     namespace: K
   ): StoreHelper<TDependencies, TModel["models"][K]>;
-  public namespace<
-    T extends Model<TDependencies> = Model<
-      TDependencies,
-      unknown,
-      {},
-      {},
-      {},
-      {}
-    >
-  >(namespace: string): StoreHelper<TDependencies, T>;
+  public namespace<T extends ExtractDynamicModel<TModel>>(
+    namespace: string
+  ): StoreHelper<TDependencies, T>;
   public namespace(
     namespace: string
   ): StoreHelperInternal<TDependencies, Model<TDependencies>> {

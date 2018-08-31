@@ -41,8 +41,9 @@ describe("redux-typescript-helper", () => {
   }))
     .selectors({
       id({ dependencies }): number {
-        return dependencies.$storeHelper.namespace<typeof userModel>("user")
-          .state.id;
+        return (dependencies.$storeHelper as typeof storeHelper).namespace(
+          "user"
+        ).state.id;
       },
       idAndName({ state }) {
         return `${state.id} - ${state.username}`;
@@ -106,6 +107,7 @@ describe("redux-typescript-helper", () => {
     itemById: {} as { [id: number]: Item },
     count: 0
   })
+    .dynamicModel<typeof userModel>()
     .selectors((createSelector) => ({
       allItems: createSelector(
         ({ state }) => state.itemById,
@@ -251,29 +253,22 @@ describe("redux-typescript-helper", () => {
     store.dispatch(entitiesHelper.actions.increaseWithError({}));
     expect(entitiesHelper.state.count).eq(3);
 
-    entitiesHelper.registerModel("temp", entitiesModel);
-    const tempHelper = entitiesHelper.namespace<typeof entitiesModel>("temp");
+    entitiesHelper.registerModel("temp", userModel);
+    const tempHelper = entitiesHelper.namespace("temp");
 
-    expect(entitiesHelper.state.itemById[2].title).eq("def");
-    expect(tempHelper.state.itemById[2]).eq(undefined);
+    expect(tempHelper.state.username).eq("");
     store.dispatch(
-      tempHelper.actions.addItem({
-        id: 2,
-        title: "wow",
-        done: false
+      tempHelper.actions.login({
+        id: 10000,
+        username: "wow",
+        token: "",
+        about: ""
       })
     );
-    expect(entitiesHelper.state.itemById[2].title).eq("def");
-    expect(tempHelper.state.itemById[2].title).eq("wow");
-    expect((entitiesHelper.state as any)["temp"].itemById[2].title).eq("wow");
-    store.dispatch(
-      (entitiesHelper.actions as any)["temp"].addItem({
-        id: 2,
-        title: "orz",
-        done: true
-      })
-    );
-    expect(tempHelper.state.itemById[2].title).eq("orz");
+    expect(tempHelper.state.username).eq("wow");
+    expect((entitiesHelper.state as any)["temp"].username).eq("wow");
+    store.dispatch((entitiesHelper.actions as any)["temp"].logout());
+    expect(tempHelper.state.username).eq("");
 
     entitiesHelper.unregisterModel("temp");
     expect((entitiesHelper.state as any)["temp"]).eq(undefined);

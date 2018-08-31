@@ -26,7 +26,8 @@ export interface Model<
     any,
     any
   >,
-  TModels extends Models<TDependencies> = Models<TDependencies>
+  TModels extends Models<TDependencies> = Models<TDependencies>,
+  TDynamicModel extends Model<TDependencies> | never = never
 > {
   state: State<TDependencies, TState>;
   selectors: TSelectors;
@@ -40,13 +41,20 @@ export type Models<TDependencies> = {
   [key: string]: Model<TDependencies>;
 };
 
+export type ExtractDynamicModel<
+  TModel extends Model<any, any, any, any, any, any, any>
+> = TModel extends Model<any, any, any, any, any, any, infer TDynamicModel>
+  ? TDynamicModel
+  : never;
+
 export class ModelFactory<
   TDependencies,
   TState,
   TSelectors extends Selectors<TDependencies, TState, any, any>,
   TReducers extends Reducers<TDependencies, TState>,
   TEffects extends Effects<TDependencies, TState, any, any, any, any>,
-  TModels extends Models<TDependencies>
+  TModels extends Models<TDependencies>,
+  TDynamicModel extends Model<TDependencies> | never
 > {
   private readonly _state: State<TDependencies, TState>;
   private _selectors: Selectors<
@@ -73,6 +81,28 @@ export class ModelFactory<
     this._state = state;
   }
 
+  public dynamicModel<
+    T extends Model<TDependencies> = Model<
+      TDependencies,
+      unknown,
+      {},
+      {},
+      {},
+      {},
+      never
+    >
+  >(): ModelFactory<
+    TDependencies,
+    TState,
+    TSelectors,
+    TReducers,
+    TEffects,
+    TModels,
+    T
+  > {
+    return this as any;
+  }
+
   public selectors<
     T extends Selectors<TDependencies, TState, TSelectors, TModels>
   >(
@@ -92,7 +122,8 @@ export class ModelFactory<
     TSelectors & T,
     TReducers,
     TEffects,
-    TModels
+    TModels,
+    TDynamicModel
   > {
     if (typeof selectors === "function") {
       selectors = selectors(createSelector);
@@ -114,7 +145,8 @@ export class ModelFactory<
     TSelectors,
     TReducers & T,
     TEffects,
-    TModels
+    TModels,
+    TDynamicModel
   > {
     this._reducers = {
       ...this._reducers,
@@ -141,7 +173,8 @@ export class ModelFactory<
     TSelectors,
     TReducers,
     TEffects & T,
-    TModels
+    TModels,
+    TDynamicModel
   > {
     this._effects = {
       ...this._effects,
@@ -168,7 +201,8 @@ export class ModelFactory<
     TSelectors,
     TReducers,
     TEffects,
-    TModels
+    TModels,
+    TDynamicModel
   > {
     this._epics = [...this._epics, ...epics];
 
@@ -183,7 +217,8 @@ export class ModelFactory<
     TSelectors,
     TReducers,
     TEffects,
-    TModels & T
+    TModels & T,
+    TDynamicModel
   > {
     this._models = {
       ...this._models,
@@ -199,7 +234,8 @@ export class ModelFactory<
     TSelectors,
     TReducers,
     TEffects,
-    TModels
+    TModels,
+    TDynamicModel
   > {
     return {
       state: this._state,
@@ -208,19 +244,27 @@ export class ModelFactory<
       effects: { ...this._effects },
       epics: [...this._epics],
       models: { ...this._models }
-    } as Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>;
+    } as Model<
+      TDependencies,
+      TState,
+      TSelectors,
+      TReducers,
+      TEffects,
+      TModels,
+      TDynamicModel
+    >;
   }
 }
 
 function createModelFactory<TDependencies, TState>(
   state: State<TDependencies, TState>
-): ModelFactory<TDependencies, TState, {}, {}, {}, {}> {
-  return new ModelFactory<TDependencies, TState, {}, {}, {}, {}>(state);
+): ModelFactory<TDependencies, TState, {}, {}, {}, {}, never> {
+  return new ModelFactory<TDependencies, TState, {}, {}, {}, {}, never>(state);
 }
 
 export type ModelFactoryCreator<TDependencies> = <TState>(
   state: State<TDependencies, TState>
-) => ModelFactory<TDependencies, TState, {}, {}, {}, {}>;
+) => ModelFactory<TDependencies, TState, {}, {}, {}, {}, never>;
 
 export function createModelFactoryCreator<TDependencies>(): ModelFactoryCreator<
   TDependencies

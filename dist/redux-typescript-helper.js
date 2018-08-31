@@ -223,6 +223,9 @@ var ModelFactory = /** @class */ (function () {
         this._models = {};
         this._state = state;
     }
+    ModelFactory.prototype.dynamicModel = function () {
+        return this;
+    };
     ModelFactory.prototype.selectors = function (selectors) {
         if (typeof selectors === "function") {
             selectors = selectors(reselect__WEBPACK_IMPORTED_MODULE_0__["createSelector"]);

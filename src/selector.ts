@@ -121,7 +121,7 @@ export type Getters<T extends Selectors<any, any, any, any>> = {
 };
 
 export type ModelGetters<
-  TModel extends Model<any, any, any, any, any, any>
+  TModel extends Model<any, any, any, any, any, any, any>
 > = Getters<TModel["selectors"]> &
   ModelsGetters<TModel["models"]> & {
     $namespace: string;
@@ -132,7 +132,15 @@ export type ModelGetters<
   };
 
 export type ModelsGetters<TModels extends Models<any>> = {
-  [K in keyof TModels]: TModels[K] extends Model<any, any, any, any, any, any>
+  [K in keyof TModels]: TModels[K] extends Model<
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
     ? ModelGetters<TModels[K]>
     : never
 };

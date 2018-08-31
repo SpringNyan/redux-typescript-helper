@@ -56,7 +56,7 @@ export type ActionHelpers<
 > = { [K in keyof T]: ActionHelper<ExtractActionPayload<T[K]>> };
 
 export type ModelActionHelpers<
-  TModel extends Model<any, any, any, any, any, any>
+  TModel extends Model<any, any, any, any, any, any, any>
 > = ActionHelpers<TModel["reducers"]> &
   ActionHelpers<TModel["effects"]> &
   ModelsActionHelpers<TModel["models"]> & {
@@ -67,7 +67,15 @@ export type ModelActionHelpers<
   };
 
 export type ModelsActionHelpers<TModels extends Models<any>> = {
-  [K in keyof TModels]: TModels[K] extends Model<any, any, any, any, any, any>
+  [K in keyof TModels]: TModels[K] extends Model<
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
     ? ModelActionHelpers<TModels[K]>
     : never
 };

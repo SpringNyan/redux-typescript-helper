@@ -4,9 +4,9 @@ import { Epic as ReduxObservableEpic } from "redux-observable";
 import { ModelState } from "./state";
 import { ModelActionHelpers } from "./action";
 import { ModelGetters } from "./selector";
-import { Model } from "./model";
+import { Model, ExtractDynamicModel } from "./model";
 export declare type StoreHelperDependencies<TDependencies> = TDependencies & {
-    $storeHelper: StoreHelper<TDependencies, Model<TDependencies, unknown, {}, {}, {}, {}>>;
+    $storeHelper: StoreHelper<TDependencies, Model<TDependencies, unknown, {}, {}, {}, {}, never>>;
 };
 export interface StoreHelperOptions {
     epicErrorHandler?: (err: any, caught: Observable<ReduxAction>) => Observable<ReduxAction>;
@@ -36,8 +36,8 @@ interface StoreHelperInternal<TDependencies, TModel extends Model<TDependencies>
     actions: ModelActionHelpers<TModel>;
     getters: ModelGetters<TModel>;
     namespace<K extends Extract<keyof TModel["models"], string>>(namespace: K): StoreHelper<TDependencies, TModel["models"][K]>;
-    namespace<T extends Model<TDependencies> = Model<TDependencies, unknown, {}, {}, {}, {}>>(namespace: string): StoreHelper<TDependencies, T>;
-    registerModel<T extends Model<TDependencies>>(namespace: string, model: T): void;
+    namespace<T extends ExtractDynamicModel<TModel>>(namespace: string): T extends Model<any, any, any, any, any, any, any> ? StoreHelper<TDependencies, T> : never;
+    registerModel<T extends ExtractDynamicModel<TModel>>(namespace: string, model: T): void;
     unregisterModel(namespace: string): void;
 }
 export {};

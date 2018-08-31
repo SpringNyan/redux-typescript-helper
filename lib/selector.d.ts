@@ -27,7 +27,7 @@ export declare type ExtractSelectorResult<T extends Selector<any, any, any, any,
 export declare type Getters<T extends Selectors<any, any, any, any>> = {
     [K in keyof T]: ExtractSelectorResult<T[K]>;
 };
-export declare type ModelGetters<TModel extends Model<any, any, any, any, any, any>> = Getters<TModel["selectors"]> & ModelsGetters<TModel["models"]> & {
+export declare type ModelGetters<TModel extends Model<any, any, any, any, any, any, any>> = Getters<TModel["selectors"]> & ModelsGetters<TModel["models"]> & {
     $namespace: string;
     $state: ModelState<TModel>;
     $rootState: unknown;
@@ -35,5 +35,5 @@ export declare type ModelGetters<TModel extends Model<any, any, any, any, any, a
     $root: unknown;
 };
 export declare type ModelsGetters<TModels extends Models<any>> = {
-    [K in keyof TModels]: TModels[K] extends Model<any, any, any, any, any, any> ? ModelGetters<TModels[K]> : never;
+    [K in keyof TModels]: TModels[K] extends Model<any, any, any, any, any, any, any> ? ModelGetters<TModels[K]> : never;
 };
