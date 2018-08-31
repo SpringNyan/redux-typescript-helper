@@ -20,7 +20,10 @@ import { Effect } from "./epic";
 import { Model } from "./model";
 
 export type StoreHelperDependencies<TDependencies> = TDependencies & {
-  storeHelper: StoreHelper<TDependencies, Model<TDependencies>>;
+  $storeHelper: StoreHelper<
+    TDependencies,
+    Model<TDependencies, unknown, {}, {}, {}, {}>
+  >;
 };
 
 export interface StoreHelperOptions {
@@ -30,35 +33,12 @@ export interface StoreHelperOptions {
   ) => Observable<ReduxAction>;
 }
 
-export interface StoreHelper<
+export type StoreHelper<
   TDependencies,
   TModel extends Model<TDependencies>
-> {
-  store: Store;
-  state: ModelState<TModel>;
-  actions: ModelActionHelpers<TModel>;
-  getters: ModelGetters<TModel>;
-
-  namespace<K extends Extract<keyof TModel["models"], string>>(
-    namespace: K
-  ): StoreHelperWithNamespaces<TDependencies, TModel["models"][K]>;
-  namespace<T extends Model<TDependencies>>(
-    namespace: string
-  ): StoreHelperWithNamespaces<TDependencies, T>;
-
-  registerModel<T extends Model<TDependencies>>(
-    namespace: string,
-    model: T
-  ): void;
-  unregisterModel(namespace: string): void;
-}
-
-export type StoreHelperWithNamespaces<
-  TDependencies,
-  TModel extends Model<TDependencies>
-> = StoreHelper<TDependencies, TModel> &
+> = StoreHelperInternal<TDependencies, TModel> &
   {
-    [K in keyof TModel["models"]]: StoreHelperWithNamespaces<
+    [K in keyof TModel["models"]]: StoreHelper<
       TDependencies,
       TModel["models"][K]
     >
@@ -100,7 +80,7 @@ export class StoreHelperFactory<
 
     this._reducer = createModelReducer(model, dependencies);
 
-    this._actions = createModelActionHelpers(model, []);
+    this._actions = createModelActionHelpers(model, [], null);
     this._getters = createModelGetters(
       model,
       () => this._store!.getState(),
@@ -132,9 +112,7 @@ export class StoreHelperFactory<
     return this._epic;
   }
 
-  public create(
-    store: Store
-  ): StoreHelperWithNamespaces<TDependencies, TModel> {
+  public create(store: Store): StoreHelper<TDependencies, TModel> {
     if (this._store != null) {
       throw new Error("Store helper is already created");
     }
@@ -146,15 +124,13 @@ export class StoreHelperFactory<
       this._model,
       [],
       this._actions,
-      this._actions,
-      this._getters,
       this._getters,
       this._addEpic$,
       this._dependencies,
       this._options
     );
 
-    this._dependencies.storeHelper = storeHelper;
+    this._dependencies.$storeHelper = storeHelper;
 
     return storeHelper as any;
   }
@@ -175,21 +151,54 @@ export function createStoreHelperFactory<
   return new StoreHelperFactory(model, dependencies, options);
 }
 
+interface StoreHelperInternal<
+  TDependencies,
+  TModel extends Model<TDependencies>
+> {
+  store: Store;
+  state: ModelState<TModel>;
+  actions: ModelActionHelpers<TModel>;
+  getters: ModelGetters<TModel>;
+
+  namespace<K extends Extract<keyof TModel["models"], string>>(
+    namespace: K
+  ): StoreHelper<TDependencies, TModel["models"][K]>;
+  namespace<
+    T extends Model<TDependencies> = Model<
+      TDependencies,
+      unknown,
+      {},
+      {},
+      {},
+      {}
+    >
+  >(
+    namespace: string
+  ): StoreHelper<TDependencies, T>;
+
+  registerModel<T extends Model<TDependencies>>(
+    namespace: string,
+    model: T
+  ): void;
+  unregisterModel(namespace: string): void;
+}
+
 class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
-  implements StoreHelper<TDependencies, TModel> {
+  implements StoreHelperInternal<TDependencies, TModel> {
   private readonly _store: Store;
   private readonly _model: TModel;
   private readonly _dependencies: StoreHelperDependencies<TDependencies>;
   private readonly _namespaces: string[];
   private readonly _actions: ModelActionHelpers<TModel>;
-  private readonly _rootActions: ModelActionHelpers<Model<TDependencies>>;
   private readonly _getters: ModelGetters<TModel>;
-  private readonly _rootGetters: ModelGetters<Model<TDependencies>>;
   private readonly _addEpic$: BehaviorSubject<ReduxObservableEpic>;
   private readonly _options: StoreHelperOptions;
 
   private readonly _subStoreHelpers: {
-    [namespace: string]: StoreHelper<TDependencies, Model<TDependencies>>;
+    [namespace: string]: StoreHelperInternal<
+      TDependencies,
+      Model<TDependencies>
+    >;
   } = {};
 
   constructor(
@@ -197,9 +206,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     model: TModel,
     namespaces: string[],
     actions: ModelActionHelpers<TModel>,
-    rootActions: ModelActionHelpers<Model<TDependencies>>,
     getters: ModelGetters<TModel>,
-    rootGetters: ModelGetters<Model<TDependencies>>,
     addEpic$: BehaviorSubject<ReduxObservableEpic>,
     dependencies: StoreHelperDependencies<TDependencies>,
     options: StoreHelperOptions
@@ -208,9 +215,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     this._model = model;
     this._namespaces = namespaces;
     this._actions = actions;
-    this._rootActions = rootActions;
     this._getters = getters;
-    this._rootGetters = rootGetters;
     this._addEpic$ = addEpic$;
     this._dependencies = dependencies;
     this._options = options;
@@ -238,13 +243,20 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
 
   public namespace<K extends Extract<keyof TModel["models"], string>>(
     namespace: K
-  ): StoreHelperWithNamespaces<TDependencies, TModel["models"][K]>;
-  public namespace<T extends Model<TDependencies>>(
-    namespace: string
-  ): StoreHelperWithNamespaces<TDependencies, T>;
+  ): StoreHelper<TDependencies, TModel["models"][K]>;
+  public namespace<
+    T extends Model<TDependencies> = Model<
+      TDependencies,
+      unknown,
+      {},
+      {},
+      {},
+      {}
+    >
+  >(namespace: string): StoreHelper<TDependencies, T>;
   public namespace(
     namespace: string
-  ): StoreHelper<TDependencies, Model<TDependencies>> {
+  ): StoreHelperInternal<TDependencies, Model<TDependencies>> {
     return this._subStoreHelpers[namespace];
   }
 
@@ -256,24 +268,22 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     const namespaces = [...this._namespaces, namespace];
 
     this._model.models[namespace] = cloneModel(model);
-    this._actions[namespace] = createModelActionHelpers(
-      model,
-      namespaces
-    ) as any;
+    this._actions[namespace] = createModelActionHelpers(model, namespaces, this
+      ._actions as any) as any;
     this._getters[namespace] = createModelGetters(
       model,
       () => this._store.getState(),
       this._dependencies,
       namespaces,
-      this._rootGetters
+      this._getters
     ) as any;
 
     this._addEpic$.next(
       createModelRootEpic(
         model,
         namespaces,
-        this._rootActions,
-        this._rootGetters,
+        this._actions.$root as any,
+        this._getters.$root as any,
         this._dependencies,
         { errorHandler: this._options.epicErrorHandler }
       )
@@ -313,9 +323,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
       this._model.models[namespace],
       [...this._namespaces, namespace],
       this._actions[namespace],
-      this._rootActions,
       this._getters[namespace],
-      this._rootGetters,
       this._addEpic$,
       this._dependencies,
       this._options
@@ -338,11 +346,18 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
 
 function createModelActionHelpers<TModel extends Model>(
   model: TModel,
-  namespaces: string[]
+  namespaces: string[],
+  parent: ModelActionHelpers<any> | null
 ): ModelActionHelpers<TModel> {
   const actions = {
-    namespace: namespaces.join("/")
+    $namespace: namespaces.join("/"),
+    $epicEnd: createActionHelper(
+      [...namespaces, actionTypes.epicEnd].join("/")
+    ),
+    $parent: parent
   } as any;
+
+  actions.$root = parent != null ? parent.$root : actions;
 
   for (const key of [
     ...Object.keys(model.reducers),
@@ -352,10 +367,11 @@ function createModelActionHelpers<TModel extends Model>(
   }
 
   for (const key of Object.keys(model.models)) {
-    actions[key] = createModelActionHelpers(model.models[key], [
-      ...namespaces,
-      key
-    ]);
+    actions[key] = createModelActionHelpers(
+      model.models[key],
+      [...namespaces, key],
+      actions
+    );
   }
 
   return actions;
@@ -568,16 +584,20 @@ function createModelGetters<TDependencies, TModel extends Model<TDependencies>>(
   getState: () => any,
   dependencies: StoreHelperDependencies<TDependencies>,
   namespaces: string[],
-  rootGetters: ModelGetters<any> | null
+  parent: ModelGetters<any> | null
 ): ModelGetters<TModel> {
-  if (rootGetters == null && namespaces.length > 0) {
-    throw new Error("rootGetters is required for creating sub model getters");
-  }
+  const getters = {
+    $namespace: namespaces.join("/"),
+    get $state() {
+      return getSubProperty(getState(), namespaces);
+    },
+    get $rootState() {
+      return getState();
+    },
+    $parent: parent
+  } as any;
 
-  const getters = {} as any;
-  if (rootGetters == null) {
-    rootGetters = getters;
-  }
+  getters.$root = parent != null ? parent.$root : getters;
 
   for (const key of Object.keys(model.selectors)) {
     Object.defineProperty(getters, key, {
@@ -589,7 +609,7 @@ function createModelGetters<TDependencies, TModel extends Model<TDependencies>>(
           state,
           rootState,
           getters,
-          rootGetters: rootGetters!,
+          rootGetters: getters.$root,
           dependencies
         });
       },
@@ -604,7 +624,7 @@ function createModelGetters<TDependencies, TModel extends Model<TDependencies>>(
       getState,
       dependencies,
       [...namespaces, key],
-      rootGetters
+      getters
     );
   }
 

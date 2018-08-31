@@ -53,15 +53,18 @@ export function createActionHelper<TPayload>(
 
 export type ActionHelpers<
   T extends Reducers<any, any> | Effects<any, any, any, any, any, any>
-> = { [K in keyof T]: ActionHelper<ExtractActionPayload<T[K]>> } & {
-  namespace: string;
-};
+> = { [K in keyof T]: ActionHelper<ExtractActionPayload<T[K]>> };
 
 export type ModelActionHelpers<
   TModel extends Model<any, any, any, any, any, any>
 > = ActionHelpers<TModel["reducers"]> &
   ActionHelpers<TModel["effects"]> &
-  ModelsActionHelpers<TModel["models"]>;
+  ModelsActionHelpers<TModel["models"]> & {
+    $namespace: string;
+    $epicEnd: ActionHelper<{}>;
+    $parent: unknown;
+    $root: unknown;
+  };
 
 export type ModelsActionHelpers<TModels extends Models<any>> = {
   [K in keyof TModels]: TModels[K] extends Model<any, any, any, any, any, any>

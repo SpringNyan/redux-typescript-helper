@@ -41,7 +41,7 @@ describe("redux-typescript-helper", () => {
   }))
     .selectors({
       id({ dependencies }): number {
-        return dependencies.storeHelper.namespace<typeof userModel>("user")
+        return dependencies.$storeHelper.namespace<typeof userModel>("user")
           .state.id;
       },
       idAndName({ state }) {
@@ -83,7 +83,7 @@ describe("redux-typescript-helper", () => {
           { actions, dependencies },
           payload: { username: string; password: string }
         ) => {
-          expect(actions.namespace).eq("user");
+          expect(actions.$namespace).eq("user");
 
           return of(
             actions.login({

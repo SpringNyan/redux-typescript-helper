@@ -326,7 +326,7 @@ var StoreHelperFactory = /** @class */ (function () {
             _loop_1(key);
         }
         this._reducer = createModelReducer(model, dependencies);
-        this._actions = createModelActionHelpers(model, []);
+        this._actions = createModelActionHelpers(model, [], null);
         this._getters = createModelGetters(model, function () { return _this._store.getState(); }, this._dependencies, [], null);
         var initialEpic = createModelRootEpic(model, [], this._actions, this._getters, this._dependencies, { errorHandler: this._options.epicErrorHandler });
         this._addEpic$ = new rxjs__WEBPACK_IMPORTED_MODULE_1__["BehaviorSubject"](initialEpic);
@@ -353,8 +353,8 @@ var StoreHelperFactory = /** @class */ (function () {
             throw new Error("Store helper is already created");
         }
         this._store = store;
-        var storeHelper = new _StoreHelper(store, this._model, [], this._actions, this._actions, this._getters, this._getters, this._addEpic$, this._dependencies, this._options);
-        this._dependencies.storeHelper = storeHelper;
+        var storeHelper = new _StoreHelper(store, this._model, [], this._actions, this._getters, this._addEpic$, this._dependencies, this._options);
+        this._dependencies.$storeHelper = storeHelper;
         return storeHelper;
     };
     return StoreHelperFactory;
@@ -367,15 +367,13 @@ function createStoreHelperFactory(model, dependencies, options) {
     return new StoreHelperFactory(model, dependencies, options);
 }
 var _StoreHelper = /** @class */ (function () {
-    function _StoreHelper(store, model, namespaces, actions, rootActions, getters, rootGetters, addEpic$, dependencies, options) {
+    function _StoreHelper(store, model, namespaces, actions, getters, addEpic$, dependencies, options) {
         this._subStoreHelpers = {};
         this._store = store;
         this._model = model;
         this._namespaces = namespaces;
         this._actions = actions;
-        this._rootActions = rootActions;
         this._getters = getters;
-        this._rootGetters = rootGetters;
         this._addEpic$ = addEpic$;
         this._dependencies = dependencies;
         this._options = options;
@@ -422,9 +420,10 @@ var _StoreHelper = /** @class */ (function () {
         }
         var namespaces = this._namespaces.concat([namespace]);
         this._model.models[namespace] = cloneModel(model);
-        this._actions[namespace] = createModelActionHelpers(model, namespaces);
-        this._getters[namespace] = createModelGetters(model, function () { return _this._store.getState(); }, this._dependencies, namespaces, this._rootGetters);
-        this._addEpic$.next(createModelRootEpic(model, namespaces, this._rootActions, this._rootGetters, this._dependencies, { errorHandler: this._options.epicErrorHandler }));
+        this._actions[namespace] = createModelActionHelpers(model, namespaces, this
+            ._actions);
+        this._getters[namespace] = createModelGetters(model, function () { return _this._store.getState(); }, this._dependencies, namespaces, this._getters);
+        this._addEpic$.next(createModelRootEpic(model, namespaces, this._actions.$root, this._getters.$root, this._dependencies, { errorHandler: this._options.epicErrorHandler }));
         this._store.dispatch({
             type: namespaces.join("/") + "/" + _action__WEBPACK_IMPORTED_MODULE_4__["actionTypes"].register
         });
@@ -448,7 +447,7 @@ var _StoreHelper = /** @class */ (function () {
     };
     _StoreHelper.prototype._registerSubStoreHelper = function (namespace) {
         var _this = this;
-        this._subStoreHelpers[namespace] = new _StoreHelper(this._store, this._model.models[namespace], this._namespaces.concat([namespace]), this._actions[namespace], this._rootActions, this._getters[namespace], this._rootGetters, this._addEpic$, this._dependencies, this._options);
+        this._subStoreHelpers[namespace] = new _StoreHelper(this._store, this._model.models[namespace], this._namespaces.concat([namespace]), this._actions[namespace], this._getters[namespace], this._addEpic$, this._dependencies, this._options);
         Object.defineProperty(this, namespace, {
             get: function () {
                 return _this.namespace(namespace);
@@ -463,19 +462,20 @@ var _StoreHelper = /** @class */ (function () {
     };
     return _StoreHelper;
 }());
-function createModelActionHelpers(model, namespaces) {
+function createModelActionHelpers(model, namespaces, parent) {
     var actions = {
-        namespace: namespaces.join("/")
+        $namespace: namespaces.join("/"),
+        $epicEnd: Object(_action__WEBPACK_IMPORTED_MODULE_4__["createActionHelper"])(namespaces.concat([_action__WEBPACK_IMPORTED_MODULE_4__["actionTypes"].epicEnd]).join("/")),
+        $parent: parent
     };
+    actions.$root = parent != null ? parent.$root : actions;
     for (var _i = 0, _a = Object.keys(model.reducers).concat(Object.keys(model.effects)); _i < _a.length; _i++) {
         var key = _a[_i];
         actions[key] = Object(_action__WEBPACK_IMPORTED_MODULE_4__["createActionHelper"])(namespaces.concat([key]).join("/"));
     }
     for (var _b = 0, _c = Object.keys(model.models); _b < _c.length; _b++) {
         var key = _c[_b];
-        actions[key] = createModelActionHelpers(model.models[key], namespaces.concat([
-            key
-        ]));
+        actions[key] = createModelActionHelpers(model.models[key], namespaces.concat([key]), actions);
     }
     return actions;
 }
@@ -589,14 +589,18 @@ function createModelReducer(model, dependencies) {
         });
     });
 }
-function createModelGetters(model, getState, dependencies, namespaces, rootGetters) {
-    if (rootGetters == null && namespaces.length > 0) {
-        throw new Error("rootGetters is required for creating sub model getters");
-    }
-    var getters = {};
-    if (rootGetters == null) {
-        rootGetters = getters;
-    }
+function createModelGetters(model, getState, dependencies, namespaces, parent) {
+    var getters = {
+        $namespace: namespaces.join("/"),
+        get $state() {
+            return getSubProperty(getState(), namespaces);
+        },
+        get $rootState() {
+            return getState();
+        },
+        $parent: parent
+    };
+    getters.$root = parent != null ? parent.$root : getters;
     var _loop_3 = function (key) {
         Object.defineProperty(getters, key, {
             get: function () {
@@ -606,7 +610,7 @@ function createModelGetters(model, getState, dependencies, namespaces, rootGette
                     state: state,
                     rootState: rootState,
                     getters: getters,
-                    rootGetters: rootGetters,
+                    rootGetters: getters.$root,
                     dependencies: dependencies
                 });
             },
@@ -620,7 +624,7 @@ function createModelGetters(model, getState, dependencies, namespaces, rootGette
     }
     for (var _b = 0, _c = Object.keys(model.models); _b < _c.length; _b++) {
         var key = _c[_b];
-        getters[key] = createModelGetters(model.models[key], getState, dependencies, namespaces.concat([key]), rootGetters);
+        getters[key] = createModelGetters(model.models[key], getState, dependencies, namespaces.concat([key]), getters);
     }
     return getters;
 }

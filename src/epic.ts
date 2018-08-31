@@ -2,11 +2,11 @@ import { Observable, OperatorFunction } from "rxjs";
 import { Action as ReduxAction, Dispatch } from "redux";
 import { ActionsObservable, StateObservable } from "redux-observable";
 
-import { ModelsState } from "./state";
-import { Action, ActionHelpers, ModelsActionHelpers } from "./action";
-import { Selectors, Getters, ModelsGetters } from "./selector";
+import { ModelState } from "./state";
+import { Action, ModelActionHelpers } from "./action";
+import { Selectors, ModelGetters } from "./selector";
 import { Reducers } from "./reducer";
-import { Models } from "./model";
+import { Model, Models } from "./model";
 import { StoreHelperDependencies } from "./store";
 
 export interface EpicContext<
@@ -19,13 +19,19 @@ export interface EpicContext<
 > {
   action$: ActionsObservable<Action<unknown>>;
   rootAction$: ActionsObservable<ReduxAction>;
-  state$: StateObservable<TState & ModelsState<TModels>>;
+  state$: StateObservable<
+    ModelState<
+      Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>
+    >
+  >;
   rootState$: StateObservable<unknown>;
-  actions: ActionHelpers<TReducers> &
-    ActionHelpers<TEffects> &
-    ModelsActionHelpers<TModels>;
+  actions: ModelActionHelpers<
+    Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>
+  >;
   rootActions: unknown;
-  getters: Getters<TSelectors> & ModelsGetters<TModels>;
+  getters: ModelGetters<
+    Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>
+  >;
   rootGetters: unknown;
   dependencies: StoreHelperDependencies<TDependencies>;
 }
