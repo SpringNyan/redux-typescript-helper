@@ -387,18 +387,6 @@ function registerModelEpics<TDependencies, TModel extends Model<TDependencies>>(
     outputs.push(...subOutputs);
   }
 
-  const unregisterType = `${namespaces.join("/")}/${actionTypes.unregister}`;
-  const takeUntil$ = rootAction$.pipe(
-    filter((action) => action.type === unregisterType)
-  );
-
-  rootAction$ = new ActionsObservable(rootAction$.pipe(takeUntil(takeUntil$)));
-
-  rootState$ = new StateObservable(
-    rootState$.pipe(takeUntil(takeUntil$)) as any,
-    rootState$.value
-  );
-
   const state$ = new StateObservable(
     rootState$.pipe(map((state) => getSubProperty(state, namespaces))) as any,
     getSubProperty(rootState$.value, namespaces)
@@ -493,8 +481,13 @@ function createModelRootEpic<
   dependencies: StoreHelperDependencies<TDependencies>,
   options: CreateModelRootEpicOptions
 ): ReduxObservableEpic<ReduxAction, ReduxAction> {
-  return (rootAction$, rootState$) =>
-    merge(
+  return (rootAction$, rootState$) => {
+    const unregisterType = `${namespaces.join("/")}/${actionTypes.unregister}`;
+    const takeUntil$ = rootAction$.pipe(
+      filter((action) => action.type === unregisterType)
+    );
+
+    return merge(
       ...registerModelEpics(
         model,
         namespaces,
@@ -511,7 +504,8 @@ function createModelRootEpic<
               )
             : epic
       )
-    );
+    ).pipe(takeUntil(takeUntil$));
+  };
 }
 
 function createModelReducer<TDependencies, TModel extends Model<TDependencies>>(
