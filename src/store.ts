@@ -1,6 +1,13 @@
 import produce from "immer";
 import { BehaviorSubject, Observable, merge } from "rxjs";
-import { map, mergeMap, filter, takeUntil, catchError } from "rxjs/operators";
+import {
+  map,
+  mergeMap,
+  filter,
+  distinctUntilChanged,
+  takeUntil,
+  catchError
+} from "rxjs/operators";
 import { Action as ReduxAction, Reducer as ReduxReducer, Store } from "redux";
 import {
   Epic as ReduxObservableEpic,
@@ -404,7 +411,10 @@ function registerModelEpics<TDependencies, TModel extends Model<TDependencies>>(
   }
 
   const state$ = new StateObservable(
-    rootState$.pipe(map((state) => getSubProperty(state, namespaces))) as any,
+    rootState$.pipe(
+      map((state) => getSubProperty(state, namespaces)),
+      distinctUntilChanged()
+    ) as any,
     getSubProperty(rootState$.value, namespaces)
   );
 

@@ -487,7 +487,7 @@ function registerModelEpics(model, namespaces, rootActions, rootGetters, rootAct
         var subOutputs = registerModelEpics(subModel, namespaces.concat([key]), rootActions, rootGetters, rootAction$, rootState$, dependencies);
         outputs.push.apply(outputs, subOutputs);
     }
-    var state$ = new redux_observable__WEBPACK_IMPORTED_MODULE_3__["StateObservable"](rootState$.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(function (state) { return getSubProperty(state, namespaces); })), getSubProperty(rootState$.value, namespaces));
+    var state$ = new redux_observable__WEBPACK_IMPORTED_MODULE_3__["StateObservable"](rootState$.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(function (state) { return getSubProperty(state, namespaces); }), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["distinctUntilChanged"])()), getSubProperty(rootState$.value, namespaces));
     var actions = getSubProperty(rootActions, namespaces);
     var getters = getSubProperty(rootGetters, namespaces);
     var _loop_2 = function (key) {
