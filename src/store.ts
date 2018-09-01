@@ -24,12 +24,12 @@ import {
 } from "./action";
 import { ModelGetters } from "./selector";
 import { Effect } from "./epic";
-import { Model, ExtractDynamicModel } from "./model";
+import { Model, ExtractDynamicModels } from "./model";
 
 export type StoreHelperDependencies<TDependencies> = TDependencies & {
   $storeHelper: StoreHelper<
     TDependencies,
-    Model<TDependencies, unknown, {}, {}, {}, {}, never>
+    Model<TDependencies, unknown, {}, {}, {}, {}, {}>
   >;
 };
 
@@ -137,7 +137,7 @@ export class StoreHelperFactory<
       this._options
     );
 
-    this._dependencies.$storeHelper = storeHelper;
+    this._dependencies.$storeHelper = storeHelper as any;
 
     return storeHelper as any;
   }
@@ -170,17 +170,19 @@ interface StoreHelperInternal<
   namespace<K extends Extract<keyof TModel["models"], string>>(
     namespace: K
   ): StoreHelper<TDependencies, TModel["models"][K]>;
-  namespace<T extends ExtractDynamicModel<TModel>>(
-    namespace: string
-  ): T extends Model<any, any, any, any, any, any, any>
-    ? StoreHelper<TDependencies, T>
-    : never;
+  namespace<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
+    namespace: K
+  ): StoreHelper<TDependencies, ExtractDynamicModels<TModel>[K]>;
 
-  registerModel<T extends ExtractDynamicModel<TModel>>(
-    namespace: string,
-    model: T
+  registerModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
+    namespace: K,
+    model: ExtractDynamicModels<TModel>[K]
   ): void;
-  unregisterModel(namespace: string): void;
+  unregisterModel<
+    K extends Extract<keyof ExtractDynamicModels<TModel>, string>
+  >(
+    namespace: K
+  ): void;
 }
 
 class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
@@ -244,16 +246,18 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
   public namespace<K extends Extract<keyof TModel["models"], string>>(
     namespace: K
   ): StoreHelper<TDependencies, TModel["models"][K]>;
-  public namespace<T extends ExtractDynamicModel<TModel>>(
-    namespace: string
-  ): StoreHelper<TDependencies, T>;
+  public namespace<
+    K extends Extract<keyof ExtractDynamicModels<TModel>, string>
+  >(namespace: K): StoreHelper<TDependencies, ExtractDynamicModels<TModel>[K]>;
   public namespace(
     namespace: string
   ): StoreHelperInternal<TDependencies, Model<TDependencies>> {
     return this._subStoreHelpers[namespace];
   }
 
-  public registerModel<T extends Model>(namespace: string, model: T): void {
+  public registerModel<
+    K extends Extract<keyof ExtractDynamicModels<TModel>, string>
+  >(namespace: K, model: ExtractDynamicModels<TModel>[K]): void {
     if (this._model.models[namespace] != null) {
       throw new Error("Failed to register model: model is already registered");
     }
@@ -289,7 +293,9 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     this._registerSubStoreHelper(namespace);
   }
 
-  public unregisterModel(namespace: string): void {
+  public unregisterModel<
+    K extends Extract<keyof ExtractDynamicModels<TModel>, string>
+  >(namespace: K): void {
     if (this._model.models[namespace] == null) {
       throw new Error("Failed to unregister model: model is not existing");
     }
@@ -324,7 +330,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
 
     Object.defineProperty(this, namespace, {
       get: () => {
-        return this.namespace(namespace);
+        return this.namespace(namespace as any);
       },
       enumerable: true,
       configurable: true

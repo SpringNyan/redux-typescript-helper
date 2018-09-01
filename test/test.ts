@@ -107,7 +107,7 @@ describe("redux-typescript-helper", () => {
     itemById: {} as { [id: number]: Item },
     count: 0
   })
-    .dynamicModel<typeof userModel>()
+    .dynamicModels<{ temp: typeof userModel }>()
     .selectors((createSelector) => ({
       allItems: createSelector(
         ({ state }) => state.itemById,
