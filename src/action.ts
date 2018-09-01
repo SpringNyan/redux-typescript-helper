@@ -63,10 +63,6 @@ export type ModelActionHelpers<
     $namespace: string;
     $parent: unknown;
     $root: unknown;
-
-    $register: ActionHelper<{}>;
-    $epicEnd: ActionHelper<{}>;
-    $unregister: ActionHelper<{}>;
   };
 
 export type ModelsActionHelpers<TModels extends Models<any>> = {

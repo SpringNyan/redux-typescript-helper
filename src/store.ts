@@ -333,17 +333,7 @@ function createModelActionHelpers<TModel extends Model>(
 ): ModelActionHelpers<TModel> {
   const actions = {
     $namespace: namespaces.join("/"),
-    $parent: parent,
-
-    $register: createActionHelper(
-      [...namespaces, actionTypes.register].join("/")
-    ),
-    $epicEnd: createActionHelper(
-      [...namespaces, actionTypes.epicEnd].join("/")
-    ),
-    $unregister: createActionHelper(
-      [...namespaces, actionTypes.unregister].join("/")
-    )
+    $parent: parent
   } as any;
 
   actions.$root = parent != null ? parent.$root : actions;
