@@ -1,4 +1,4 @@
-import { ModelState } from "./state";
+import { ModelState, ModelsState } from "./state";
 import { Model, Models } from "./model";
 import { StoreHelperDependencies } from "./store";
 
@@ -8,9 +8,7 @@ export interface SelectorContext<
   TSelectors extends Selectors<TDependencies, TState, any, any>,
   TModels extends Models<TDependencies>
 > {
-  state: ModelState<
-    Model<TDependencies, TState, TSelectors, any, any, TModels>
-  >;
+  state: TState & ModelsState<TModels>;
   rootState: unknown;
   getters: ModelGetters<
     Model<TDependencies, TState, TSelectors, any, any, TModels>
