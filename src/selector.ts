@@ -1,4 +1,4 @@
-import { ModelsState } from "./state";
+import { ModelState, ModelsState } from "./state";
 import { Model, Models } from "./model";
 import { StoreHelperDependencies } from "./store";
 
@@ -10,7 +10,9 @@ export interface SelectorContext<
 > {
   state: TState & ModelsState<TModels>;
   rootState: unknown;
-  getters: Getters<TSelectors> & ModelsGetters<TModels>;
+  getters: ModelGetters<
+    Model<TDependencies, TState, TSelectors, any, any, TModels>
+  >;
   rootGetters: unknown;
   dependencies: StoreHelperDependencies<TDependencies>;
 }
@@ -117,11 +119,26 @@ export type Getters<T extends Selectors<any, any, any, any>> = {
 };
 
 export type ModelGetters<
-  TModel extends Model<any, any, any, any, any, any>
-> = Getters<TModel["selectors"]> & ModelsGetters<TModel["models"]>;
+  TModel extends Model<any, any, any, any, any, any, any>
+> = Getters<TModel["selectors"]> &
+  ModelsGetters<TModel["models"]> & {
+    $namespace: string;
+    $state: ModelState<TModel>;
+    $rootState: unknown;
+    $parent: unknown;
+    $root: unknown;
+  };
 
 export type ModelsGetters<TModels extends Models<any>> = {
-  [K in keyof TModels]: TModels[K] extends Model<any, any, any, any, any, any>
+  [K in keyof TModels]: TModels[K] extends Model<
+    any,
+    any,
+    any,
+    any,
+    any,
+    any,
+    any
+  >
     ? ModelGetters<TModels[K]>
     : never
 };

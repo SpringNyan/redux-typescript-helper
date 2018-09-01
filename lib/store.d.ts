@@ -4,25 +4,15 @@ import { Epic as ReduxObservableEpic } from "redux-observable";
 import { ModelState } from "./state";
 import { ModelActionHelpers } from "./action";
 import { ModelGetters } from "./selector";
-import { Model } from "./model";
+import { Model, ExtractDynamicModels } from "./model";
 export declare type StoreHelperDependencies<TDependencies> = TDependencies & {
-    storeHelper: StoreHelper<TDependencies, Model<TDependencies>>;
+    $storeHelper: StoreHelper<Model<TDependencies, unknown, {}, {}, {}, {}, {}>>;
 };
 export interface StoreHelperOptions {
     epicErrorHandler?: (err: any, caught: Observable<ReduxAction>) => Observable<ReduxAction>;
 }
-export interface StoreHelper<TDependencies, TModel extends Model<TDependencies>> {
-    store: Store;
-    state: ModelState<TModel>;
-    actions: ModelActionHelpers<TModel>;
-    getters: ModelGetters<TModel>;
-    namespace<K extends Extract<keyof TModel["models"], string>>(namespace: K): StoreHelperWithNamespaces<TDependencies, TModel["models"][K]>;
-    namespace<T extends Model<TDependencies>>(namespace: string): StoreHelperWithNamespaces<TDependencies, T>;
-    registerModel<T extends Model<TDependencies>>(namespace: string, model: T): void;
-    unregisterModel(namespace: string): void;
-}
-export declare type StoreHelperWithNamespaces<TDependencies, TModel extends Model<TDependencies>> = StoreHelper<TDependencies, TModel> & {
-    [K in keyof TModel["models"]]: StoreHelperWithNamespaces<TDependencies, TModel["models"][K]>;
+export declare type StoreHelper<TModel extends Model> = StoreHelperInternal<TModel> & {
+    [K in keyof TModel["models"]]: StoreHelper<TModel["models"][K]>;
 };
 export declare class StoreHelperFactory<TDependencies, TModel extends Model<TDependencies>> {
     private readonly _model;
@@ -37,6 +27,17 @@ export declare class StoreHelperFactory<TDependencies, TModel extends Model<TDep
     constructor(model: TModel, dependencies: TDependencies, options: StoreHelperOptions);
     readonly reducer: ReduxReducer;
     readonly epic: ReduxObservableEpic;
-    create(store: Store): StoreHelperWithNamespaces<TDependencies, TModel>;
+    create(store: Store): StoreHelper<TModel>;
 }
 export declare function createStoreHelperFactory<TDependencies, TModel extends Model<TDependencies>>(model: TModel, dependencies: TDependencies, options?: StoreHelperOptions): StoreHelperFactory<TDependencies, TModel>;
+interface StoreHelperInternal<TModel extends Model> {
+    store: Store;
+    state: ModelState<TModel>;
+    actions: ModelActionHelpers<TModel>;
+    getters: ModelGetters<TModel>;
+    namespace<K extends Extract<keyof TModel["models"], string>>(namespace: K): StoreHelper<TModel["models"][K]>;
+    namespace<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(namespace: K): StoreHelper<ExtractDynamicModels<TModel>[K]>;
+    registerModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(namespace: K, model: ExtractDynamicModels<TModel>[K]): void;
+    unregisterModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(namespace: K): void;
+}
+export {};

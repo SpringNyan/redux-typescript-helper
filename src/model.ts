@@ -26,7 +26,8 @@ export interface Model<
     any,
     any
   >,
-  TModels extends Models<TDependencies> = Models<TDependencies>
+  TModels extends Models<TDependencies> = Models<TDependencies>,
+  TDynamicModels extends Models<TDependencies> = Models<TDependencies>
 > {
   state: State<TDependencies, TState>;
   selectors: TSelectors;
@@ -40,13 +41,20 @@ export type Models<TDependencies> = {
   [key: string]: Model<TDependencies>;
 };
 
-export class ModelFactory<
+export type ExtractDynamicModels<
+  T extends Model<any, any, any, any, any, any, any>
+> = T extends Model<any, any, any, any, any, any, infer TDynamicModels>
+  ? TDynamicModels
+  : never;
+
+export class ModelBuilder<
   TDependencies,
   TState,
   TSelectors extends Selectors<TDependencies, TState, any, any>,
   TReducers extends Reducers<TDependencies, TState>,
   TEffects extends Effects<TDependencies, TState, any, any, any, any>,
-  TModels extends Models<TDependencies>
+  TModels extends Models<TDependencies>,
+  TDynamicModels extends Models<TDependencies>
 > {
   private readonly _state: State<TDependencies, TState>;
   private _selectors: Selectors<
@@ -86,13 +94,14 @@ export class ModelFactory<
             TModels
           >
         ) => T)
-  ): ModelFactory<
+  ): ModelBuilder<
     TDependencies,
     TState,
     TSelectors & T,
     TReducers,
     TEffects,
-    TModels
+    TModels,
+    TDynamicModels
   > {
     if (typeof selectors === "function") {
       selectors = selectors(createSelector);
@@ -108,13 +117,14 @@ export class ModelFactory<
 
   public reducers<T extends Reducers<TDependencies, TState>>(
     reducers: T
-  ): ModelFactory<
+  ): ModelBuilder<
     TDependencies,
     TState,
     TSelectors,
     TReducers & T,
     TEffects,
-    TModels
+    TModels,
+    TDynamicModels
   > {
     this._reducers = {
       ...this._reducers,
@@ -135,13 +145,14 @@ export class ModelFactory<
     >
   >(
     effects: T
-  ): ModelFactory<
+  ): ModelBuilder<
     TDependencies,
     TState,
     TSelectors,
     TReducers,
     TEffects & T,
-    TModels
+    TModels,
+    TDynamicModels
   > {
     this._effects = {
       ...this._effects,
@@ -162,13 +173,14 @@ export class ModelFactory<
     epics: Array<
       Epic<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>
     >
-  ): ModelFactory<
+  ): ModelBuilder<
     TDependencies,
     TState,
     TSelectors,
     TReducers,
     TEffects,
-    TModels
+    TModels,
+    TDynamicModels
   > {
     this._epics = [...this._epics, ...epics];
 
@@ -177,13 +189,14 @@ export class ModelFactory<
 
   public models<T extends Models<TDependencies>>(
     models: T
-  ): ModelFactory<
+  ): ModelBuilder<
     TDependencies,
     TState,
     TSelectors,
     TReducers,
     TEffects,
-    TModels & T
+    TModels & T,
+    TDynamicModels
   > {
     this._models = {
       ...this._models,
@@ -193,13 +206,26 @@ export class ModelFactory<
     return this as any;
   }
 
-  public create(): Model<
+  public dynamicModels<T extends Models<TDependencies>>(): ModelBuilder<
     TDependencies,
     TState,
     TSelectors,
     TReducers,
     TEffects,
-    TModels
+    TModels,
+    T
+  > {
+    return this as any;
+  }
+
+  public build(): Model<
+    TDependencies,
+    TState,
+    TSelectors,
+    TReducers,
+    TEffects,
+    TModels,
+    TDynamicModels
   > {
     return {
       state: this._state,
@@ -208,22 +234,30 @@ export class ModelFactory<
       effects: { ...this._effects },
       epics: [...this._epics],
       models: { ...this._models }
-    } as Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>;
+    } as Model<
+      TDependencies,
+      TState,
+      TSelectors,
+      TReducers,
+      TEffects,
+      TModels,
+      TDynamicModels
+    >;
   }
 }
 
-function createModelFactory<TDependencies, TState>(
+function createModelBuilder<TDependencies, TState>(
   state: State<TDependencies, TState>
-): ModelFactory<TDependencies, TState, {}, {}, {}, {}> {
-  return new ModelFactory<TDependencies, TState, {}, {}, {}, {}>(state);
+): ModelBuilder<TDependencies, TState, {}, {}, {}, {}, {}> {
+  return new ModelBuilder<TDependencies, TState, {}, {}, {}, {}, {}>(state);
 }
 
-export type ModelFactoryCreator<TDependencies> = <TState>(
+export type ModelBuilderCreator<TDependencies> = <TState>(
   state: State<TDependencies, TState>
-) => ModelFactory<TDependencies, TState, {}, {}, {}, {}>;
+) => ModelBuilder<TDependencies, TState, {}, {}, {}, {}, {}>;
 
-export function createModelFactoryCreator<TDependencies>(): ModelFactoryCreator<
+export function createModelBuilderCreator<TDependencies>(): ModelBuilderCreator<
   TDependencies
 > {
-  return createModelFactory;
+  return createModelBuilder;
 }
