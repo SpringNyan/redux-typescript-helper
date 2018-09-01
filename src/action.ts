@@ -61,9 +61,12 @@ export type ModelActionHelpers<
   ActionHelpers<TModel["effects"]> &
   ModelsActionHelpers<TModel["models"]> & {
     $namespace: string;
-    $epicEnd: ActionHelper<{}>;
     $parent: unknown;
     $root: unknown;
+
+    $register: ActionHelper<{}>;
+    $epicEnd: ActionHelper<{}>;
+    $unregister: ActionHelper<{}>;
   };
 
 export type ModelsActionHelpers<TModels extends Models<any>> = {

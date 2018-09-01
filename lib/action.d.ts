@@ -22,9 +22,11 @@ export declare type ActionHelpers<T extends Reducers<any, any> | Effects<any, an
 };
 export declare type ModelActionHelpers<TModel extends Model<any, any, any, any, any, any, any>> = ActionHelpers<TModel["reducers"]> & ActionHelpers<TModel["effects"]> & ModelsActionHelpers<TModel["models"]> & {
     $namespace: string;
-    $epicEnd: ActionHelper<{}>;
     $parent: unknown;
     $root: unknown;
+    $register: ActionHelper<{}>;
+    $epicEnd: ActionHelper<{}>;
+    $unregister: ActionHelper<{}>;
 };
 export declare type ModelsActionHelpers<TModels extends Models<any>> = {
     [K in keyof TModels]: TModels[K] extends Model<any, any, any, any, any, any, any> ? ModelActionHelpers<TModels[K]> : never;
