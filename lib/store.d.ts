@@ -6,13 +6,13 @@ import { ModelActionHelpers } from "./action";
 import { ModelGetters } from "./selector";
 import { Model, ExtractDynamicModels } from "./model";
 export declare type StoreHelperDependencies<TDependencies> = TDependencies & {
-    $storeHelper: StoreHelper<TDependencies, Model<TDependencies, unknown, {}, {}, {}, {}, {}>>;
+    $storeHelper: StoreHelper<Model<TDependencies, unknown, {}, {}, {}, {}, {}>>;
 };
 export interface StoreHelperOptions {
     epicErrorHandler?: (err: any, caught: Observable<ReduxAction>) => Observable<ReduxAction>;
 }
-export declare type StoreHelper<TDependencies, TModel extends Model<TDependencies>> = StoreHelperInternal<TDependencies, TModel> & {
-    [K in keyof TModel["models"]]: StoreHelper<TDependencies, TModel["models"][K]>;
+export declare type StoreHelper<TModel extends Model> = StoreHelperInternal<TModel> & {
+    [K in keyof TModel["models"]]: StoreHelper<TModel["models"][K]>;
 };
 export declare class StoreHelperFactory<TDependencies, TModel extends Model<TDependencies>> {
     private readonly _model;
@@ -27,16 +27,16 @@ export declare class StoreHelperFactory<TDependencies, TModel extends Model<TDep
     constructor(model: TModel, dependencies: TDependencies, options: StoreHelperOptions);
     readonly reducer: ReduxReducer;
     readonly epic: ReduxObservableEpic;
-    create(store: Store): StoreHelper<TDependencies, TModel>;
+    create(store: Store): StoreHelper<TModel>;
 }
 export declare function createStoreHelperFactory<TDependencies, TModel extends Model<TDependencies>>(model: TModel, dependencies: TDependencies, options?: StoreHelperOptions): StoreHelperFactory<TDependencies, TModel>;
-interface StoreHelperInternal<TDependencies, TModel extends Model<TDependencies>> {
+interface StoreHelperInternal<TModel extends Model> {
     store: Store;
     state: ModelState<TModel>;
     actions: ModelActionHelpers<TModel>;
     getters: ModelGetters<TModel>;
-    namespace<K extends Extract<keyof TModel["models"], string>>(namespace: K): StoreHelper<TDependencies, TModel["models"][K]>;
-    namespace<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(namespace: K): StoreHelper<TDependencies, ExtractDynamicModels<TModel>[K]>;
+    namespace<K extends Extract<keyof TModel["models"], string>>(namespace: K): StoreHelper<TModel["models"][K]>;
+    namespace<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(namespace: K): StoreHelper<ExtractDynamicModels<TModel>[K]>;
     registerModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(namespace: K, model: ExtractDynamicModels<TModel>[K]): void;
     unregisterModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(namespace: K): void;
 }
