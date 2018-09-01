@@ -269,11 +269,11 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
       )
     );
 
+    this._registerSubStoreHelper(namespace);
+
     this._store.dispatch({
       type: `${namespaces.join("/")}/${actionTypes.register}`
     });
-
-    this._registerSubStoreHelper(namespace);
   }
 
   public unregisterModel<
@@ -283,8 +283,6 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
       throw new Error("Failed to unregister model: model is not existing");
     }
 
-    this._unregisterSubStoreHelper(namespace);
-
     const namespaces = [...this._namespaces, namespace];
 
     this._store.dispatch({
@@ -293,6 +291,8 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     this._store.dispatch({
       type: `${namespaces.join("/")}/${actionTypes.unregister}`
     });
+
+    this._unregisterSubStoreHelper(namespace);
 
     delete this._model.models[namespace];
     delete this._actions[namespace];
