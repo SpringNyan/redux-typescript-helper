@@ -6,7 +6,7 @@ import { createStore, applyMiddleware } from "redux";
 import { createEpicMiddleware } from "redux-observable";
 
 import {
-  createModelFactoryCreator,
+  createModelBuilderCreator,
   createStoreHelperFactory,
   asyncEffect
 } from "../lib";
@@ -30,9 +30,9 @@ describe("redux-typescript-helper", () => {
   const delayTime = 50;
   const waitTime = delayTime + 10;
 
-  const createModelFactory = createModelFactoryCreator<Dependencies>();
+  const createModelBuilder = createModelBuilderCreator<Dependencies>();
 
-  const userModel = createModelFactory(() => ({
+  const userModel = createModelBuilder(() => ({
     id: 0,
     username: "",
     token: "",
@@ -101,9 +101,9 @@ describe("redux-typescript-helper", () => {
         return of(actions.editAbout(getters.idAndName));
       }
     })
-    .create();
+    .build();
 
-  const entitiesModel = createModelFactory({
+  const entitiesModel = createModelBuilder({
     itemById: {} as { [id: number]: Item },
     count: 0
   })
@@ -161,9 +161,9 @@ describe("redux-typescript-helper", () => {
         });
       }
     })
-    .create();
+    .build();
 
-  const rootModel = createModelFactory({})
+  const rootModel = createModelBuilder({})
     .models({
       user: userModel,
       entities: entitiesModel
@@ -174,7 +174,7 @@ describe("redux-typescript-helper", () => {
     .effects({
       increaseCount: ({ actions }) => of(actions.entities.increaseCount({}))
     })
-    .create();
+    .build();
 
   const storeHelperFactory = createStoreHelperFactory(
     rootModel,

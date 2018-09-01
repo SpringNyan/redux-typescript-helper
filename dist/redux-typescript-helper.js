@@ -158,7 +158,7 @@ function asyncEffect(asyncFn) {
 /*!**********************!*\
   !*** ./lib/index.js ***!
   \**********************/
-/*! exports provided: actionTypes, createActionHelper, asyncEffect, ModelFactory, createModelFactoryCreator, StoreHelperFactory, createStoreHelperFactory */
+/*! exports provided: actionTypes, createActionHelper, asyncEffect, ModelBuilder, createModelBuilderCreator, StoreHelperFactory, createStoreHelperFactory */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -172,9 +172,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "asyncEffect", function() { return _epic__WEBPACK_IMPORTED_MODULE_1__["asyncEffect"]; });
 
 /* harmony import */ var _model__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./model */ "./lib/model.js");
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "ModelFactory", function() { return _model__WEBPACK_IMPORTED_MODULE_2__["ModelFactory"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "ModelBuilder", function() { return _model__WEBPACK_IMPORTED_MODULE_2__["ModelBuilder"]; });
 
-/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "createModelFactoryCreator", function() { return _model__WEBPACK_IMPORTED_MODULE_2__["createModelFactoryCreator"]; });
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "createModelBuilderCreator", function() { return _model__WEBPACK_IMPORTED_MODULE_2__["createModelBuilderCreator"]; });
 
 /* harmony import */ var _store__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./store */ "./lib/store.js");
 /* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "StoreHelperFactory", function() { return _store__WEBPACK_IMPORTED_MODULE_3__["StoreHelperFactory"]; });
@@ -193,13 +193,13 @@ __webpack_require__.r(__webpack_exports__);
 /*!**********************!*\
   !*** ./lib/model.js ***!
   \**********************/
-/*! exports provided: ModelFactory, createModelFactoryCreator */
+/*! exports provided: ModelBuilder, createModelBuilderCreator */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ModelFactory", function() { return ModelFactory; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createModelFactoryCreator", function() { return createModelFactoryCreator; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ModelBuilder", function() { return ModelBuilder; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createModelBuilderCreator", function() { return createModelBuilderCreator; });
 /* harmony import */ var reselect__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! reselect */ "reselect");
 /* harmony import */ var reselect__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(reselect__WEBPACK_IMPORTED_MODULE_0__);
 var __assign = (undefined && undefined.__assign) || function () {
@@ -214,8 +214,8 @@ var __assign = (undefined && undefined.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 
-var ModelFactory = /** @class */ (function () {
-    function ModelFactory(state) {
+var ModelBuilder = /** @class */ (function () {
+    function ModelBuilder(state) {
         this._selectors = {};
         this._reducers = {};
         this._effects = {};
@@ -223,33 +223,33 @@ var ModelFactory = /** @class */ (function () {
         this._models = {};
         this._state = state;
     }
-    ModelFactory.prototype.dynamicModels = function () {
-        return this;
-    };
-    ModelFactory.prototype.selectors = function (selectors) {
+    ModelBuilder.prototype.selectors = function (selectors) {
         if (typeof selectors === "function") {
             selectors = selectors(reselect__WEBPACK_IMPORTED_MODULE_0__["createSelector"]);
         }
         this._selectors = __assign({}, this._selectors, selectors);
         return this;
     };
-    ModelFactory.prototype.reducers = function (reducers) {
+    ModelBuilder.prototype.reducers = function (reducers) {
         this._reducers = __assign({}, this._reducers, reducers);
         return this;
     };
-    ModelFactory.prototype.effects = function (effects) {
+    ModelBuilder.prototype.effects = function (effects) {
         this._effects = __assign({}, this._effects, effects);
         return this;
     };
-    ModelFactory.prototype.epics = function (epics) {
+    ModelBuilder.prototype.epics = function (epics) {
         this._epics = this._epics.concat(epics);
         return this;
     };
-    ModelFactory.prototype.models = function (models) {
+    ModelBuilder.prototype.models = function (models) {
         this._models = __assign({}, this._models, models);
         return this;
     };
-    ModelFactory.prototype.create = function () {
+    ModelBuilder.prototype.dynamicModels = function () {
+        return this;
+    };
+    ModelBuilder.prototype.build = function () {
         return {
             state: this._state,
             selectors: __assign({}, this._selectors),
@@ -259,14 +259,14 @@ var ModelFactory = /** @class */ (function () {
             models: __assign({}, this._models)
         };
     };
-    return ModelFactory;
+    return ModelBuilder;
 }());
 
-function createModelFactory(state) {
-    return new ModelFactory(state);
+function createModelBuilder(state) {
+    return new ModelBuilder(state);
 }
-function createModelFactoryCreator() {
-    return createModelFactory;
+function createModelBuilderCreator() {
+    return createModelBuilder;
 }
 
 

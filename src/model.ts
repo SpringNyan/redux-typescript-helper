@@ -47,7 +47,7 @@ export type ExtractDynamicModels<
   ? TDynamicModels
   : never;
 
-export class ModelFactory<
+export class ModelBuilder<
   TDependencies,
   TState,
   TSelectors extends Selectors<TDependencies, TState, any, any>,
@@ -81,18 +81,6 @@ export class ModelFactory<
     this._state = state;
   }
 
-  public dynamicModels<T extends Models<TDependencies>>(): ModelFactory<
-    TDependencies,
-    TState,
-    TSelectors,
-    TReducers,
-    TEffects,
-    TModels,
-    T
-  > {
-    return this as any;
-  }
-
   public selectors<
     T extends Selectors<TDependencies, TState, TSelectors, TModels>
   >(
@@ -106,7 +94,7 @@ export class ModelFactory<
             TModels
           >
         ) => T)
-  ): ModelFactory<
+  ): ModelBuilder<
     TDependencies,
     TState,
     TSelectors & T,
@@ -129,7 +117,7 @@ export class ModelFactory<
 
   public reducers<T extends Reducers<TDependencies, TState>>(
     reducers: T
-  ): ModelFactory<
+  ): ModelBuilder<
     TDependencies,
     TState,
     TSelectors,
@@ -157,7 +145,7 @@ export class ModelFactory<
     >
   >(
     effects: T
-  ): ModelFactory<
+  ): ModelBuilder<
     TDependencies,
     TState,
     TSelectors,
@@ -185,7 +173,7 @@ export class ModelFactory<
     epics: Array<
       Epic<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>
     >
-  ): ModelFactory<
+  ): ModelBuilder<
     TDependencies,
     TState,
     TSelectors,
@@ -201,7 +189,7 @@ export class ModelFactory<
 
   public models<T extends Models<TDependencies>>(
     models: T
-  ): ModelFactory<
+  ): ModelBuilder<
     TDependencies,
     TState,
     TSelectors,
@@ -218,7 +206,19 @@ export class ModelFactory<
     return this as any;
   }
 
-  public create(): Model<
+  public dynamicModels<T extends Models<TDependencies>>(): ModelBuilder<
+    TDependencies,
+    TState,
+    TSelectors,
+    TReducers,
+    TEffects,
+    TModels,
+    T
+  > {
+    return this as any;
+  }
+
+  public build(): Model<
     TDependencies,
     TState,
     TSelectors,
@@ -246,18 +246,18 @@ export class ModelFactory<
   }
 }
 
-function createModelFactory<TDependencies, TState>(
+function createModelBuilder<TDependencies, TState>(
   state: State<TDependencies, TState>
-): ModelFactory<TDependencies, TState, {}, {}, {}, {}, {}> {
-  return new ModelFactory<TDependencies, TState, {}, {}, {}, {}, {}>(state);
+): ModelBuilder<TDependencies, TState, {}, {}, {}, {}, {}> {
+  return new ModelBuilder<TDependencies, TState, {}, {}, {}, {}, {}>(state);
 }
 
-export type ModelFactoryCreator<TDependencies> = <TState>(
+export type ModelBuilderCreator<TDependencies> = <TState>(
   state: State<TDependencies, TState>
-) => ModelFactory<TDependencies, TState, {}, {}, {}, {}, {}>;
+) => ModelBuilder<TDependencies, TState, {}, {}, {}, {}, {}>;
 
-export function createModelFactoryCreator<TDependencies>(): ModelFactoryCreator<
+export function createModelBuilderCreator<TDependencies>(): ModelBuilderCreator<
   TDependencies
 > {
-  return createModelFactory;
+  return createModelBuilder;
 }
