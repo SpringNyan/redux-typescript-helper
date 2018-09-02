@@ -254,7 +254,7 @@ describe("redux-typescript-helper", () => {
     expect(entitiesHelper.state.count).eq(3);
 
     entitiesHelper.registerModel("temp", userModel);
-    const tempHelper = entitiesHelper.namespace("temp");
+    const tempHelper = entitiesHelper.namespace("temp")!;
 
     expect(tempHelper.state.username).eq("");
     store.dispatch(

@@ -36,7 +36,7 @@ interface StoreHelperInternal<TModel extends Model> {
     actions: ModelActionHelpers<TModel>;
     getters: ModelGetters<TModel>;
     namespace<K extends Extract<keyof TModel["models"], string>>(namespace: K): StoreHelper<TModel["models"][K]>;
-    namespace<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(namespace: K): StoreHelper<ExtractDynamicModels<TModel>[K]>;
+    namespace<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(namespace: K): StoreHelper<ExtractDynamicModels<TModel>[K]> | null;
     registerModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(namespace: K, model: ExtractDynamicModels<TModel>[K]): void;
     unregisterModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(namespace: K): void;
 }

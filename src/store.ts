@@ -158,7 +158,7 @@ interface StoreHelperInternal<TModel extends Model> {
   ): StoreHelper<TModel["models"][K]>;
   namespace<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
     namespace: K
-  ): StoreHelper<ExtractDynamicModels<TModel>[K]>;
+  ): StoreHelper<ExtractDynamicModels<TModel>[K]> | null;
 
   registerModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
     namespace: K,
@@ -231,11 +231,12 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
   ): StoreHelper<TModel["models"][K]>;
   public namespace<
     K extends Extract<keyof ExtractDynamicModels<TModel>, string>
-  >(namespace: K): StoreHelper<ExtractDynamicModels<TModel>[K]>;
+  >(namespace: K): StoreHelper<ExtractDynamicModels<TModel>[K]> | null;
   public namespace(
     namespace: string
-  ): StoreHelperInternal<Model<TDependencies>> {
-    return this._subStoreHelpers[namespace];
+  ): StoreHelperInternal<Model<TDependencies>> | null {
+    const helper = this._subStoreHelpers[namespace];
+    return helper != null ? helper : null;
   }
 
   public registerModel<
@@ -269,11 +270,11 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
       )
     );
 
-    this._registerSubStoreHelper(namespace);
-
     this._store.dispatch({
       type: `${namespaces.join("/")}/${actionTypes.register}`
     });
+
+    this._registerSubStoreHelper(namespace);
   }
 
   public unregisterModel<
@@ -288,11 +289,12 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     this._store.dispatch({
       type: `${namespaces.join("/")}/${actionTypes.epicEnd}`
     });
+
+    this._unregisterSubStoreHelper(namespace);
+
     this._store.dispatch({
       type: `${namespaces.join("/")}/${actionTypes.unregister}`
     });
-
-    this._unregisterSubStoreHelper(namespace);
 
     delete this._model.models[namespace];
     delete this._actions[namespace];
