@@ -4,7 +4,7 @@ import { StoreHelperDependencies } from "./store";
 export interface SelectorContext<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any, any>, TModels extends Models<TDependencies>> {
     state: DeepState<TState, TModels>;
     rootState: unknown;
-    getters: ContextModelGetters<TSelectors, Model<TDependencies, TState, TSelectors, any, any, TModels>>;
+    getters: DeepGetters<TState, TSelectors, TModels>;
     rootGetters: unknown;
     dependencies: StoreHelperDependencies<TDependencies>;
 }
@@ -29,14 +29,14 @@ export declare type ExtractSelectorResult<T extends Selector<any, any, any, any,
 export declare type Getters<T extends Selectors<any, any, any, any>> = {
     [K in keyof T]: ExtractSelectorResult<T[K]>;
 };
-export declare type ContextModelGetters<TSelectors extends Selectors<any, any, any, any>, TModel extends Model<any, any, any, any, any, any, any>> = Getters<TSelectors> & ModelsGetters<TModel["models"]> & {
+export declare type DeepGetters<TState, TSelectors extends Selectors<any, any, any, any>, TModels extends Models<any>> = Getters<TSelectors> & ModelsGetters<TModels> & {
     $namespace: string;
-    $state: ModelState<TModel>;
+    $state: TState;
     $rootState: unknown;
     $parent: unknown;
     $root: unknown;
 };
-export declare type ModelGetters<TModel extends Model<any, any, any, any, any, any, any>> = ContextModelGetters<ExtractSelectors<TModel>, TModel>;
+export declare type ModelGetters<TModel extends Model<any, any, any, any, any, any, any>> = DeepGetters<ModelState<TModel>, ExtractSelectors<TModel>, TModel["models"]>;
 export declare type ModelsGetters<TModels extends Models<any>> = {
     [K in keyof TModels]: TModels[K] extends Model<any, any, any, any, any, any, any> ? ModelGetters<TModels[K]> : never;
 };

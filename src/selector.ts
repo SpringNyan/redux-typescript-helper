@@ -10,10 +10,7 @@ export interface SelectorContext<
 > {
   state: DeepState<TState, TModels>;
   rootState: unknown;
-  getters: ContextModelGetters<
-    TSelectors,
-    Model<TDependencies, TState, TSelectors, any, any, TModels>
-  >;
+  getters: DeepGetters<TState, TSelectors, TModels>;
   rootGetters: unknown;
   dependencies: StoreHelperDependencies<TDependencies>;
 }
@@ -134,13 +131,14 @@ export type Getters<T extends Selectors<any, any, any, any>> = {
   [K in keyof T]: ExtractSelectorResult<T[K]>
 };
 
-export type ContextModelGetters<
+export type DeepGetters<
+  TState,
   TSelectors extends Selectors<any, any, any, any>,
-  TModel extends Model<any, any, any, any, any, any, any>
+  TModels extends Models<any>
 > = Getters<TSelectors> &
-  ModelsGetters<TModel["models"]> & {
+  ModelsGetters<TModels> & {
     $namespace: string;
-    $state: ModelState<TModel>;
+    $state: TState;
     $rootState: unknown;
     $parent: unknown;
     $root: unknown;
@@ -148,7 +146,7 @@ export type ContextModelGetters<
 
 export type ModelGetters<
   TModel extends Model<any, any, any, any, any, any, any>
-> = ContextModelGetters<ExtractSelectors<TModel>, TModel>;
+> = DeepGetters<ModelState<TModel>, ExtractSelectors<TModel>, TModel["models"]>;
 
 export type ModelsGetters<TModels extends Models<any>> = {
   [K in keyof TModels]: TModels[K] extends Model<

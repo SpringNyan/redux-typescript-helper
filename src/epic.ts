@@ -4,7 +4,7 @@ import { ActionsObservable, StateObservable } from "redux-observable";
 
 import { DeepState } from "./state";
 import { Action, ModelActionHelpers } from "./action";
-import { Selectors, ContextModelGetters } from "./selector";
+import { Selectors, DeepGetters } from "./selector";
 import { Reducers } from "./reducer";
 import { Model, Models } from "./model";
 import { StoreHelperDependencies } from "./store";
@@ -25,10 +25,7 @@ export interface EpicContext<
     Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>
   >;
   rootActions: unknown;
-  getters: ContextModelGetters<
-    TSelectors,
-    Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>
-  >;
+  getters: DeepGetters<TState, TSelectors, TModels>;
   rootGetters: unknown;
   dependencies: StoreHelperDependencies<TDependencies>;
 }
