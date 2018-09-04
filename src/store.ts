@@ -153,10 +153,10 @@ interface StoreHelperInternal<TModel extends Model> {
   actions: ModelActionHelpers<TModel>;
   getters: ModelGetters<TModel>;
 
-  namespace<K extends Extract<keyof TModel["models"], string>>(
+  child<K extends Extract<keyof TModel["models"], string>>(
     namespace: K
   ): StoreHelper<TModel["models"][K]>;
-  namespace<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
+  child<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
     namespace: K
   ): StoreHelper<ExtractDynamicModels<TModel>[K]> | null;
 
@@ -226,13 +226,13 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     return this._getters;
   }
 
-  public namespace<K extends Extract<keyof TModel["models"], string>>(
+  public child<K extends Extract<keyof TModel["models"], string>>(
     namespace: K
   ): StoreHelper<TModel["models"][K]>;
-  public namespace<
-    K extends Extract<keyof ExtractDynamicModels<TModel>, string>
-  >(namespace: K): StoreHelper<ExtractDynamicModels<TModel>[K]> | null;
-  public namespace(
+  public child<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
+    namespace: K
+  ): StoreHelper<ExtractDynamicModels<TModel>[K]> | null;
+  public child(
     namespace: string
   ): StoreHelperInternal<Model<TDependencies>> | null {
     const helper = this._subStoreHelpers[namespace];
@@ -315,7 +315,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
 
     Object.defineProperty(this, namespace, {
       get: () => {
-        return this.namespace(namespace as any);
+        return this.child(namespace as any);
       },
       enumerable: true,
       configurable: true
