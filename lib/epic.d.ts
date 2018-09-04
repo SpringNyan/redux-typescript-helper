@@ -3,7 +3,7 @@ import { Action as ReduxAction, Dispatch } from "redux";
 import { ActionsObservable, StateObservable } from "redux-observable";
 import { ModelsState } from "./state";
 import { Action, ModelActionHelpers } from "./action";
-import { Selectors, ModelGetters } from "./selector";
+import { Selectors, ContextModelGetters } from "./selector";
 import { Reducers } from "./reducer";
 import { Model, Models } from "./model";
 import { StoreHelperDependencies } from "./store";
@@ -14,7 +14,7 @@ export interface EpicContext<TDependencies, TState, TSelectors extends Selectors
     rootState$: StateObservable<unknown>;
     actions: ModelActionHelpers<Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>>;
     rootActions: unknown;
-    getters: ModelGetters<Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>>;
+    getters: ContextModelGetters<TSelectors, Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>>;
     rootGetters: unknown;
     dependencies: StoreHelperDependencies<TDependencies>;
 }

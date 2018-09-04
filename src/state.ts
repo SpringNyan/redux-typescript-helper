@@ -1,14 +1,14 @@
 import { Model, Models } from "./model";
 import { StoreHelperDependencies } from "./store";
 
-export type State<TDependencies, TState> =
-  | TState
-  | ((dependencies: StoreHelperDependencies<TDependencies>) => TState);
+export type StateFactory<TState, TDependencies> = (
+  dependencies: StoreHelperDependencies<TDependencies>
+) => TState;
 
 export type ExtractState<
-  T extends State<any, any> | Model<any, any, any, any, any, any, any>
+  T extends StateFactory<any, any> | Model<any, any, any, any, any, any, any>
 > = T extends
-  | State<any, infer TState>
+  | StateFactory<infer TState, any>
   | Model<any, infer TState, any, any, any, any, any>
   ? TState
   : never;

@@ -1,7 +1,5 @@
-import { createSelector } from "reselect";
-
-import { State } from "./state";
-import { Selectors, SelectorCreator } from "./selector";
+import { StateFactory } from "./state";
+import { Selectors, SelectorCreator, SelectorsFactory } from "./selector";
 import { Reducers } from "./reducer";
 import { Effects, Epic } from "./epic";
 
@@ -29,8 +27,11 @@ export interface Model<
   TModels extends Models<TDependencies> = Models<TDependencies>,
   TDynamicModels extends Models<TDependencies> = Models<TDependencies>
 > {
-  state: State<TDependencies, TState>;
-  selectors: TSelectors;
+  state: StateFactory<TState, TDependencies>;
+  selectors: SelectorsFactory<
+    TSelectors,
+    SelectorCreator<TDependencies, TState, any, any>
+  >;
   reducers: TReducers;
   effects: TEffects;
   epics: Array<Epic<TDependencies, TState, any, any, any, any>>;
@@ -56,13 +57,11 @@ export class ModelBuilder<
   TModels extends Models<TDependencies>,
   TDynamicModels extends Models<TDependencies>
 > {
-  private readonly _state: State<TDependencies, TState>;
-  private _selectors: Selectors<
-    TDependencies,
-    TState,
-    TSelectors,
-    TModels
-  > = {};
+  private readonly _state: StateFactory<TState, TDependencies>;
+  private _selectors: SelectorsFactory<
+    Selectors<TDependencies, TState, TSelectors, TModels>,
+    SelectorCreator<TDependencies, TState, TSelectors, TModels>
+  > = () => ({});
   private _reducers: Reducers<TDependencies, TState> = {};
   private _effects: Effects<
     TDependencies,
@@ -77,8 +76,8 @@ export class ModelBuilder<
   > = [];
   private _models: Models<TDependencies> = {};
 
-  constructor(state: State<TDependencies, TState>) {
-    this._state = state;
+  constructor(state: TState | StateFactory<TState, TDependencies>) {
+    this._state = typeof state === "function" ? state : () => state;
   }
 
   public selectors<
@@ -86,14 +85,10 @@ export class ModelBuilder<
   >(
     selectors:
       | T
-      | ((
-          selectorCreator: SelectorCreator<
-            TDependencies,
-            TState,
-            TSelectors,
-            TModels
-          >
-        ) => T)
+      | SelectorsFactory<
+          T,
+          SelectorCreator<TDependencies, TState, TSelectors, TModels>
+        >
   ): ModelBuilder<
     TDependencies,
     TState,
@@ -103,13 +98,22 @@ export class ModelBuilder<
     TModels,
     TDynamicModels
   > {
-    if (typeof selectors === "function") {
-      selectors = selectors(createSelector);
-    }
+    const oldSelectors = this._selectors;
+    this._selectors = (selectorCreator) => {
+      const selectorsObj: Selectors<
+        TDependencies,
+        TState,
+        TSelectors,
+        TModels
+      > =
+        typeof selectors === "function"
+          ? selectors(selectorCreator)
+          : selectors;
 
-    this._selectors = {
-      ...this._selectors,
-      ...(selectors as Selectors<TDependencies, TState, TSelectors, TModels>)
+      return {
+        ...oldSelectors(selectorCreator),
+        ...selectorsObj
+      };
     };
 
     return this as any;
@@ -218,7 +222,9 @@ export class ModelBuilder<
     return this as any;
   }
 
-  public build(): Model<
+  public build(
+    state?: TState | StateFactory<TState, TDependencies>
+  ): Model<
     TDependencies,
     TState,
     TSelectors,
@@ -228,8 +234,13 @@ export class ModelBuilder<
     TDynamicModels
   > {
     return {
-      state: this._state,
-      selectors: { ...this._selectors },
+      state:
+        state === undefined
+          ? this._state
+          : typeof state === "function"
+            ? state
+            : () => state,
+      selectors: this._selectors,
       reducers: { ...this._reducers },
       effects: { ...this._effects },
       epics: [...this._epics],
@@ -247,13 +258,13 @@ export class ModelBuilder<
 }
 
 function createModelBuilder<TDependencies, TState>(
-  state: State<TDependencies, TState>
+  state: TState | StateFactory<TState, TDependencies>
 ): ModelBuilder<TDependencies, TState, {}, {}, {}, {}, {}> {
   return new ModelBuilder<TDependencies, TState, {}, {}, {}, {}, {}>(state);
 }
 
 export type ModelBuilderCreator<TDependencies> = <TState>(
-  state: State<TDependencies, TState>
+  state: TState | StateFactory<TState, TDependencies>
 ) => ModelBuilder<TDependencies, TState, {}, {}, {}, {}, {}>;
 
 export function createModelBuilderCreator<TDependencies>(): ModelBuilderCreator<

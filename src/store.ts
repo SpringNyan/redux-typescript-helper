@@ -14,6 +14,7 @@ import {
   ActionsObservable,
   StateObservable
 } from "redux-observable";
+import { createSelector } from "reselect";
 
 import { ModelState } from "./state";
 import {
@@ -74,8 +75,7 @@ export class StoreHelperFactory<
       });
     }
 
-    this._reducer = createModelReducer(model, dependencies);
-
+    this._reducer = createModelReducer(model, this._dependencies);
     this._actions = createModelActionHelpers(model, [], null);
     this._getters = createModelGetters(
       model,
@@ -510,7 +510,7 @@ function createModelRootEpic<
 
 function createModelReducer<TDependencies, TModel extends Model<TDependencies>>(
   model: TModel,
-  dependencies: TDependencies
+  dependencies: StoreHelperDependencies<TDependencies>
 ): ReduxReducer {
   return ((state: any, action: Action<any>) => {
     state = initializeModelState(state, model, dependencies);
@@ -583,13 +583,14 @@ function createModelGetters<TDependencies, TModel extends Model<TDependencies>>(
 
   getters.$root = parent != null ? parent.$root : getters;
 
-  for (const key of Object.keys(model.selectors)) {
+  const selectors = model.selectors(createSelector);
+  for (const key of Object.keys(selectors)) {
     Object.defineProperty(getters, key, {
       get() {
         const rootState = getState();
         const state = getSubProperty(rootState, namespaces);
 
-        return model.selectors[key]({
+        return selectors[key]({
           state,
           rootState,
           getters,
@@ -621,14 +622,10 @@ function initializeModelState<
 >(
   state: ModelState<TModel> | undefined,
   model: TModel,
-  dependencies: TDependencies
+  dependencies: StoreHelperDependencies<TDependencies>
 ): ModelState<TModel> {
   if (state === undefined) {
-    if (typeof model.state === "function") {
-      state = model.state(dependencies);
-    } else {
-      state = model.state;
-    }
+    state = model.state(dependencies);
   }
 
   let mutated = false;
@@ -655,7 +652,7 @@ function initializeModelState<
 function cloneModel<TModel extends Model>(model: TModel): TModel {
   return {
     state: model.state,
-    selectors: { ...model.selectors },
+    selectors: model.selectors,
     reducers: { ...model.reducers },
     effects: { ...model.effects },
     epics: [...model.epics],

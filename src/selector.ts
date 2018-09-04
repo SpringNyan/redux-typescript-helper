@@ -10,7 +10,8 @@ export interface SelectorContext<
 > {
   state: TState & ModelsState<TModels>;
   rootState: unknown;
-  getters: ModelGetters<
+  getters: ContextModelGetters<
+    TSelectors,
     Model<TDependencies, TState, TSelectors, any, any, TModels>
   >;
   rootGetters: unknown;
@@ -110,6 +111,21 @@ export interface Selectors<
   [name: string]: Selector<TDependencies, TState, TSelectors, TModels, any>;
 }
 
+export type SelectorsFactory<
+  TSelectors extends Selectors<any, any, any, any>,
+  TSelectorCreator extends SelectorCreator<any, any, any, any>
+> = ((selectorCreator: TSelectorCreator) => TSelectors);
+
+export type ExtractSelectors<
+  T extends
+    | SelectorsFactory<any, any>
+    | Model<any, any, any, any, any, any, any>
+> = T extends
+  | SelectorsFactory<infer TSelectors, any>
+  | Model<any, any, infer TSelectors, any, any, any, any>
+  ? TSelectors
+  : never;
+
 export type ExtractSelectorResult<
   T extends Selector<any, any, any, any, any>
 > = T extends Selector<any, any, any, any, infer TResult> ? TResult : never;
@@ -118,9 +134,10 @@ export type Getters<T extends Selectors<any, any, any, any>> = {
   [K in keyof T]: ExtractSelectorResult<T[K]>
 };
 
-export type ModelGetters<
+export type ContextModelGetters<
+  TSelectors extends Selectors<any, any, any, any>,
   TModel extends Model<any, any, any, any, any, any, any>
-> = Getters<TModel["selectors"]> &
+> = Getters<TSelectors> &
   ModelsGetters<TModel["models"]> & {
     $namespace: string;
     $state: ModelState<TModel>;
@@ -128,6 +145,10 @@ export type ModelGetters<
     $parent: unknown;
     $root: unknown;
   };
+
+export type ModelGetters<
+  TModel extends Model<any, any, any, any, any, any, any>
+> = ContextModelGetters<ExtractSelectors<TModel>, TModel>;
 
 export type ModelsGetters<TModels extends Models<any>> = {
   [K in keyof TModels]: TModels[K] extends Model<
