@@ -1,7 +1,7 @@
 import { StateFactory } from "./state";
 import { Selectors, SelectorCreator, SelectorsFactory } from "./selector";
 import { Reducers } from "./reducer";
-import { Effects, Epic } from "./epic";
+import { Effects, Epic, Epics } from "./epic";
 
 export interface Model<
   TDependencies = any,
@@ -34,7 +34,7 @@ export interface Model<
   >;
   reducers: TReducers;
   effects: TEffects;
-  epics: Array<Epic<TDependencies, TState, any, any, any, any>>;
+  epics: Epics<TDependencies, TState>;
   models: TModels;
 }
 
@@ -57,7 +57,7 @@ export class ModelBuilder<
   TModels extends Models<TDependencies>,
   TDynamicModels extends Models<TDependencies>
 > {
-  private readonly _state: StateFactory<TState, TDependencies>;
+  private _state: StateFactory<TState, TDependencies>;
   private _selectors: SelectorsFactory<
     Selectors<TDependencies, TState, TSelectors, TModels>,
     SelectorCreator<TDependencies, TState, TSelectors, TModels>

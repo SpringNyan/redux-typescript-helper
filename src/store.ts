@@ -491,8 +491,8 @@ function createModelRootEpic<
       ...registerModelEpics(
         model,
         namespaces,
-        rootActions,
-        rootGetters,
+        rootActions as any,
+        rootGetters as any,
         rootAction$,
         rootState$,
         dependencies

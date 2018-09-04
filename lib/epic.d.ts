@@ -2,17 +2,17 @@ import { Observable, OperatorFunction } from "rxjs";
 import { Action as ReduxAction, Dispatch } from "redux";
 import { ActionsObservable, StateObservable } from "redux-observable";
 import { DeepState } from "./state";
-import { Action, ModelActionHelpers } from "./action";
+import { Action, DeepActionHelpers } from "./action";
 import { Selectors, DeepGetters } from "./selector";
 import { Reducers } from "./reducer";
-import { Model, Models } from "./model";
+import { Models } from "./model";
 import { StoreHelperDependencies } from "./store";
 export interface EpicContext<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any, any>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any, any>, TModels extends Models<TDependencies>> {
     action$: ActionsObservable<Action<unknown>>;
     rootAction$: ActionsObservable<ReduxAction>;
     state$: StateObservable<DeepState<TState, TModels>>;
     rootState$: StateObservable<unknown>;
-    actions: ModelActionHelpers<Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>>;
+    actions: DeepActionHelpers<TReducers, TEffects, TModels>;
     rootActions: unknown;
     getters: DeepGetters<TState, TSelectors, TModels>;
     rootGetters: unknown;
@@ -21,6 +21,7 @@ export interface EpicContext<TDependencies, TState, TSelectors extends Selectors
 export interface Epic<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any, any>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any, any>, TModels extends Models<TDependencies>> {
     (context: EpicContext<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>): Observable<ReduxAction>;
 }
+export declare type Epics<TDependencies, TState> = Array<Epic<TDependencies, TState, any, any, any, any>>;
 export interface Effect<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any, any>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any, any>, TModels extends Models<TDependencies>, TPayload> {
     (context: EpicContext<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>, payload: TPayload): Observable<ReduxAction>;
 }

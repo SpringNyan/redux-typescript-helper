@@ -3,10 +3,10 @@ import { Action as ReduxAction, Dispatch } from "redux";
 import { ActionsObservable, StateObservable } from "redux-observable";
 
 import { DeepState } from "./state";
-import { Action, ModelActionHelpers } from "./action";
+import { Action, DeepActionHelpers } from "./action";
 import { Selectors, DeepGetters } from "./selector";
 import { Reducers } from "./reducer";
-import { Model, Models } from "./model";
+import { Models } from "./model";
 import { StoreHelperDependencies } from "./store";
 
 export interface EpicContext<
@@ -21,9 +21,7 @@ export interface EpicContext<
   rootAction$: ActionsObservable<ReduxAction>;
   state$: StateObservable<DeepState<TState, TModels>>;
   rootState$: StateObservable<unknown>;
-  actions: ModelActionHelpers<
-    Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>
-  >;
+  actions: DeepActionHelpers<TReducers, TEffects, TModels>;
   rootActions: unknown;
   getters: DeepGetters<TState, TSelectors, TModels>;
   rootGetters: unknown;
@@ -49,6 +47,10 @@ export interface Epic<
     >
   ): Observable<ReduxAction>;
 }
+
+export type Epics<TDependencies, TState> = Array<
+  Epic<TDependencies, TState, any, any, any, any>
+>;
 
 export interface Effect<
   TDependencies,

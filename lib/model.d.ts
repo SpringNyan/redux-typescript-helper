@@ -1,13 +1,13 @@
 import { StateFactory } from "./state";
 import { Selectors, SelectorCreator, SelectorsFactory } from "./selector";
 import { Reducers } from "./reducer";
-import { Effects, Epic } from "./epic";
+import { Effects, Epic, Epics } from "./epic";
 export interface Model<TDependencies = any, TState = any, TSelectors extends Selectors<TDependencies, TState, any, any> = Selectors<TDependencies, TState, any, any>, TReducers extends Reducers<TDependencies, TState> = Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any, any> = Effects<TDependencies, TState, any, any, any, any>, TModels extends Models<TDependencies> = Models<TDependencies>, TDynamicModels extends Models<TDependencies> = Models<TDependencies>> {
     state: StateFactory<TState, TDependencies>;
     selectors: SelectorsFactory<TSelectors, SelectorCreator<TDependencies, TState, any, any>>;
     reducers: TReducers;
     effects: TEffects;
-    epics: Array<Epic<TDependencies, TState, any, any, any, any>>;
+    epics: Epics<TDependencies, TState>;
     models: TModels;
 }
 export declare type Models<TDependencies> = {
@@ -15,7 +15,7 @@ export declare type Models<TDependencies> = {
 };
 export declare type ExtractDynamicModels<T extends Model<any, any, any, any, any, any, any>> = T extends Model<any, any, any, any, any, any, infer TDynamicModels> ? TDynamicModels : never;
 export declare class ModelBuilder<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any, any>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any, any>, TModels extends Models<TDependencies>, TDynamicModels extends Models<TDependencies>> {
-    private readonly _state;
+    private _state;
     private _selectors;
     private _reducers;
     private _effects;

@@ -55,15 +55,21 @@ export type ActionHelpers<
   T extends Reducers<any, any> | Effects<any, any, any, any, any, any>
 > = { [K in keyof T]: ActionHelper<ExtractActionPayload<T[K]>> };
 
-export type ModelActionHelpers<
-  TModel extends Model<any, any, any, any, any, any, any>
-> = ActionHelpers<TModel["reducers"]> &
-  ActionHelpers<TModel["effects"]> &
-  ModelsActionHelpers<TModel["models"]> & {
+export type DeepActionHelpers<
+  TReducers extends Reducers<any, any>,
+  TEffects extends Effects<any, any, any, any, any, any>,
+  TModels extends Models<any>
+> = ActionHelpers<TReducers> &
+  ActionHelpers<TEffects> &
+  ModelsActionHelpers<TModels> & {
     $namespace: string;
     $parent: unknown;
     $root: unknown;
   };
+
+export type ModelActionHelpers<
+  TModel extends Model<any, any, any, any, any, any, any>
+> = DeepActionHelpers<TModel["reducers"], TModel["effects"], TModel["models"]>;
 
 export type ModelsActionHelpers<TModels extends Models<any>> = {
   [K in keyof TModels]: TModels[K] extends Model<
