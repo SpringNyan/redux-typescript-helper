@@ -48,8 +48,15 @@ export interface Epic<
   ): Observable<ReduxAction>;
 }
 
-export type Epics<TDependencies, TState> = Array<
-  Epic<TDependencies, TState, any, any, any, any>
+export type Epics<
+  TDependencies,
+  TState,
+  TSelectors extends Selectors<TDependencies, TState, any, any>,
+  TReducers extends Reducers<TDependencies, TState>,
+  TEffects extends Effects<TDependencies, TState, any, any, any, any>,
+  TModels extends Models<TDependencies>
+> = Array<
+  Epic<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>
 >;
 
 export interface Effect<

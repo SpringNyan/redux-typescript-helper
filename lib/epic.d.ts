@@ -21,7 +21,7 @@ export interface EpicContext<TDependencies, TState, TSelectors extends Selectors
 export interface Epic<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any, any>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any, any>, TModels extends Models<TDependencies>> {
     (context: EpicContext<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>): Observable<ReduxAction>;
 }
-export declare type Epics<TDependencies, TState> = Array<Epic<TDependencies, TState, any, any, any, any>>;
+export declare type Epics<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any, any>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any, any>, TModels extends Models<TDependencies>> = Array<Epic<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>>;
 export interface Effect<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any, any>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any, any>, TModels extends Models<TDependencies>, TPayload> {
     (context: EpicContext<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>, payload: TPayload): Observable<ReduxAction>;
 }
