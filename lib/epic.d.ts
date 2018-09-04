@@ -1,7 +1,7 @@
 import { Observable, OperatorFunction } from "rxjs";
 import { Action as ReduxAction, Dispatch } from "redux";
 import { ActionsObservable, StateObservable } from "redux-observable";
-import { ModelsState } from "./state";
+import { DeepState } from "./state";
 import { Action, ModelActionHelpers } from "./action";
 import { Selectors, ContextModelGetters } from "./selector";
 import { Reducers } from "./reducer";
@@ -10,7 +10,7 @@ import { StoreHelperDependencies } from "./store";
 export interface EpicContext<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any, any>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any, any>, TModels extends Models<TDependencies>> {
     action$: ActionsObservable<Action<unknown>>;
     rootAction$: ActionsObservable<ReduxAction>;
-    state$: StateObservable<TState & ModelsState<TModels>>;
+    state$: StateObservable<DeepState<TState, TModels>>;
     rootState$: StateObservable<unknown>;
     actions: ModelActionHelpers<Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>>;
     rootActions: unknown;
