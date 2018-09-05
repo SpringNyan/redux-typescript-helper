@@ -25,7 +25,7 @@ import {
 } from "./action";
 import { ModelGetters } from "./selector";
 import { Effect } from "./epic";
-import { Model, ExtractDynamicModels } from "./model";
+import { Model, ExtractDynamicModels, cloneModel } from "./model";
 
 export type StoreHelperDependencies<TDependencies> = TDependencies & {
   $storeHelper: StoreHelper<Model<TDependencies, unknown, {}, {}, {}, {}, {}>>;
@@ -647,17 +647,6 @@ function initializeModelState<
   } else {
     return state!;
   }
-}
-
-function cloneModel<TModel extends Model>(model: TModel): TModel {
-  return {
-    state: model.state,
-    selectors: model.selectors,
-    reducers: { ...model.reducers },
-    effects: { ...model.effects },
-    epics: [...model.epics],
-    models: { ...model.models }
-  } as TModel;
 }
 
 function getSubProperty<T>(
