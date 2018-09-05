@@ -1,45 +1,54 @@
-import produce from "immer";
-import { BehaviorSubject, Observable, merge } from "rxjs";
-import {
-  map,
-  mergeMap,
-  filter,
-  distinctUntilChanged,
-  takeUntil,
-  catchError
-} from "rxjs/operators";
+import { BehaviorSubject, Observable } from "rxjs";
+import { mergeMap } from "rxjs/operators";
 import { Action as ReduxAction, Reducer as ReduxReducer, Store } from "redux";
-import {
-  Epic as ReduxObservableEpic,
-  ActionsObservable,
-  StateObservable
-} from "redux-observable";
-import { createSelector } from "reselect";
+import { Epic as ReduxObservableEpic } from "redux-observable";
 
 import { ModelState } from "./state";
 import {
-  actionTypes,
   ModelActionHelpers,
-  Action,
-  createActionHelper
+  actionTypes,
+  createModelActionHelpers
 } from "./action";
-import { ModelGetters } from "./selector";
-import { Effect } from "./epic";
+import { createModelReducer } from "./reducer";
+import { ModelGetters, createModelGetters } from "./selector";
+import { ReduxObservableEpicErrorHandler, createModelEpic } from "./epic";
 import { Model, ExtractDynamicModels, cloneModel } from "./model";
+import { getIn } from "./util";
 
-export type StoreHelperDependencies<TDependencies> = TDependencies & {
-  $storeHelper: StoreHelper<Model<TDependencies, unknown, {}, {}, {}, {}, {}>>;
-};
+interface StoreHelperInternal<TModel extends Model> {
+  state: ModelState<TModel>;
+  actions: ModelActionHelpers<TModel>;
+  getters: ModelGetters<TModel>;
 
-export interface StoreHelperOptions {
-  epicErrorHandler?: (
-    err: any,
-    caught: Observable<ReduxAction>
-  ) => Observable<ReduxAction>;
+  child<K extends Extract<keyof TModel["models"], string>>(
+    namespace: K
+  ): StoreHelper<TModel["models"][K]>;
+  child<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
+    namespace: K
+  ): StoreHelper<ExtractDynamicModels<TModel>[K]> | null;
+
+  registerModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
+    namespace: K,
+    model: ExtractDynamicModels<TModel>[K]
+  ): void;
+  unregisterModel<
+    K extends Extract<keyof ExtractDynamicModels<TModel>, string>
+  >(
+    namespace: K
+  ): void;
 }
 
 export type StoreHelper<TModel extends Model> = StoreHelperInternal<TModel> &
   { [K in keyof TModel["models"]]: StoreHelper<TModel["models"][K]> };
+
+export type StoreHelperDependencies<TDependencies> = TDependencies & {
+  $store: Store<unknown>;
+  $storeHelper: StoreHelper<Model<TDependencies, unknown, {}, {}, {}, {}, {}>>;
+};
+
+export interface StoreHelperOptions {
+  epicErrorHandler?: ReduxObservableEpicErrorHandler;
+}
 
 export class StoreHelperFactory<
   TDependencies,
@@ -75,23 +84,23 @@ export class StoreHelperFactory<
       });
     }
 
-    this._reducer = createModelReducer(model, this._dependencies);
-    this._actions = createModelActionHelpers(model, [], null);
+    this._reducer = createModelReducer(this._model, this._dependencies);
+    this._actions = createModelActionHelpers(this._model, [], null);
     this._getters = createModelGetters(
-      model,
-      () => this._store!.getState(),
+      this._model,
       this._dependencies,
+      () => this._store!.getState(),
       [],
       null
     );
 
-    const initialEpic = createModelRootEpic(
+    const initialEpic = createModelEpic(
       model,
-      [],
+      this._dependencies,
+      this._options.epicErrorHandler || null,
       this._actions,
       this._getters,
-      this._dependencies,
-      { errorHandler: this._options.epicErrorHandler }
+      []
     );
     this._addEpic$ = new BehaviorSubject(initialEpic);
     this._epic = (action$, state$, epicDependencies) =>
@@ -110,23 +119,24 @@ export class StoreHelperFactory<
 
   public create(store: Store): StoreHelper<TModel> {
     if (this._store != null) {
-      throw new Error("Store helper is already created");
+      throw new Error("store helper is already created");
     }
 
     this._store = store;
 
     const storeHelper = new _StoreHelper(
-      store,
+      this._store,
       this._model,
-      [],
+      this._dependencies,
+      this._options,
       this._actions,
       this._getters,
       this._addEpic$,
-      this._dependencies,
-      this._options
+      []
     );
 
-    this._dependencies.$storeHelper = storeHelper as any;
+    this._dependencies.$store = store;
+    this._dependencies.$storeHelper = storeHelper;
 
     return storeHelper as any;
   }
@@ -147,40 +157,16 @@ export function createStoreHelperFactory<
   return new StoreHelperFactory(model, dependencies, options);
 }
 
-interface StoreHelperInternal<TModel extends Model> {
-  store: Store;
-  state: ModelState<TModel>;
-  actions: ModelActionHelpers<TModel>;
-  getters: ModelGetters<TModel>;
-
-  child<K extends Extract<keyof TModel["models"], string>>(
-    namespace: K
-  ): StoreHelper<TModel["models"][K]>;
-  child<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
-    namespace: K
-  ): StoreHelper<ExtractDynamicModels<TModel>[K]> | null;
-
-  registerModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
-    namespace: K,
-    model: ExtractDynamicModels<TModel>[K]
-  ): void;
-  unregisterModel<
-    K extends Extract<keyof ExtractDynamicModels<TModel>, string>
-  >(
-    namespace: K
-  ): void;
-}
-
 class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
   implements StoreHelperInternal<TModel> {
   private readonly _store: Store;
   private readonly _model: TModel;
   private readonly _dependencies: StoreHelperDependencies<TDependencies>;
-  private readonly _namespaces: string[];
+  private readonly _options: StoreHelperOptions;
   private readonly _actions: ModelActionHelpers<TModel>;
   private readonly _getters: ModelGetters<TModel>;
   private readonly _addEpic$: BehaviorSubject<ReduxObservableEpic>;
-  private readonly _options: StoreHelperOptions;
+  private readonly _namespaces: string[];
 
   private readonly _subStoreHelpers: {
     [namespace: string]: StoreHelperInternal<Model<TDependencies>>;
@@ -189,33 +175,29 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
   constructor(
     store: Store,
     model: TModel,
-    namespaces: string[],
+    dependencies: StoreHelperDependencies<TDependencies>,
+    options: StoreHelperOptions,
     actions: ModelActionHelpers<TModel>,
     getters: ModelGetters<TModel>,
     addEpic$: BehaviorSubject<ReduxObservableEpic>,
-    dependencies: StoreHelperDependencies<TDependencies>,
-    options: StoreHelperOptions
+    namespaces: string[]
   ) {
     this._store = store;
     this._model = model;
-    this._namespaces = namespaces;
+    this._dependencies = dependencies;
+    this._options = options;
     this._actions = actions;
     this._getters = getters;
     this._addEpic$ = addEpic$;
-    this._dependencies = dependencies;
-    this._options = options;
+    this._namespaces = namespaces;
 
     for (const namespace of Object.keys(model.models)) {
       this._registerSubStoreHelper(namespace);
     }
   }
 
-  public get store(): Store {
-    return this._store;
-  }
-
   public get state(): ModelState<TModel> {
-    return getSubProperty(this._store.getState(), this._namespaces);
+    return getIn(this._store.getState(), this._namespaces);
   }
 
   public get actions(): ModelActionHelpers<TModel> {
@@ -243,30 +225,35 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     K extends Extract<keyof ExtractDynamicModels<TModel>, string>
   >(namespace: K, model: ExtractDynamicModels<TModel>[K]): void {
     if (this._model.models[namespace] != null) {
-      throw new Error("Failed to register model: model is already registered");
+      throw new Error("model is already registered");
     }
+
+    this._model.models[namespace] = model;
 
     const namespaces = [...this._namespaces, namespace];
 
-    this._model.models[namespace] = cloneModel(model);
-    this._actions[namespace] = createModelActionHelpers(model, namespaces, this
-      ._actions as any) as any;
+    this._actions[namespace] = createModelActionHelpers(
+      model,
+      namespaces,
+      this._actions
+    ) as any;
+
     this._getters[namespace] = createModelGetters(
       model,
-      () => this._store.getState(),
       this._dependencies,
+      () => this._store.getState(),
       namespaces,
       this._getters
     ) as any;
 
     this._addEpic$.next(
-      createModelRootEpic(
+      createModelEpic(
         model,
-        namespaces,
+        this._dependencies,
+        this._options.epicErrorHandler || null,
         this._actions.$root as any,
         this._getters.$root as any,
-        this._dependencies,
-        { errorHandler: this._options.epicErrorHandler }
+        namespaces
       )
     );
 
@@ -281,7 +268,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     K extends Extract<keyof ExtractDynamicModels<TModel>, string>
   >(namespace: K): void {
     if (this._model.models[namespace] == null) {
-      throw new Error("Failed to unregister model: model is not existing");
+      throw new Error("model is already unregistered");
     }
 
     const namespaces = [...this._namespaces, namespace];
@@ -305,13 +292,13 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     this._subStoreHelpers[namespace] = new _StoreHelper(
       this._store,
       this._model.models[namespace],
-      [...this._namespaces, namespace],
+      this._dependencies,
+      this._options,
       this._actions[namespace],
       this._getters[namespace],
       this._addEpic$,
-      this._dependencies,
-      this._options
-    );
+      [...this._namespaces, namespace]
+    ) as any;
 
     Object.defineProperty(this, namespace, {
       get: () => {
@@ -326,337 +313,4 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     delete (this as any)[namespace];
     delete this._subStoreHelpers[namespace];
   }
-}
-
-function createModelActionHelpers<TModel extends Model>(
-  model: TModel,
-  namespaces: string[],
-  parent: ModelActionHelpers<any> | null
-): ModelActionHelpers<TModel> {
-  const actions = {
-    $namespace: namespaces.join("/"),
-    $parent: parent
-  } as any;
-
-  actions.$root = parent != null ? parent.$root : actions;
-
-  for (const key of [
-    ...Object.keys(model.reducers),
-    ...Object.keys(model.effects)
-  ]) {
-    actions[key] = createActionHelper([...namespaces, key].join("/"));
-  }
-
-  for (const key of Object.keys(model.models)) {
-    actions[key] = createModelActionHelpers(
-      model.models[key],
-      [...namespaces, key],
-      actions
-    );
-  }
-
-  return actions;
-}
-
-function registerModelEpics<TDependencies, TModel extends Model<TDependencies>>(
-  model: TModel,
-  namespaces: string[],
-  rootActions: ModelActionHelpers<TModel>,
-  rootGetters: ModelGetters<TModel>,
-  rootAction$: ActionsObservable<ReduxAction>,
-  rootState$: StateObservable<any>,
-  dependencies: StoreHelperDependencies<TDependencies>
-): Observable<ReduxAction>[] {
-  const outputs: Observable<ReduxAction>[] = [];
-
-  for (const key of Object.keys(model.models)) {
-    const subModel = model.models[key];
-    const subOutputs = registerModelEpics(
-      subModel,
-      [...namespaces, key],
-      rootActions,
-      rootGetters,
-      rootAction$,
-      rootState$,
-      dependencies
-    );
-
-    outputs.push(...subOutputs);
-  }
-
-  const state$ = new StateObservable(
-    rootState$.pipe(
-      map((state) => getSubProperty(state, namespaces)),
-      distinctUntilChanged()
-    ) as any,
-    getSubProperty(rootState$.value, namespaces)
-  );
-
-  const actions: any = getSubProperty(rootActions, namespaces)!;
-  const getters = getSubProperty(rootGetters, namespaces)!;
-
-  for (const key of Object.keys(model.effects)) {
-    let effect: Effect<any, any, any, any, any, any, any>;
-    let operator = mergeMap;
-
-    const effectWithOperator = model.effects[key];
-    if (Array.isArray(effectWithOperator)) {
-      [effect, operator] = effectWithOperator;
-    } else {
-      effect = effectWithOperator;
-    }
-
-    const action$ = rootAction$.ofType<Action<any>>(
-      [...namespaces, key].join("/")
-    );
-
-    const output$ = action$.pipe(
-      operator((action) => {
-        const payload = action.payload;
-        return effect(
-          {
-            action$,
-            rootAction$,
-            state$,
-            rootState$,
-            actions,
-            rootActions,
-            getters,
-            rootGetters,
-            dependencies
-          },
-          payload
-        );
-      })
-    );
-
-    outputs.push(output$);
-  }
-
-  const namespacePrefix = namespaces.join("/");
-  for (const epic of model.epics) {
-    const action$ = new ActionsObservable(
-      rootAction$.pipe(
-        filter(
-          (action): action is Action<any> =>
-            typeof action.type === "string" &&
-            action.type.lastIndexOf(namespacePrefix, 0) === 0
-        )
-      )
-    );
-
-    const output$ = epic({
-      action$,
-      rootAction$,
-      state$,
-      rootState$,
-      actions,
-      rootActions,
-      getters,
-      rootGetters,
-      dependencies
-    });
-
-    outputs.push(output$);
-  }
-
-  return outputs;
-}
-
-interface CreateModelRootEpicOptions {
-  errorHandler?: (
-    err: any,
-    caught: Observable<ReduxAction>
-  ) => Observable<ReduxAction>;
-}
-
-function createModelRootEpic<
-  TDependencies,
-  TModel extends Model<TDependencies>
->(
-  model: TModel,
-  namespaces: string[],
-  rootActions: ModelActionHelpers<Model<TDependencies>>,
-  rootGetters: ModelGetters<Model<TDependencies>>,
-  dependencies: StoreHelperDependencies<TDependencies>,
-  options: CreateModelRootEpicOptions
-): ReduxObservableEpic<ReduxAction, ReduxAction> {
-  return (rootAction$, rootState$) => {
-    const unregisterType = `${namespaces.join("/")}/${actionTypes.unregister}`;
-    const takeUntil$ = rootAction$.pipe(
-      filter((action) => action.type === unregisterType)
-    );
-
-    return merge(
-      ...registerModelEpics(
-        model,
-        namespaces,
-        rootActions as any,
-        rootGetters as any,
-        rootAction$,
-        rootState$,
-        dependencies
-      ).map(
-        (epic) =>
-          options.errorHandler != null
-            ? epic.pipe(
-                catchError((err, caught) => options.errorHandler!(err, caught))
-              )
-            : epic
-      )
-    ).pipe(takeUntil(takeUntil$));
-  };
-}
-
-function createModelReducer<TDependencies, TModel extends Model<TDependencies>>(
-  model: TModel,
-  dependencies: StoreHelperDependencies<TDependencies>
-): ReduxReducer {
-  return ((state: any, action: Action<any>) => {
-    state = initializeModelState(state, model, dependencies);
-
-    return produce(state, (draft) => {
-      const namespaces = action.type.split("/");
-      const stateName = namespaces[namespaces.length - 2];
-      const actionType = namespaces[namespaces.length - 1];
-
-      const parentState = getSubProperty(
-        draft,
-        namespaces.slice(0, namespaces.length - 2)
-      );
-
-      const subModel = getSubProperty<Model>(
-        model,
-        namespaces.slice(0, namespaces.length - 1),
-        (o, p) => o.models[p]
-      );
-
-      if (actionType === actionTypes.unregister) {
-        if (parentState != null) {
-          delete parentState[stateName];
-        }
-      }
-
-      const subState =
-        parentState != null && stateName != null
-          ? parentState[stateName]
-          : parentState;
-
-      const subReducer =
-        subModel != null ? subModel.reducers[actionType] : undefined;
-
-      if (subReducer != null) {
-        if (subState == null) {
-          throw new Error("Failed to handle action: state must be initialized");
-        }
-
-        const nextSubState = subReducer(subState, action.payload, dependencies);
-        if (nextSubState !== undefined) {
-          if (stateName != null) {
-            parentState[stateName] = nextSubState;
-          } else {
-            return nextSubState;
-          }
-        }
-      }
-    });
-  }) as ReduxReducer;
-}
-
-function createModelGetters<TDependencies, TModel extends Model<TDependencies>>(
-  model: TModel,
-  getState: () => any,
-  dependencies: StoreHelperDependencies<TDependencies>,
-  namespaces: string[],
-  parent: ModelGetters<any> | null
-): ModelGetters<TModel> {
-  const getters = {
-    $namespace: namespaces.join("/"),
-    get $state() {
-      return getSubProperty(getState(), namespaces);
-    },
-    get $rootState() {
-      return getState();
-    },
-    $parent: parent
-  } as any;
-
-  getters.$root = parent != null ? parent.$root : getters;
-
-  const selectors = model.selectors(createSelector);
-  for (const key of Object.keys(selectors)) {
-    Object.defineProperty(getters, key, {
-      get() {
-        const rootState = getState();
-        const state = getSubProperty(rootState, namespaces);
-
-        return selectors[key]({
-          state,
-          rootState,
-          getters,
-          rootGetters: getters.$root,
-          dependencies
-        });
-      },
-      enumerable: true,
-      configurable: true
-    });
-  }
-
-  for (const key of Object.keys(model.models)) {
-    getters[key] = createModelGetters(
-      model.models[key],
-      getState,
-      dependencies,
-      [...namespaces, key],
-      getters
-    );
-  }
-
-  return getters;
-}
-
-function initializeModelState<
-  TDependencies,
-  TModel extends Model<TDependencies>
->(
-  state: ModelState<TModel> | undefined,
-  model: TModel,
-  dependencies: StoreHelperDependencies<TDependencies>
-): ModelState<TModel> {
-  if (state === undefined) {
-    state = model.state(dependencies);
-  }
-
-  let mutated = false;
-  const subStates: { [key: string]: any } = {};
-  for (const key of Object.keys(model.models)) {
-    const subModel = model.models[key];
-    const subState = initializeModelState(state![key], subModel, dependencies);
-    if (state![key] !== subState) {
-      subStates[key] = subState;
-      mutated = true;
-    }
-  }
-
-  if (mutated) {
-    return {
-      ...(state as { [key: string]: any }),
-      ...subStates
-    } as ModelState<TModel>;
-  } else {
-    return state!;
-  }
-}
-
-function getSubProperty<T>(
-  obj: T,
-  paths: string[],
-  map?: (obj: T, path: string) => T
-): T | undefined {
-  return paths.reduce<T | undefined>(
-    (o, path) =>
-      o != null ? (map ? map(o, path) : (o as any)[path]) : undefined,
-    obj
-  );
 }
