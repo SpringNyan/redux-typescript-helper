@@ -25,7 +25,7 @@ export declare type DeepActionHelpers<TReducers extends Reducers<any, any>, TEff
     $parent: unknown;
     $root: unknown;
 };
-export declare type ModelActionHelpers<TModel extends Model<any, any, any, any, any, any, any>> = DeepActionHelpers<TModel["reducers"], TModel["effects"], TModel["models"]>;
+export declare type ModelActionHelpers<TModel extends Model> = DeepActionHelpers<TModel["reducers"], TModel["effects"], TModel["models"]>;
 export declare type ModelsActionHelpers<TModels extends Models<any>> = {
-    [K in keyof TModels]: TModels[K] extends Model<any, any, any, any, any, any, any> ? ModelActionHelpers<TModels[K]> : never;
+    [K in keyof TModels]: TModels[K] extends Model ? ModelActionHelpers<TModels[K]> : never;
 };

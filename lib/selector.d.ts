@@ -36,7 +36,7 @@ export declare type DeepGetters<TState, TSelectors extends Selectors<any, any, a
     $parent: unknown;
     $root: unknown;
 };
-export declare type ModelGetters<TModel extends Model<any, any, any, any, any, any, any>> = DeepGetters<ModelState<TModel>, ExtractSelectors<TModel>, TModel["models"]>;
+export declare type ModelGetters<TModel extends Model> = DeepGetters<ModelState<TModel>, ExtractSelectors<TModel>, TModel["models"]>;
 export declare type ModelsGetters<TModels extends Models<any>> = {
-    [K in keyof TModels]: TModels[K] extends Model<any, any, any, any, any, any, any> ? ModelGetters<TModels[K]> : never;
+    [K in keyof TModels]: TModels[K] extends Model ? ModelGetters<TModels[K]> : never;
 };

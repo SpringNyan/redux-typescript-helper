@@ -144,20 +144,14 @@ export type DeepGetters<
     $root: unknown;
   };
 
-export type ModelGetters<
-  TModel extends Model<any, any, any, any, any, any, any>
-> = DeepGetters<ModelState<TModel>, ExtractSelectors<TModel>, TModel["models"]>;
+export type ModelGetters<TModel extends Model> = DeepGetters<
+  ModelState<TModel>,
+  ExtractSelectors<TModel>,
+  TModel["models"]
+>;
 
 export type ModelsGetters<TModels extends Models<any>> = {
-  [K in keyof TModels]: TModels[K] extends Model<
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any
-  >
+  [K in keyof TModels]: TModels[K] extends Model
     ? ModelGetters<TModels[K]>
     : never
 };

@@ -42,9 +42,15 @@ export type Models<TDependencies> = {
   [key: string]: Model<TDependencies>;
 };
 
-export type ExtractDynamicModels<
-  T extends Model<any, any, any, any, any, any, any>
-> = T extends Model<any, any, any, any, any, any, infer TDynamicModels>
+export type ExtractDynamicModels<T extends Model> = T extends Model<
+  any,
+  any,
+  any,
+  any,
+  any,
+  any,
+  infer TDynamicModels
+>
   ? TDynamicModels
   : never;
 

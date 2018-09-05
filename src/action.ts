@@ -67,20 +67,14 @@ export type DeepActionHelpers<
     $root: unknown;
   };
 
-export type ModelActionHelpers<
-  TModel extends Model<any, any, any, any, any, any, any>
-> = DeepActionHelpers<TModel["reducers"], TModel["effects"], TModel["models"]>;
+export type ModelActionHelpers<TModel extends Model> = DeepActionHelpers<
+  TModel["reducers"],
+  TModel["effects"],
+  TModel["models"]
+>;
 
 export type ModelsActionHelpers<TModels extends Models<any>> = {
-  [K in keyof TModels]: TModels[K] extends Model<
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any
-  >
+  [K in keyof TModels]: TModels[K] extends Model
     ? ModelActionHelpers<TModels[K]>
     : never
 };

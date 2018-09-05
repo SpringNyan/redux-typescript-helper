@@ -16,20 +16,13 @@ export type ExtractState<
 export type DeepState<TState, TModels extends Models<any>> = TState &
   ModelsState<TModels>;
 
-export type ModelState<
-  TModel extends Model<any, any, any, any, any, any, any>
-> = DeepState<ExtractState<TModel>, TModel["models"]>;
+export type ModelState<TModel extends Model> = DeepState<
+  ExtractState<TModel>,
+  TModel["models"]
+>;
 
 export type ModelsState<TModels extends Models<any>> = {
-  [K in keyof TModels]: TModels[K] extends Model<
-    any,
-    any,
-    any,
-    any,
-    any,
-    any,
-    any
-  >
+  [K in keyof TModels]: TModels[K] extends Model
     ? ModelState<TModels[K]>
     : never
 };

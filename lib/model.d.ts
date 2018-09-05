@@ -13,7 +13,7 @@ export interface Model<TDependencies = any, TState = any, TSelectors extends Sel
 export declare type Models<TDependencies> = {
     [key: string]: Model<TDependencies>;
 };
-export declare type ExtractDynamicModels<T extends Model<any, any, any, any, any, any, any>> = T extends Model<any, any, any, any, any, any, infer TDynamicModels> ? TDynamicModels : never;
+export declare type ExtractDynamicModels<T extends Model> = T extends Model<any, any, any, any, any, any, infer TDynamicModels> ? TDynamicModels : never;
 export declare class ModelBuilder<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState, any, any>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any, any>, TModels extends Models<TDependencies>, TDynamicModels extends Models<TDependencies>> {
     private readonly _model;
     constructor(model: Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>);
