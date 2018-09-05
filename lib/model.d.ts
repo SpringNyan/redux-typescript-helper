@@ -1,13 +1,13 @@
-import { State } from "./state";
-import { Selectors, SelectorCreator } from "./selector";
+import { StateFactory } from "./state";
+import { Selectors, SelectorCreator, SelectorsFactory } from "./selector";
 import { Reducers } from "./reducer";
-import { Effects, Epic } from "./epic";
+import { Effects, Epics } from "./epic";
 export interface Model<TDependencies = any, TState = any, TSelectors extends Selectors<TDependencies, TState, any, any> = Selectors<TDependencies, TState, any, any>, TReducers extends Reducers<TDependencies, TState> = Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState, any, any, any, any> = Effects<TDependencies, TState, any, any, any, any>, TModels extends Models<TDependencies> = Models<TDependencies>, TDynamicModels extends Models<TDependencies> = Models<TDependencies>> {
-    state: State<TDependencies, TState>;
-    selectors: TSelectors;
+    state: StateFactory<TState, TDependencies>;
+    selectors: SelectorsFactory<TSelectors, SelectorCreator<TDependencies, TState, any, any>>;
     reducers: TReducers;
     effects: TEffects;
-    epics: Array<Epic<TDependencies, TState, any, any, any, any>>;
+    epics: Epics<TDependencies, TState, any, any, any, any>;
     models: TModels;
 }
 export declare type Models<TDependencies> = {
@@ -21,14 +21,15 @@ export declare class ModelBuilder<TDependencies, TState, TSelectors extends Sele
     private _effects;
     private _epics;
     private _models;
-    constructor(state: State<TDependencies, TState>);
-    selectors<T extends Selectors<TDependencies, TState, TSelectors, TModels>>(selectors: T | ((selectorCreator: SelectorCreator<TDependencies, TState, TSelectors, TModels>) => T)): ModelBuilder<TDependencies, TState, TSelectors & T, TReducers, TEffects, TModels, TDynamicModels>;
+    constructor(state: TState | StateFactory<TState, TDependencies>);
+    selectors<T extends Selectors<TDependencies, TState, TSelectors, TModels>>(selectors: T | SelectorsFactory<T, SelectorCreator<TDependencies, TState, TSelectors, TModels>>): ModelBuilder<TDependencies, TState, TSelectors & T, TReducers, TEffects, TModels, TDynamicModels>;
     reducers<T extends Reducers<TDependencies, TState>>(reducers: T): ModelBuilder<TDependencies, TState, TSelectors, TReducers & T, TEffects, TModels, TDynamicModels>;
     effects<T extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>>(effects: T): ModelBuilder<TDependencies, TState, TSelectors, TReducers, TEffects & T, TModels, TDynamicModels>;
-    epics(epics: Array<Epic<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>>): ModelBuilder<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>;
+    epics(epics: Epics<TDependencies, TState, TSelectors, TReducers, TEffects, TModels>): ModelBuilder<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>;
     models<T extends Models<TDependencies>>(models: T): ModelBuilder<TDependencies, TState, TSelectors, TReducers, TEffects, TModels & T, TDynamicModels>;
-    dynamicModels<T extends Models<TDependencies>>(): ModelBuilder<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, T>;
-    build(): Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>;
+    dynamicModels<T extends Models<TDependencies>>(): ModelBuilder<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels & T>;
+    build(state?: TState | ((s: TState) => TState)): Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>;
+    private _toFactoryIfNeeded;
 }
-export declare type ModelBuilderCreator<TDependencies> = <TState>(state: State<TDependencies, TState>) => ModelBuilder<TDependencies, TState, {}, {}, {}, {}, {}>;
+export declare type ModelBuilderCreator<TDependencies> = <TState>(state: TState | StateFactory<TState, TDependencies>) => ModelBuilder<TDependencies, TState, {}, {}, {}, {}, {}>;
 export declare function createModelBuilderCreator<TDependencies>(): ModelBuilderCreator<TDependencies>;

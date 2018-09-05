@@ -41,9 +41,8 @@ describe("redux-typescript-helper", () => {
   }))
     .selectors({
       id({ dependencies }): number {
-        return (dependencies.$storeHelper as typeof storeHelper).namespace(
-          "user"
-        ).state.id;
+        return (dependencies.$storeHelper as typeof storeHelper).child("user")
+          .state.id;
       },
       idAndName({ state }) {
         return `${state.id} - ${state.username}`;
@@ -254,7 +253,7 @@ describe("redux-typescript-helper", () => {
     expect(entitiesHelper.state.count).eq(3);
 
     entitiesHelper.registerModel("temp", userModel);
-    const tempHelper = entitiesHelper.namespace("temp")!;
+    const tempHelper = entitiesHelper.child("temp")!;
 
     expect(tempHelper.state.username).eq("");
     store.dispatch(
