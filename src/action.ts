@@ -16,7 +16,7 @@ export interface Action<TPayload> {
 export type ExtractActionPayload<
   T extends
     | Action<any>
-    | Reducer<any, any, any>
+    | Reducer
     | Effect<any, any, any, any, any, any, any>
     | EffectWithOperator<any, any, any, any, any, any, any>
 > = T extends
@@ -52,11 +52,11 @@ export function createActionHelper<TPayload>(
 }
 
 export type ActionHelpers<
-  T extends Reducers<any, any> | Effects<any, any, any, any, any, any>
+  T extends Reducers | Effects<any, any, any, any, any, any>
 > = { [K in keyof T]: ActionHelper<ExtractActionPayload<T[K]>> };
 
 export type DeepActionHelpers<
-  TReducers extends Reducers<any, any>,
+  TReducers extends Reducers,
   TEffects extends Effects<any, any, any, any, any, any>,
   TModels extends Models<any>
 > = ActionHelpers<TReducers> &

@@ -1,6 +1,6 @@
 import { StoreHelperDependencies } from "./store";
 
-export interface Reducer<TDependencies, TState, TPayload> {
+export interface Reducer<TDependencies = any, TState = any, TPayload = any> {
   (
     state: TState,
     payload: TPayload,
@@ -8,6 +8,6 @@ export interface Reducer<TDependencies, TState, TPayload> {
   ): void | TState;
 }
 
-export interface Reducers<TDependencies, TState> {
-  [type: string]: Reducer<TDependencies, TState, any>;
+export interface Reducers<TDependencies = any, TState = any> {
+  [type: string]: Reducer<TDependencies, TState>;
 }

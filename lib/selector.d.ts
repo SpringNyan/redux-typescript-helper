@@ -24,7 +24,7 @@ export interface Selectors<TDependencies, TState, TSelectors extends Selectors<T
     [name: string]: Selector<TDependencies, TState, TSelectors, TModels, any>;
 }
 export declare type SelectorsFactory<TSelectors extends Selectors<any, any, any, any>, TSelectorCreator extends SelectorCreator<any, any, any, any>> = ((selectorCreator: TSelectorCreator) => TSelectors);
-export declare type ExtractSelectors<T extends SelectorsFactory<any, any> | Model<any, any, any, any, any, any, any>> = T extends SelectorsFactory<infer TSelectors, any> | Model<any, any, infer TSelectors, any, any, any, any> ? TSelectors : never;
+export declare type ExtractSelectors<T extends SelectorsFactory<any, any> | Model> = T extends SelectorsFactory<infer TSelectors, any> | Model<any, any, infer TSelectors, any, any, any, any> ? TSelectors : never;
 export declare type ExtractSelectorResult<T extends Selector<any, any, any, any, any>> = T extends Selector<any, any, any, any, infer TResult> ? TResult : never;
 export declare type Getters<T extends Selectors<any, any, any, any>> = {
     [K in keyof T]: ExtractSelectorResult<T[K]>;

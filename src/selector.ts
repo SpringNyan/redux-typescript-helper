@@ -114,9 +114,7 @@ export type SelectorsFactory<
 > = ((selectorCreator: TSelectorCreator) => TSelectors);
 
 export type ExtractSelectors<
-  T extends
-    | SelectorsFactory<any, any>
-    | Model<any, any, any, any, any, any, any>
+  T extends SelectorsFactory<any, any> | Model
 > = T extends
   | SelectorsFactory<infer TSelectors, any>
   | Model<any, any, infer TSelectors, any, any, any, any>

@@ -5,9 +5,7 @@ export type StateFactory<TState, TDependencies> = (
   dependencies: StoreHelperDependencies<TDependencies>
 ) => TState;
 
-export type ExtractState<
-  T extends StateFactory<any, any> | Model<any, any, any, any, any, any, any>
-> = T extends
+export type ExtractState<T extends StateFactory<any, any> | Model> = T extends
   | StateFactory<infer TState, any>
   | Model<any, infer TState, any, any, any, any, any>
   ? TState
