@@ -132,7 +132,7 @@ export type Getters<T extends Selectors<any, any, any, any>> = {
 export type DeepGetters<
   TState,
   TSelectors extends Selectors<any, any, any, any>,
-  TModels extends Models<any>
+  TModels extends Models
 > = Getters<TSelectors> &
   ModelsGetters<TModels> & {
     $namespace: string;
@@ -148,7 +148,7 @@ export type ModelGetters<TModel extends Model> = DeepGetters<
   TModel["models"]
 >;
 
-export type ModelsGetters<TModels extends Models<any>> = {
+export type ModelsGetters<TModels extends Models> = {
   [K in keyof TModels]: TModels[K] extends Model
     ? ModelGetters<TModels[K]>
     : never

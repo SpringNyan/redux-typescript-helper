@@ -38,7 +38,7 @@ export interface Model<
   models: TModels;
 }
 
-export type Models<TDependencies> = {
+export type Models<TDependencies = any> = {
   [key: string]: Model<TDependencies>;
 };
 

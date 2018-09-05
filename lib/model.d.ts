@@ -10,7 +10,7 @@ export interface Model<TDependencies = any, TState = any, TSelectors extends Sel
     epics: Epics<TDependencies, TState, any, any, any, any>;
     models: TModels;
 }
-export declare type Models<TDependencies> = {
+export declare type Models<TDependencies = any> = {
     [key: string]: Model<TDependencies>;
 };
 export declare type ExtractDynamicModels<T extends Model> = T extends Model<any, any, any, any, any, any, infer TDynamicModels> ? TDynamicModels : never;

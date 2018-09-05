@@ -58,7 +58,7 @@ export type ActionHelpers<
 export type DeepActionHelpers<
   TReducers extends Reducers,
   TEffects extends Effects<any, any, any, any, any, any>,
-  TModels extends Models<any>
+  TModels extends Models
 > = ActionHelpers<TReducers> &
   ActionHelpers<TEffects> &
   ModelsActionHelpers<TModels> & {
@@ -73,7 +73,7 @@ export type ModelActionHelpers<TModel extends Model> = DeepActionHelpers<
   TModel["models"]
 >;
 
-export type ModelsActionHelpers<TModels extends Models<any>> = {
+export type ModelsActionHelpers<TModels extends Models> = {
   [K in keyof TModels]: TModels[K] extends Model
     ? ModelActionHelpers<TModels[K]>
     : never
