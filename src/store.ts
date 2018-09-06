@@ -96,8 +96,6 @@ export class StoreHelperFactory<
       });
     }
 
-    this._reducer = createModelReducer(this._model, this._dependencies);
-
     this._actions = createModelActionHelpers(this._model, [], null);
 
     this._getters = createModelGetters(
@@ -106,6 +104,20 @@ export class StoreHelperFactory<
       [],
       null
     );
+
+    this._storeHelper = new _StoreHelper(
+      this._model,
+      this._dependencies,
+      this._options,
+      this._actions,
+      this._getters,
+      (epic) => this._addEpic$.next(epic),
+      [],
+      null
+    ) as any;
+    this._dependencies.$storeHelper = this._storeHelper;
+
+    this._reducer = createModelReducer(this._model, this._dependencies);
 
     const initialEpic = createModelEpic(
       model,
@@ -118,17 +130,6 @@ export class StoreHelperFactory<
       this._addEpic$.pipe(
         mergeMap((epic) => epic(action$, state$, epicDependencies))
       );
-
-    this._storeHelper = new _StoreHelper(
-      this._model,
-      this._dependencies,
-      this._options,
-      this._actions,
-      this._getters,
-      this._addEpic$,
-      [],
-      null
-    ) as any;
   }
 
   public get reducer(): ReduxReducer {
@@ -145,9 +146,7 @@ export class StoreHelperFactory<
     }
 
     this._store = store;
-
     this._dependencies.$store = this._store;
-    this._dependencies.$storeHelper = this._storeHelper;
 
     return this._storeHelper;
   }
@@ -175,7 +174,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
   private readonly _options: StoreHelperOptions;
   private readonly _actions: ModelActionHelpers<TModel>;
   private readonly _getters: ModelGetters<TModel>;
-  private readonly _addEpic$: BehaviorSubject<ReduxObservableEpic>;
+  private readonly _addEpic: (epic: ReduxObservableEpic) => void;
   private readonly _namespaces: string[];
 
   private readonly _subStoreHelpers: {
@@ -188,7 +187,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     options: StoreHelperOptions,
     actions: ModelActionHelpers<TModel>,
     getters: ModelGetters<TModel>,
-    addEpic$: BehaviorSubject<ReduxObservableEpic>,
+    addEpic: (epic: ReduxObservableEpic) => void,
     namespaces: string[],
     parent: StoreHelper<Model> | null
   ) {
@@ -197,7 +196,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     this._options = options;
     this._actions = actions;
     this._getters = getters;
-    this._addEpic$ = addEpic$;
+    this._addEpic = addEpic;
     this._namespaces = namespaces;
 
     this.$namespace = namespaces.join("/");
@@ -268,7 +267,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
 
     this._registerSubStoreHelper(namespace);
 
-    this._addEpic$.next(
+    this._addEpic(
       createModelEpic(
         model,
         this._dependencies,
@@ -316,7 +315,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
       this._options,
       this._actions[namespace],
       this._getters[namespace],
-      this._addEpic$,
+      this._addEpic,
       [...this._namespaces, namespace],
       this as any
     ) as any;

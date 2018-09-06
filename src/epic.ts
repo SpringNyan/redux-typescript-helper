@@ -264,14 +264,13 @@ function invokeModelEpics<TDependencies, TModel extends Model<TDependencies>>(
     getIn(rootState$.value, namespaces)
   );
 
-  const getHelper = () =>
-    getIn(
-      dependencies.$storeHelper as StoreHelper<Model>,
-      namespaces,
-      (obj, key) => obj.$child(key)
-    )!;
-  const getActions = () => getHelper().actions;
-  const getGetters = () => getHelper().getters;
+  const helper = getIn(
+    dependencies.$storeHelper as StoreHelper<Model>,
+    namespaces,
+    (obj, key) => obj.$child(key)
+  )!;
+  const actions = helper.actions;
+  const getters = helper.getters;
 
   for (const key of Object.keys(model.effects)) {
     let effect: Effect;
@@ -296,15 +295,9 @@ function invokeModelEpics<TDependencies, TModel extends Model<TDependencies>>(
             state$,
             rootState$,
 
-            get helper() {
-              return getHelper();
-            },
-            get actions() {
-              return getActions();
-            },
-            get getters() {
-              return getGetters();
-            },
+            helper,
+            actions,
+            getters,
             dependencies
           },
           payload
@@ -333,15 +326,9 @@ function invokeModelEpics<TDependencies, TModel extends Model<TDependencies>>(
       state$,
       rootState$,
 
-      get helper() {
-        return getHelper();
-      },
-      get actions() {
-        return getActions();
-      },
-      get getters() {
-        return getGetters();
-      },
+      helper,
+      actions,
+      getters,
       dependencies
     });
 
