@@ -73,8 +73,9 @@ export class StoreHelperFactory<
   private readonly _addEpic$: BehaviorSubject<ReduxObservableEpic>;
   private readonly _options: StoreHelperOptions;
 
+  private readonly _storeHelper: StoreHelper<TModel>;
+
   private _store?: Store;
-  private _storeHelper?: StoreHelper<TModel>;
 
   constructor(
     model: TModel,
@@ -96,7 +97,9 @@ export class StoreHelperFactory<
     }
 
     this._reducer = createModelReducer(this._model, this._dependencies);
+
     this._actions = createModelActionHelpers(this._model, [], null);
+
     this._getters = createModelGetters(
       this._model,
       this._dependencies,
@@ -115,6 +118,17 @@ export class StoreHelperFactory<
       this._addEpic$.pipe(
         mergeMap((epic) => epic(action$, state$, epicDependencies))
       );
+
+    this._storeHelper = new _StoreHelper(
+      this._model,
+      this._dependencies,
+      this._options,
+      this._actions,
+      this._getters,
+      this._addEpic$,
+      [],
+      null
+    ) as any;
   }
 
   public get reducer(): ReduxReducer {
@@ -131,22 +145,11 @@ export class StoreHelperFactory<
     }
 
     this._store = store;
-    this._storeHelper = new _StoreHelper(
-      this._store,
-      this._model,
-      this._dependencies,
-      this._options,
-      this._actions,
-      this._getters,
-      this._addEpic$,
-      [],
-      null
-    ) as any;
 
-    this._dependencies.$store = this._store!;
-    this._dependencies.$storeHelper = this._storeHelper!;
+    this._dependencies.$store = this._store;
+    this._dependencies.$storeHelper = this._storeHelper;
 
-    return this._storeHelper!;
+    return this._storeHelper;
   }
 }
 
@@ -167,7 +170,6 @@ export function createStoreHelperFactory<
 
 class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
   implements StoreHelperInternal<TModel> {
-  private readonly _store: Store;
   private readonly _model: TModel;
   private readonly _dependencies: StoreHelperDependencies<TDependencies>;
   private readonly _options: StoreHelperOptions;
@@ -181,7 +183,6 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
   } = {};
 
   constructor(
-    store: Store,
     model: TModel,
     dependencies: StoreHelperDependencies<TDependencies>,
     options: StoreHelperOptions,
@@ -191,7 +192,6 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     namespaces: string[],
     parent: StoreHelper<Model> | null
   ) {
-    this._store = store;
     this._model = model;
     this._dependencies = dependencies;
     this._options = options;
@@ -305,9 +305,12 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     delete this._getters[namespace];
   }
 
+  private get _store(): Store {
+    return this._dependencies.$store;
+  }
+
   private _registerSubStoreHelper(namespace: string): void {
     this._subStoreHelpers[namespace] = new _StoreHelper(
-      this._store,
       this._model.models[namespace],
       this._dependencies,
       this._options,
