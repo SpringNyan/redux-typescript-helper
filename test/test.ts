@@ -41,7 +41,7 @@ describe("redux-typescript-helper", () => {
   }))
     .selectors({
       id({ dependencies }): number {
-        return (dependencies.$storeHelper as typeof storeHelper).child("user")
+        return (dependencies.$storeHelper as typeof storeHelper).$child("user")
           .state.id;
       },
       idAndName({ state }) {
@@ -252,8 +252,8 @@ describe("redux-typescript-helper", () => {
     store.dispatch(entitiesHelper.actions.increaseWithError({}));
     expect(entitiesHelper.state.count).eq(3);
 
-    entitiesHelper.registerModel("temp", userModel);
-    const tempHelper = entitiesHelper.child("temp")!;
+    entitiesHelper.$registerModel("temp", userModel);
+    const tempHelper = entitiesHelper.$child("temp")!;
 
     expect(tempHelper.state.username).eq("");
     store.dispatch(
@@ -269,7 +269,7 @@ describe("redux-typescript-helper", () => {
     store.dispatch((entitiesHelper.actions as any)["temp"].logout());
     expect(tempHelper.state.username).eq("");
 
-    entitiesHelper.unregisterModel("temp");
+    entitiesHelper.$unregisterModel("temp");
     expect((entitiesHelper.state as any)["temp"]).eq(undefined);
   });
 });

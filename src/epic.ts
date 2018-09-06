@@ -15,16 +15,11 @@ import {
 } from "redux-observable";
 
 import { DeepState } from "./state";
-import {
-  Action,
-  DeepActionHelpers,
-  ModelActionHelpers,
-  actionTypes
-} from "./action";
-import { Selectors, DeepGetters, ModelGetters } from "./selector";
+import { Action, DeepActionHelpers, actionTypes } from "./action";
+import { Selectors, DeepGetters } from "./selector";
 import { Reducers } from "./reducer";
 import { Model, Models } from "./model";
-import { StoreHelperDependencies } from "./store";
+import { StoreHelper, StoreHelperDependencies } from "./store";
 import { getIn, startsWith, endsWith } from "./util";
 
 export interface EpicContext<
@@ -40,10 +35,20 @@ export interface EpicContext<
   rootAction$: ActionsObservable<ReduxAction>;
   state$: StateObservable<DeepState<TState, TModels>>;
   rootState$: StateObservable<unknown>;
+
+  helper: StoreHelper<
+    Model<
+      TDependencies,
+      TState,
+      TSelectors,
+      TReducers,
+      TEffects,
+      TModels,
+      TDynamicModels
+    >
+  >;
   actions: DeepActionHelpers<TReducers, TEffects, TModels, TDynamicModels>;
-  rootActions: unknown;
   getters: DeepGetters<TState, TSelectors, TModels, TDynamicModels>;
-  rootGetters: unknown;
   dependencies: StoreHelperDependencies<TDependencies>;
 }
 
@@ -193,8 +198,6 @@ export function createModelEpic<
   model: TModel,
   dependencies: StoreHelperDependencies<TDependencies>,
   errorHandler: ReduxObservableEpicErrorHandler | null,
-  rootActions: ModelActionHelpers<Model<TDependencies>>,
-  rootGetters: ModelGetters<Model<TDependencies>>,
   namespaces: string[]
 ): ReduxObservableEpic<ReduxAction, ReduxAction> {
   return (rootAction$, rootState$) => {
@@ -222,8 +225,6 @@ export function createModelEpic<
         dependencies,
         rootAction$,
         rootState$,
-        rootActions,
-        rootGetters,
         namespaces
       ).map(
         (epic) =>
@@ -238,8 +239,6 @@ function invokeModelEpics<TDependencies, TModel extends Model<TDependencies>>(
   dependencies: StoreHelperDependencies<TDependencies>,
   rootAction$: ActionsObservable<ReduxAction>,
   rootState$: StateObservable<any>,
-  rootActions: ModelActionHelpers<Model<TDependencies>>,
-  rootGetters: ModelGetters<Model<TDependencies>>,
   namespaces: string[]
 ): Observable<ReduxAction>[] {
   const outputs: Observable<ReduxAction>[] = [];
@@ -251,8 +250,6 @@ function invokeModelEpics<TDependencies, TModel extends Model<TDependencies>>(
       dependencies,
       rootAction$,
       rootState$,
-      rootActions,
-      rootGetters,
       [...namespaces, key]
     );
 
@@ -267,8 +264,14 @@ function invokeModelEpics<TDependencies, TModel extends Model<TDependencies>>(
     getIn(rootState$.value, namespaces)
   );
 
-  const actions = getIn(rootActions, namespaces)!;
-  const getters = getIn(rootGetters, namespaces)!;
+  const getHelper = () =>
+    getIn(
+      dependencies.$storeHelper as StoreHelper<Model>,
+      namespaces,
+      (obj, key) => obj.$child(key)
+    )!;
+  const getActions = () => getHelper().actions;
+  const getGetters = () => getHelper().getters;
 
   for (const key of Object.keys(model.effects)) {
     let effect: Effect;
@@ -292,10 +295,16 @@ function invokeModelEpics<TDependencies, TModel extends Model<TDependencies>>(
             rootAction$,
             state$,
             rootState$,
-            actions,
-            rootActions,
-            getters,
-            rootGetters,
+
+            get helper() {
+              return getHelper();
+            },
+            get actions() {
+              return getActions();
+            },
+            get getters() {
+              return getGetters();
+            },
             dependencies
           },
           payload
@@ -323,10 +332,16 @@ function invokeModelEpics<TDependencies, TModel extends Model<TDependencies>>(
       rootAction$,
       state$,
       rootState$,
-      actions,
-      rootActions,
-      getters,
-      rootGetters,
+
+      get helper() {
+        return getHelper();
+      },
+      get actions() {
+        return getActions();
+      },
+      get getters() {
+        return getGetters();
+      },
       dependencies
     });
 

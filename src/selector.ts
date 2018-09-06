@@ -87,12 +87,11 @@ export type DeepGetters<
   TDynamicModels extends Models
 > = Getters<TSelectors> &
   ModelsGetters<TModels> & {
-    $state: TState;
-    $rootState: unknown;
+    state: TState;
 
     $namespace: string;
-    $parent: unknown;
-    $root: unknown;
+    $parent: DeepGetters<unknown, {}, {}, {}> | null;
+    $root: DeepGetters<unknown, {}, {}, {}>;
     $child: DeepGettersChild<TModels, TDynamicModels>;
   };
 
@@ -100,12 +99,12 @@ export interface DeepGettersChild<
   TModels extends Models,
   TDynamicModels extends Models
 > {
-  <K extends Extract<keyof ModelsGetters<TModels>, string>>(
-    namespace: K
-  ): ModelsGetters<TModels>[K];
-  <K extends Extract<keyof ModelsGetters<TDynamicModels>, string>>(
-    namespace: K
-  ): ModelsGetters<TDynamicModels>[K] | null;
+  <K extends Extract<keyof TModels, string>>(namespace: K): ModelGetters<
+    TModels[K]
+  >;
+  <K extends Extract<keyof TDynamicModels, string>>(namespace: K): ModelGetters<
+    TDynamicModels[K]
+  > | null;
 }
 
 export type ModelGetters<TModel extends Model> = DeepGetters<
@@ -445,16 +444,12 @@ export function createModelGetters<
 >(
   model: TModel,
   dependencies: StoreHelperDependencies<TDependencies>,
-  getState: () => unknown,
   namespaces: string[],
   parent: ModelGetters<Model<TDependencies>> | null
 ): ModelGetters<TModel> {
   const getters = {
-    get $state() {
-      return getIn(getState(), namespaces);
-    },
-    get $rootState() {
-      return getState();
+    get state() {
+      return getIn(dependencies.$store.getState(), namespaces);
     },
 
     $namespace: namespaces.join("/"),
@@ -469,7 +464,7 @@ export function createModelGetters<
     Object.defineProperty(getters, key, {
       get() {
         return selectors[key]({
-          state: getters.$state,
+          state: getters.state,
           rootState: getters.$rootState,
 
           getters,
@@ -485,7 +480,6 @@ export function createModelGetters<
     getters[key] = createModelGetters(
       model.models[key],
       dependencies,
-      getState,
       [...namespaces, key],
       getters
     ) as any;

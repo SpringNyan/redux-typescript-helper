@@ -40,7 +40,7 @@ export function createModelReducer<
       const targetModel = getIn<Model>(
         model,
         namespaces.slice(0, namespaces.length - 1),
-        (o, p) => o.models[p]
+        (obj, key) => obj.models[key]
       );
 
       const stateName = namespaces[namespaces.length - 2];

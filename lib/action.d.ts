@@ -22,13 +22,13 @@ export declare type ActionHelpers<T extends Reducers | Effects> = {
 };
 export declare type DeepActionHelpers<TReducers extends Reducers, TEffects extends Effects, TModels extends Models, TDynamicModels extends Models> = ActionHelpers<TReducers> & ActionHelpers<TEffects> & ModelsActionHelpers<TModels> & {
     $namespace: string;
-    $parent: unknown;
-    $root: unknown;
+    $parent: DeepActionHelpers<{}, {}, {}, {}> | null;
+    $root: DeepActionHelpers<{}, {}, {}, {}>;
     $child: DeepActionHelpersChild<TModels, TDynamicModels>;
 };
 export interface DeepActionHelpersChild<TModels extends Models, TDynamicModels extends Models> {
-    <K extends Extract<keyof ModelsActionHelpers<TModels>, string>>(namespace: K): ModelsActionHelpers<TModels>[K];
-    <K extends Extract<keyof ModelsActionHelpers<TDynamicModels>, string>>(namespace: K): ModelsActionHelpers<TDynamicModels>[K] | null;
+    <K extends Extract<keyof TModels, string>>(namespace: K): ModelActionHelpers<TModels[K]>;
+    <K extends Extract<keyof TDynamicModels, string>>(namespace: K): ModelActionHelpers<TDynamicModels[K]> | null;
 }
 export declare type ModelActionHelpers<TModel extends Model> = DeepActionHelpers<TModel["reducers"], TModel["effects"], TModel["models"], ExtractDynamicModels<TModel>>;
 export declare type ModelsActionHelpers<TModels extends Models> = {

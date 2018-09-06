@@ -60,8 +60,8 @@ export type DeepActionHelpers<
   ActionHelpers<TEffects> &
   ModelsActionHelpers<TModels> & {
     $namespace: string;
-    $parent: unknown;
-    $root: unknown;
+    $parent: DeepActionHelpers<{}, {}, {}, {}> | null;
+    $root: DeepActionHelpers<{}, {}, {}, {}>;
     $child: DeepActionHelpersChild<TModels, TDynamicModels>;
   };
 
@@ -69,12 +69,12 @@ export interface DeepActionHelpersChild<
   TModels extends Models,
   TDynamicModels extends Models
 > {
-  <K extends Extract<keyof ModelsActionHelpers<TModels>, string>>(
+  <K extends Extract<keyof TModels, string>>(namespace: K): ModelActionHelpers<
+    TModels[K]
+  >;
+  <K extends Extract<keyof TDynamicModels, string>>(
     namespace: K
-  ): ModelsActionHelpers<TModels>[K];
-  <K extends Extract<keyof ModelsActionHelpers<TDynamicModels>, string>>(
-    namespace: K
-  ): ModelsActionHelpers<TDynamicModels>[K] | null;
+  ): ModelActionHelpers<TDynamicModels[K]> | null;
 }
 
 export type ModelActionHelpers<TModel extends Model> = DeepActionHelpers<

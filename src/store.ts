@@ -1,6 +1,6 @@
-import { BehaviorSubject, Observable } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { mergeMap } from "rxjs/operators";
-import { Action as ReduxAction, Reducer as ReduxReducer, Store } from "redux";
+import { Reducer as ReduxReducer, Store } from "redux";
 import { Epic as ReduxObservableEpic } from "redux-observable";
 
 import { ModelState } from "./state";
@@ -12,7 +12,7 @@ import {
 import { createModelReducer } from "./reducer";
 import { ModelGetters, createModelGetters } from "./selector";
 import { ReduxObservableEpicErrorHandler, createModelEpic } from "./epic";
-import { Model, ExtractDynamicModels, cloneModel } from "./model";
+import { Model, Models, ExtractDynamicModels } from "./model";
 import { getIn } from "./util";
 
 interface StoreHelperInternal<TModel extends Model> {
@@ -20,18 +20,16 @@ interface StoreHelperInternal<TModel extends Model> {
   actions: ModelActionHelpers<TModel>;
   getters: ModelGetters<TModel>;
 
-  child<K extends Extract<keyof TModel["models"], string>>(
-    namespace: K
-  ): StoreHelper<TModel["models"][K]>;
-  child<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
-    namespace: K
-  ): StoreHelper<ExtractDynamicModels<TModel>[K]> | null;
+  $namespace: string;
+  $parent: StoreHelper<Model<unknown, unknown, {}, {}, {}, {}, {}>> | null;
+  $root: StoreHelper<Model<unknown, unknown, {}, {}, {}, {}, {}>>;
+  $child: StoreHelperChild<TModel["models"], ExtractDynamicModels<TModel>>;
 
-  registerModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
+  $registerModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
     namespace: K,
     model: ExtractDynamicModels<TModel>[K]
   ): void;
-  unregisterModel<
+  $unregisterModel<
     K extends Extract<keyof ExtractDynamicModels<TModel>, string>
   >(
     namespace: K
@@ -40,6 +38,18 @@ interface StoreHelperInternal<TModel extends Model> {
 
 export type StoreHelper<TModel extends Model> = StoreHelperInternal<TModel> &
   { [K in keyof TModel["models"]]: StoreHelper<TModel["models"][K]> };
+
+export interface StoreHelperChild<
+  TModels extends Models,
+  TDynamicModels extends Models
+> {
+  <K extends Extract<keyof TModels, string>>(namespace: K): StoreHelper<
+    TModels[K]
+  >;
+  <K extends Extract<keyof TDynamicModels, string>>(namespace: K): StoreHelper<
+    TDynamicModels[K]
+  > | null;
+}
 
 export type StoreHelperDependencies<TDependencies> = TDependencies & {
   $store: Store<unknown>;
@@ -64,6 +74,7 @@ export class StoreHelperFactory<
   private readonly _options: StoreHelperOptions;
 
   private _store?: Store;
+  private _storeHelper?: StoreHelper<TModel>;
 
   constructor(
     model: TModel,
@@ -89,7 +100,6 @@ export class StoreHelperFactory<
     this._getters = createModelGetters(
       this._model,
       this._dependencies,
-      () => this._store!.getState(),
       [],
       null
     );
@@ -98,8 +108,6 @@ export class StoreHelperFactory<
       model,
       this._dependencies,
       this._options.epicErrorHandler || null,
-      this._actions,
-      this._getters,
       []
     );
     this._addEpic$ = new BehaviorSubject(initialEpic);
@@ -123,8 +131,7 @@ export class StoreHelperFactory<
     }
 
     this._store = store;
-
-    const storeHelper = new _StoreHelper(
+    this._storeHelper = new _StoreHelper(
       this._store,
       this._model,
       this._dependencies,
@@ -132,13 +139,14 @@ export class StoreHelperFactory<
       this._actions,
       this._getters,
       this._addEpic$,
-      []
-    );
+      [],
+      null
+    ) as any;
 
-    this._dependencies.$store = store;
-    this._dependencies.$storeHelper = storeHelper;
+    this._dependencies.$store = this._store!;
+    this._dependencies.$storeHelper = this._storeHelper!;
 
-    return storeHelper as any;
+    return this._storeHelper!;
   }
 }
 
@@ -180,7 +188,8 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     actions: ModelActionHelpers<TModel>,
     getters: ModelGetters<TModel>,
     addEpic$: BehaviorSubject<ReduxObservableEpic>,
-    namespaces: string[]
+    namespaces: string[],
+    parent: StoreHelper<Model> | null
   ) {
     this._store = store;
     this._model = model;
@@ -190,6 +199,10 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     this._getters = getters;
     this._addEpic$ = addEpic$;
     this._namespaces = namespaces;
+
+    this.$namespace = namespaces.join("/");
+    this.$parent = parent;
+    this.$root = parent != null ? parent.$root : this;
 
     for (const namespace of Object.keys(model.models)) {
       this._registerSubStoreHelper(namespace);
@@ -208,20 +221,28 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     return this._getters;
   }
 
-  public child<K extends Extract<keyof TModel["models"], string>>(
+  public readonly $namespace: string;
+  public readonly $parent: StoreHelper<
+    Model<unknown, unknown, {}, {}, {}, {}, {}>
+  > | null;
+  public readonly $root: StoreHelper<
+    Model<unknown, unknown, {}, {}, {}, {}, {}>
+  >;
+
+  public $child<K extends Extract<keyof TModel["models"], string>>(
     namespace: K
   ): StoreHelper<TModel["models"][K]>;
-  public child<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
+  public $child<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
     namespace: K
   ): StoreHelper<ExtractDynamicModels<TModel>[K]> | null;
-  public child(
+  public $child(
     namespace: string
   ): StoreHelperInternal<Model<TDependencies>> | null {
     const helper = this._subStoreHelpers[namespace];
     return helper != null ? helper : null;
   }
 
-  public registerModel<
+  public $registerModel<
     K extends Extract<keyof ExtractDynamicModels<TModel>, string>
   >(namespace: K, model: ExtractDynamicModels<TModel>[K]): void {
     if (this._model.models[namespace] != null) {
@@ -241,18 +262,17 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     this._getters[namespace] = createModelGetters(
       model,
       this._dependencies,
-      () => this._store.getState(),
       namespaces,
       this._getters
     ) as any;
+
+    this._registerSubStoreHelper(namespace);
 
     this._addEpic$.next(
       createModelEpic(
         model,
         this._dependencies,
         this._options.epicErrorHandler || null,
-        this._actions.$root as any,
-        this._getters.$root as any,
         namespaces
       )
     );
@@ -260,11 +280,9 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     this._store.dispatch({
       type: `${namespaces.join("/")}/${actionTypes.register}`
     });
-
-    this._registerSubStoreHelper(namespace);
   }
 
-  public unregisterModel<
+  public $unregisterModel<
     K extends Extract<keyof ExtractDynamicModels<TModel>, string>
   >(namespace: K): void {
     if (this._model.models[namespace] == null) {
@@ -277,12 +295,11 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
       type: `${namespaces.join("/")}/${actionTypes.epicEnd}`
     });
 
-    this._unregisterSubStoreHelper(namespace);
-
     this._store.dispatch({
       type: `${namespaces.join("/")}/${actionTypes.unregister}`
     });
 
+    this._unregisterSubStoreHelper(namespace);
     delete this._model.models[namespace];
     delete this._actions[namespace];
     delete this._getters[namespace];
@@ -297,12 +314,13 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
       this._actions[namespace],
       this._getters[namespace],
       this._addEpic$,
-      [...this._namespaces, namespace]
+      [...this._namespaces, namespace],
+      this as any
     ) as any;
 
     Object.defineProperty(this, namespace, {
       get: () => {
-        return this.child(namespace as any);
+        return this.$child(namespace as any);
       },
       enumerable: true,
       configurable: true
