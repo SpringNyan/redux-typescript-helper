@@ -294,14 +294,15 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
       type: `${namespaces.join("/")}/${actionTypes.epicEnd}`
     });
 
+    this._unregisterSubStoreHelper(namespace);
+    delete this._actions[namespace];
+    delete this._getters[namespace];
+
     this._store.dispatch({
       type: `${namespaces.join("/")}/${actionTypes.unregister}`
     });
 
-    this._unregisterSubStoreHelper(namespace);
     delete this._model.models[namespace];
-    delete this._actions[namespace];
-    delete this._getters[namespace];
   }
 
   private get _store(): Store {
