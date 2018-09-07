@@ -464,8 +464,12 @@ export function createModelGetters<
     Object.defineProperty(getters, key, {
       get() {
         return selectors[key]({
-          state: getters.state,
-          rootState: getters.$rootState,
+          get state() {
+            return getters.state;
+          },
+          get rootState() {
+            return getters.$root.state;
+          },
 
           getters,
           dependencies
