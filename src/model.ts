@@ -2,6 +2,7 @@ import { StateFactory } from "./state";
 import { Selectors, SelectorCreator, SelectorsFactory } from "./selector";
 import { Reducers } from "./reducer";
 import { Effects, Epics } from "./epic";
+import { StoreHelper } from "./store";
 
 export interface Model<
   TDependencies = any,
@@ -36,6 +37,12 @@ export type Models<TDependencies = any> = {
   [key: string]: Model<TDependencies>;
 };
 
+export type ExtractModel<
+  T extends ModelBuilder | StoreHelper<Model>
+> = T extends ModelBuilder
+  ? ReturnType<T["build"]>
+  : T extends StoreHelper<infer TModel> ? TModel : never;
+
 export type ExtractDynamicModels<T extends Model> = T extends Model<
   any,
   any,
@@ -49,15 +56,25 @@ export type ExtractDynamicModels<T extends Model> = T extends Model<
   : never;
 
 export class ModelBuilder<
-  TDependencies,
-  TState,
-  TSelectors extends Selectors<TDependencies, TState>,
-  TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<TDependencies, TState>,
-  TModels extends Models<TDependencies>,
-  TDynamicModels extends Models<TDependencies>
+  TDependencies = any,
+  TState = any,
+  TSelectors extends Selectors<TDependencies, TState> = Selectors<
+    TDependencies,
+    TState
+  >,
+  TReducers extends Reducers<TDependencies, TState> = Reducers<
+    TDependencies,
+    TState
+  >,
+  TEffects extends Effects<TDependencies, TState> = Effects<
+    TDependencies,
+    TState
+  >,
+  TModels extends Models<TDependencies> = Models<TDependencies>,
+  TDynamicModels extends Models<TDependencies> = Models<TDependencies>
 > {
   private readonly _model: Model;
+  private _isFrozen: boolean = false;
 
   constructor(
     model: Model<
@@ -84,6 +101,10 @@ export class ModelBuilder<
     TModels,
     TDynamicModels
   > {
+    if (this._isFrozen) {
+      return this.clone().state(state);
+    }
+
     const oldState = this._model.state;
     const newState = toFactoryIfNeeded(state);
 
@@ -122,6 +143,10 @@ export class ModelBuilder<
     TModels,
     TDynamicModels
   > {
+    if (this._isFrozen) {
+      return this.clone().selectors(selectors);
+    }
+
     const oldSelectors = this._model.selectors;
     const newSelectors = toFactoryIfNeeded(selectors);
 
@@ -150,6 +175,10 @@ export class ModelBuilder<
     TModels,
     TDynamicModels
   > {
+    if (this._isFrozen) {
+      return this.clone().reducers(reducers);
+    }
+
     this._model.reducers = {
       ...this._model.reducers,
       ...(reducers as Reducers<TDependencies, TState>)
@@ -179,6 +208,10 @@ export class ModelBuilder<
     TModels,
     TDynamicModels
   > {
+    if (this._isFrozen) {
+      return this.clone().effects(effects);
+    }
+
     this._model.effects = {
       ...this._model.effects,
       ...(effects as Effects<
@@ -214,6 +247,10 @@ export class ModelBuilder<
     TModels,
     TDynamicModels
   > {
+    if (this._isFrozen) {
+      return this.clone().epics(epics);
+    }
+
     this._model.epics = [...this._model.epics, ...epics];
 
     return this as any;
@@ -230,6 +267,10 @@ export class ModelBuilder<
     TModels & T,
     TDynamicModels
   > {
+    if (this._isFrozen) {
+      return this.clone().models(models);
+    }
+
     this._model.models = {
       ...this._model.models,
       ...(models as Models<TDependencies>)
@@ -247,6 +288,10 @@ export class ModelBuilder<
     TModels,
     TDynamicModels & T
   > {
+    if (this._isFrozen) {
+      return this.clone().dynamicModels<T>();
+    }
+
     return this as any;
   }
 
@@ -288,6 +333,19 @@ export class ModelBuilder<
       TModels,
       TDynamicModels
     >);
+  }
+
+  public freeze(): ModelBuilder<
+    TDependencies,
+    TState,
+    TSelectors,
+    TReducers,
+    TEffects,
+    TModels,
+    TDynamicModels
+  > {
+    this._isFrozen = true;
+    return this;
   }
 }
 
