@@ -38,8 +38,8 @@ export type Models<TDependencies = any> = {
 };
 
 export type ExtractModel<
-  T extends ModelBuilder | StoreHelper<Model>
-> = T extends ModelBuilder
+  T extends ModelBuilder<any, any, any, any, any, any, any> | StoreHelper<any>
+> = T extends ModelBuilder<any, any, any, any, any, any, any>
   ? ReturnType<T["build"]>
   : T extends StoreHelper<infer TModel> ? TModel : never;
 
@@ -56,22 +56,13 @@ export type ExtractDynamicModels<T extends Model> = T extends Model<
   : never;
 
 export class ModelBuilder<
-  TDependencies = any,
-  TState = any,
-  TSelectors extends Selectors<TDependencies, TState> = Selectors<
-    TDependencies,
-    TState
-  >,
-  TReducers extends Reducers<TDependencies, TState> = Reducers<
-    TDependencies,
-    TState
-  >,
-  TEffects extends Effects<TDependencies, TState> = Effects<
-    TDependencies,
-    TState
-  >,
-  TModels extends Models<TDependencies> = Models<TDependencies>,
-  TDynamicModels extends Models<TDependencies> = Models<TDependencies>
+  TDependencies,
+  TState,
+  TSelectors extends Selectors<TDependencies, TState>,
+  TReducers extends Reducers<TDependencies, TState>,
+  TEffects extends Effects<TDependencies, TState>,
+  TModels extends Models<TDependencies>,
+  TDynamicModels extends Models<TDependencies>
 > {
   private readonly _model: Model;
   private _isFrozen: boolean = false;

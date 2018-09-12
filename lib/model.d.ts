@@ -14,9 +14,9 @@ export interface Model<TDependencies = any, TState = any, TSelectors extends Sel
 export declare type Models<TDependencies = any> = {
     [key: string]: Model<TDependencies>;
 };
-export declare type ExtractModel<T extends ModelBuilder | StoreHelper<Model>> = T extends ModelBuilder ? ReturnType<T["build"]> : T extends StoreHelper<infer TModel> ? TModel : never;
+export declare type ExtractModel<T extends ModelBuilder<any, any, any, any, any, any, any> | StoreHelper<any>> = T extends ModelBuilder<any, any, any, any, any, any, any> ? ReturnType<T["build"]> : T extends StoreHelper<infer TModel> ? TModel : never;
 export declare type ExtractDynamicModels<T extends Model> = T extends Model<any, any, any, any, any, any, infer TDynamicModels> ? TDynamicModels : never;
-export declare class ModelBuilder<TDependencies = any, TState = any, TSelectors extends Selectors<TDependencies, TState> = Selectors<TDependencies, TState>, TReducers extends Reducers<TDependencies, TState> = Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState> = Effects<TDependencies, TState>, TModels extends Models<TDependencies> = Models<TDependencies>, TDynamicModels extends Models<TDependencies> = Models<TDependencies>> {
+export declare class ModelBuilder<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState>, TModels extends Models<TDependencies>, TDynamicModels extends Models<TDependencies>> {
     private readonly _model;
     private _isFrozen;
     constructor(model: Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>);
