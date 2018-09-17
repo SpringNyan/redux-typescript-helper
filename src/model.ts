@@ -1,3 +1,5 @@
+import produce from "immer";
+
 import { StateFactory } from "./state";
 import { Selectors, SelectorCreator, SelectorsFactory } from "./selector";
 import { Reducers } from "./reducer";
@@ -82,7 +84,7 @@ export class ModelBuilder<
   }
 
   public state(
-    state: TState | ((s: TState) => TState)
+    state: TState | ((s: TState) => void | TState)
   ): ModelBuilder<
     TDependencies,
     TState,
@@ -99,7 +101,8 @@ export class ModelBuilder<
     const oldState = this._model.state;
     const newState = toFactoryIfNeeded(state);
 
-    this._model.state = (dependencies) => newState(oldState(dependencies));
+    this._model.state = (dependencies) =>
+      produce(oldState(dependencies), (draft) => newState(draft));
 
     return this as any;
   }

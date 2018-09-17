@@ -20,7 +20,7 @@ export declare class ModelBuilder<TDependencies, TState, TSelectors extends Sele
     private readonly _model;
     private _isFrozen;
     constructor(model: Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>);
-    state(state: TState | ((s: TState) => TState)): ModelBuilder<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>;
+    state(state: TState | ((s: TState) => void | TState)): ModelBuilder<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>;
     selectors<T extends Selectors<TDependencies, TState, TSelectors, TModels, TDynamicModels>>(selectors: T | SelectorsFactory<T, SelectorCreator<TDependencies, TState, TSelectors, TModels, TDynamicModels>>): ModelBuilder<TDependencies, TState, TSelectors & T, TReducers, TEffects, TModels, TDynamicModels>;
     reducers<T extends Reducers<TDependencies, TState>>(reducers: T): ModelBuilder<TDependencies, TState, TSelectors, TReducers & T, TEffects, TModels, TDynamicModels>;
     effects<T extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>>(effects: T): ModelBuilder<TDependencies, TState, TSelectors, TReducers, TEffects & T, TModels, TDynamicModels>;
