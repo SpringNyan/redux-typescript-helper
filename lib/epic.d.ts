@@ -28,6 +28,7 @@ export declare type EffectWithOperator<TDependencies = any, TState = any, TSelec
 export interface Effects<TDependencies = any, TState = any, TSelectors extends Selectors<TDependencies, TState> = any, TReducers extends Reducers<TDependencies, TState> = any, TEffects extends Effects<TDependencies, TState> = any, TModels extends Models<TDependencies> = any, TDynamicModels extends Models<TDependencies> = any> {
     [type: string]: Effect<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels> | EffectWithOperator<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>;
 }
+export declare type ExtractEffects<T extends Model> = T extends Model<any, any, any, any, infer TEffects, any, any> ? TEffects : never;
 export declare type ReduxObservableEpicErrorHandler = (err: any, caught: Observable<ReduxAction>) => Observable<ReduxAction>;
 export declare function toAction$(asyncFn: (dispatch: Dispatch<ReduxAction>) => Promise<void>): Observable<ReduxAction>;
 export declare function createModelEpic<TDependencies, TModel extends Model<TDependencies>>(model: TModel, dependencies: StoreHelperDependencies<TDependencies>, errorHandler: ReduxObservableEpicErrorHandler | null, namespaces: string[]): ReduxObservableEpic<ReduxAction, ReduxAction>;

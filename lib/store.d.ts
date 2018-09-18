@@ -4,7 +4,7 @@ import { ModelState } from "./state";
 import { ModelActionHelpers } from "./action";
 import { ModelGetters } from "./selector";
 import { ReduxObservableEpicErrorHandler } from "./epic";
-import { Model, Models, ExtractDynamicModels } from "./model";
+import { Model, Models, ExtractModels, ExtractDynamicModels } from "./model";
 interface StoreHelperInternal<TModel extends Model> {
     state: ModelState<TModel>;
     actions: ModelActionHelpers<TModel>;
@@ -12,12 +12,12 @@ interface StoreHelperInternal<TModel extends Model> {
     $namespace: string;
     $parent: StoreHelper<Model<unknown, unknown, {}, {}, {}, {}, {}>> | null;
     $root: StoreHelper<Model<unknown, unknown, {}, {}, {}, {}, {}>>;
-    $child: StoreHelperChild<TModel["models"], ExtractDynamicModels<TModel>>;
+    $child: StoreHelperChild<ExtractModels<TModel>, ExtractDynamicModels<TModel>>;
     $registerModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(namespace: K, model: ExtractDynamicModels<TModel>[K]): void;
     $unregisterModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(namespace: K): void;
 }
 export declare type StoreHelper<TModel extends Model> = StoreHelperInternal<TModel> & {
-    [K in keyof TModel["models"]]: StoreHelper<TModel["models"][K]>;
+    [K in keyof ExtractModels<TModel>]: StoreHelper<ExtractModels<TModel>[K]>;
 };
 export interface StoreHelperChild<TModels extends Models, TDynamicModels extends Models> {
     <K extends Extract<keyof TModels, string>>(namespace: K): StoreHelper<TModels[K]>;

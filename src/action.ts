@@ -1,6 +1,6 @@
-import { Reducer, Reducers } from "./reducer";
-import { Effect, EffectWithOperator, Effects } from "./epic";
-import { Model, Models, ExtractDynamicModels } from "./model";
+import { Reducer, Reducers, ExtractReducers } from "./reducer";
+import { Effect, EffectWithOperator, Effects, ExtractEffects } from "./epic";
+import { Model, Models, ExtractModels, ExtractDynamicModels } from "./model";
 
 export const actionTypes = {
   register: "@@REGISTER",
@@ -78,9 +78,9 @@ export interface DeepActionHelpersChild<
 }
 
 export type ModelActionHelpers<TModel extends Model> = DeepActionHelpers<
-  TModel["reducers"],
-  TModel["effects"],
-  TModel["models"],
+  ExtractReducers<TModel>,
+  ExtractEffects<TModel>,
+  ExtractModels<TModel>,
   ExtractDynamicModels<TModel>
 >;
 

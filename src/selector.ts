@@ -1,7 +1,7 @@
 import { createSelector } from "reselect";
 
 import { ModelState, DeepState } from "./state";
-import { Model, Models, ExtractDynamicModels } from "./model";
+import { Model, Models, ExtractModels, ExtractDynamicModels } from "./model";
 import { StoreHelperDependencies } from "./store";
 import { getIn } from "./util";
 
@@ -110,7 +110,7 @@ export interface DeepGettersChild<
 export type ModelGetters<TModel extends Model> = DeepGetters<
   ModelState<TModel>,
   ExtractSelectors<TModel>,
-  TModel["models"],
+  ExtractModels<TModel>,
   ExtractDynamicModels<TModel>
 >;
 

@@ -1,5 +1,5 @@
 import { ModelState, DeepState } from "./state";
-import { Model, Models, ExtractDynamicModels } from "./model";
+import { Model, Models, ExtractModels, ExtractDynamicModels } from "./model";
 import { StoreHelperDependencies } from "./store";
 export interface SelectorContext<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState>, TModels extends Models<TDependencies>, TDynamicModels extends Models<TDependencies>> {
     state: DeepState<TState, TModels>;
@@ -30,7 +30,7 @@ export interface DeepGettersChild<TModels extends Models, TDynamicModels extends
     <K extends Extract<keyof TModels, string>>(namespace: K): ModelGetters<TModels[K]>;
     <K extends Extract<keyof TDynamicModels, string>>(namespace: K): ModelGetters<TDynamicModels[K]> | null;
 }
-export declare type ModelGetters<TModel extends Model> = DeepGetters<ModelState<TModel>, ExtractSelectors<TModel>, TModel["models"], ExtractDynamicModels<TModel>>;
+export declare type ModelGetters<TModel extends Model> = DeepGetters<ModelState<TModel>, ExtractSelectors<TModel>, ExtractModels<TModel>, ExtractDynamicModels<TModel>>;
 export declare type ModelsGetters<TModels extends Models> = {
     [K in keyof TModels]: TModels[K] extends Model ? ModelGetters<TModels[K]> : never;
 };

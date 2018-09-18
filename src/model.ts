@@ -43,6 +43,18 @@ export type ExtractModel<
   ? ReturnType<T["build"]>
   : T extends StoreHelper<infer TModel> ? TModel : never;
 
+export type ExtractModels<T extends Model> = T extends Model<
+  any,
+  any,
+  any,
+  any,
+  any,
+  infer TModels,
+  any
+>
+  ? TModels
+  : never;
+
 export type ExtractDynamicModels<T extends Model> = T extends Model<
   any,
   any,

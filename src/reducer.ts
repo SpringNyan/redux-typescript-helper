@@ -19,6 +19,18 @@ export interface Reducers<TDependencies = any, TState = any> {
   [type: string]: Reducer<TDependencies, TState>;
 }
 
+export type ExtractReducers<T extends Model> = T extends Model<
+  any,
+  any,
+  any,
+  infer TReducers,
+  any,
+  any,
+  any
+>
+  ? TReducers
+  : never;
+
 export function createModelReducer<
   TDependencies,
   TModel extends Model<TDependencies>

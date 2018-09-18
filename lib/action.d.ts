@@ -1,6 +1,6 @@
-import { Reducer, Reducers } from "./reducer";
-import { Effect, EffectWithOperator, Effects } from "./epic";
-import { Model, Models, ExtractDynamicModels } from "./model";
+import { Reducer, Reducers, ExtractReducers } from "./reducer";
+import { Effect, EffectWithOperator, Effects, ExtractEffects } from "./epic";
+import { Model, Models, ExtractModels, ExtractDynamicModels } from "./model";
 export declare const actionTypes: {
     register: string;
     epicEnd: string;
@@ -30,7 +30,7 @@ export interface DeepActionHelpersChild<TModels extends Models, TDynamicModels e
     <K extends Extract<keyof TModels, string>>(namespace: K): ModelActionHelpers<TModels[K]>;
     <K extends Extract<keyof TDynamicModels, string>>(namespace: K): ModelActionHelpers<TDynamicModels[K]> | null;
 }
-export declare type ModelActionHelpers<TModel extends Model> = DeepActionHelpers<TModel["reducers"], TModel["effects"], TModel["models"], ExtractDynamicModels<TModel>>;
+export declare type ModelActionHelpers<TModel extends Model> = DeepActionHelpers<ExtractReducers<TModel>, ExtractEffects<TModel>, ExtractModels<TModel>, ExtractDynamicModels<TModel>>;
 export declare type ModelsActionHelpers<TModels extends Models> = {
     [K in keyof TModels]: TModels[K] extends Model ? ModelActionHelpers<TModels[K]> : never;
 };

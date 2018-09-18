@@ -15,6 +15,7 @@ export declare type Models<TDependencies = any> = {
     [key: string]: Model<TDependencies>;
 };
 export declare type ExtractModel<T extends ModelBuilder<any, any, any, any, any, any, any> | StoreHelper<any>> = T extends ModelBuilder<any, any, any, any, any, any, any> ? ReturnType<T["build"]> : T extends StoreHelper<infer TModel> ? TModel : never;
+export declare type ExtractModels<T extends Model> = T extends Model<any, any, any, any, any, infer TModels, any> ? TModels : never;
 export declare type ExtractDynamicModels<T extends Model> = T extends Model<any, any, any, any, any, any, infer TDynamicModels> ? TDynamicModels : never;
 export declare class ModelBuilder<TDependencies, TState, TSelectors extends Selectors, TReducers extends Reducers, TEffects extends Effects, TModels extends Models, TDynamicModels extends Models> {
     private readonly _model;

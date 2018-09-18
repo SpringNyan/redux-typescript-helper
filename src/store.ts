@@ -12,7 +12,7 @@ import {
 import { createModelReducer } from "./reducer";
 import { ModelGetters, createModelGetters } from "./selector";
 import { ReduxObservableEpicErrorHandler, createModelEpic } from "./epic";
-import { Model, Models, ExtractDynamicModels } from "./model";
+import { Model, Models, ExtractModels, ExtractDynamicModels } from "./model";
 import { getIn } from "./util";
 
 interface StoreHelperInternal<TModel extends Model> {
@@ -23,7 +23,7 @@ interface StoreHelperInternal<TModel extends Model> {
   $namespace: string;
   $parent: StoreHelper<Model<unknown, unknown, {}, {}, {}, {}, {}>> | null;
   $root: StoreHelper<Model<unknown, unknown, {}, {}, {}, {}, {}>>;
-  $child: StoreHelperChild<TModel["models"], ExtractDynamicModels<TModel>>;
+  $child: StoreHelperChild<ExtractModels<TModel>, ExtractDynamicModels<TModel>>;
 
   $registerModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
     namespace: K,
@@ -37,7 +37,7 @@ interface StoreHelperInternal<TModel extends Model> {
 }
 
 export type StoreHelper<TModel extends Model> = StoreHelperInternal<TModel> &
-  { [K in keyof TModel["models"]]: StoreHelper<TModel["models"][K]> };
+  { [K in keyof ExtractModels<TModel>]: StoreHelper<ExtractModels<TModel>[K]> };
 
 export interface StoreHelperChild<
   TModels extends Models,
@@ -228,9 +228,9 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     Model<unknown, unknown, {}, {}, {}, {}, {}>
   >;
 
-  public $child<K extends Extract<keyof TModel["models"], string>>(
+  public $child<K extends Extract<keyof ExtractModels<TModel>, string>>(
     namespace: K
-  ): StoreHelper<TModel["models"][K]>;
+  ): StoreHelper<ExtractModels<TModel>[K]>;
   public $child<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
     namespace: K
   ): StoreHelper<ExtractDynamicModels<TModel>[K]> | null;

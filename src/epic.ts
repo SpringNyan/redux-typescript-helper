@@ -173,6 +173,18 @@ export interface Effects<
       >;
 }
 
+export type ExtractEffects<T extends Model> = T extends Model<
+  any,
+  any,
+  any,
+  any,
+  infer TEffects,
+  any,
+  any
+>
+  ? TEffects
+  : never;
+
 export type ReduxObservableEpicErrorHandler = (
   err: any,
   caught: Observable<ReduxAction>
