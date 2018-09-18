@@ -24,7 +24,7 @@ export type ExtractActionPayload<
   : never;
 
 export type ExtractActionPayloads<T extends Reducers | Effects> = {
-  [K in Extract<keyof T, string>]: ExtractActionPayload<T[K]>
+  [K in keyof T]: ExtractActionPayload<T[K]>
 };
 
 export interface ActionHelper<TPayload = any> {
@@ -33,9 +33,7 @@ export interface ActionHelper<TPayload = any> {
   is(action: any): action is Action<TPayload>;
 }
 
-export type ActionHelpers<T> = {
-  [K in Extract<keyof T, string>]: ActionHelper<T[K]>
-};
+export type ActionHelpers<T> = { [K in keyof T]: ActionHelper<T[K]> };
 
 export type DeepActionHelpers<
   TReducers extends Reducers,
@@ -56,12 +54,10 @@ export interface DeepActionHelpersChild<
   TModels extends Models,
   TDynamicModels extends Models
 > {
-  <K extends Extract<keyof TModels, string>>(namespace: K): ModelActionHelpers<
-    TModels[K]
-  >;
-  <K extends Extract<keyof TDynamicModels, string>>(
-    namespace: K
-  ): ModelActionHelpers<TDynamicModels[K]> | null;
+  <K extends keyof TModels>(namespace: K): ModelActionHelpers<TModels[K]>;
+  <K extends keyof TDynamicModels>(namespace: K): ModelActionHelpers<
+    TDynamicModels[K]
+  > | null;
 }
 
 export type ModelActionHelpers<TModel extends Model> = DeepActionHelpers<
@@ -72,7 +68,7 @@ export type ModelActionHelpers<TModel extends Model> = DeepActionHelpers<
 >;
 
 export type ModelsActionHelpers<TModels extends Models> = {
-  [K in Extract<keyof TModels, string>]: TModels[K] extends Model
+  [K in keyof TModels]: TModels[K] extends Model
     ? ModelActionHelpers<TModels[K]>
     : never
 };
@@ -106,21 +102,21 @@ export function createModelActionHelpers<TModel extends Model>(
   } as ModelActionHelpers<TModel>;
 
   actions.$root = parent != null ? parent.$root : actions;
-  actions.$child = (namespace: string) => (actions as any)[namespace];
+  actions.$child = (namespace: string) => actions[namespace];
 
   for (const key of [
     ...Object.keys(model.reducers),
     ...Object.keys(model.effects)
   ]) {
-    (actions as any)[key] = createActionHelper([...namespaces, key].join("/"));
+    actions[key] = createActionHelper([...namespaces, key].join("/")) as any;
   }
 
   for (const key of Object.keys(model.models)) {
-    (actions as any)[key] = createModelActionHelpers(
+    actions[key] = createModelActionHelpers(
       model.models[key],
       [...namespaces, key],
       actions
-    );
+    ) as any;
   }
 
   return actions;

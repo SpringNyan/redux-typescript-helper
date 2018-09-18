@@ -17,11 +17,11 @@ interface StoreHelperInternal<TModel extends Model> {
     $unregisterModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(namespace: K): void;
 }
 export declare type StoreHelper<TModel extends Model> = StoreHelperInternal<TModel> & {
-    [K in Extract<keyof ExtractModels<TModel>, string>]: StoreHelper<ExtractModels<TModel>[K]>;
+    [K in keyof ExtractModels<TModel>]: StoreHelper<ExtractModels<TModel>[K]>;
 };
 export interface StoreHelperChild<TModels extends Models, TDynamicModels extends Models> {
-    <K extends Extract<keyof TModels, string>>(namespace: K): StoreHelper<TModels[K]>;
-    <K extends Extract<keyof TDynamicModels, string>>(namespace: K): StoreHelper<TDynamicModels[K]> | null;
+    <K extends keyof TModels>(namespace: K): StoreHelper<TModels[K]>;
+    <K extends keyof TDynamicModels>(namespace: K): StoreHelper<TDynamicModels[K]> | null;
 }
 export declare type StoreHelperDependencies<TDependencies> = TDependencies & {
     $store: Store<unknown>;
