@@ -82,8 +82,8 @@ export class StoreHelperFactory<
   private _store?: Store;
 
   constructor(
-    model: TModel,
     dependencies: TDependencies,
+    model: TModel,
     options: StoreHelperOptions
   ) {
     this._model = model;
@@ -160,15 +160,15 @@ export function createStoreHelperFactory<
   TDependencies,
   TModel extends Model<TDependencies>
 >(
-  model: TModel,
   dependencies: TDependencies,
+  model: TModel,
   options?: StoreHelperOptions
 ): StoreHelperFactory<TDependencies, TModel> {
   if (options == null) {
     options = {};
   }
 
-  return new StoreHelperFactory(model, dependencies, options);
+  return new StoreHelperFactory(dependencies, model, options);
 }
 
 class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>

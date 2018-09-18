@@ -172,18 +172,12 @@ export class ModelBuilder<
       return this.clone().selectors(selectors);
     }
 
-    const oldSelectors = this._model.selectors;
-    const newSelectors = toFactoryIfNeeded(selectors);
+    const oldSelectors: SelectorsFactory = this._model.selectors;
+    const newSelectors: SelectorsFactory = toFactoryIfNeeded(selectors);
 
     this._model.selectors = (selectorCreator) => ({
       ...oldSelectors(selectorCreator),
-      ...(newSelectors(selectorCreator) as Selectors<
-        TDependencies,
-        TState,
-        TSelectors,
-        TModels,
-        TDynamicModels
-      >)
+      ...newSelectors(selectorCreator)
     });
 
     return this as any;

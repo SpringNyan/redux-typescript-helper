@@ -41,10 +41,10 @@ export declare class StoreHelperFactory<TDependencies, TModel extends Model<TDep
     private readonly _options;
     private readonly _storeHelper;
     private _store?;
-    constructor(model: TModel, dependencies: TDependencies, options: StoreHelperOptions);
+    constructor(dependencies: TDependencies, model: TModel, options: StoreHelperOptions);
     readonly reducer: ReduxReducer;
     readonly epic: ReduxObservableEpic;
     create(store: Store): StoreHelper<TModel>;
 }
-export declare function createStoreHelperFactory<TDependencies, TModel extends Model<TDependencies>>(model: TModel, dependencies: TDependencies, options?: StoreHelperOptions): StoreHelperFactory<TDependencies, TModel>;
+export declare function createStoreHelperFactory<TDependencies, TModel extends Model<TDependencies>>(dependencies: TDependencies, model: TModel, options?: StoreHelperOptions): StoreHelperFactory<TDependencies, TModel>;
 export {};

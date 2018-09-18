@@ -436,6 +436,181 @@ export interface SelectorCreator<
     TDynamicModels,
     TResult
   >;
+  <T1, T2, T3, T4, T5, T6, T7, T8, TResult>(
+    selector1: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T1
+    >,
+    selector2: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T2
+    >,
+    selector3: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T3
+    >,
+    selector4: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T4
+    >,
+    selector5: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T5
+    >,
+    selector6: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T6
+    >,
+    selector7: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T7
+    >,
+    selector8: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T8
+    >,
+    combiner: (
+      res1: T1,
+      res2: T2,
+      res3: T3,
+      res4: T4,
+      res5: T5,
+      res6: T6,
+      res7: T7,
+      res8: T8
+    ) => TResult
+  ): Selector<
+    TDependencies,
+    TState,
+    TSelectors,
+    TModels,
+    TDynamicModels,
+    TResult
+  >;
+  <T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult>(
+    selector1: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T1
+    >,
+    selector2: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T2
+    >,
+    selector3: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T3
+    >,
+    selector4: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T4
+    >,
+    selector5: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T5
+    >,
+    selector6: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T6
+    >,
+    selector7: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T7
+    >,
+    selector8: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T8
+    >,
+    selector9: Selector<
+      TDependencies,
+      TState,
+      TSelectors,
+      TModels,
+      TDynamicModels,
+      T9
+    >,
+    combiner: (
+      res1: T1,
+      res2: T2,
+      res3: T3,
+      res4: T4,
+      res5: T5,
+      res6: T6,
+      res7: T7,
+      res8: T8,
+      res9: T9
+    ) => TResult
+  ): Selector<
+    TDependencies,
+    TState,
+    TSelectors,
+    TModels,
+    TDynamicModels,
+    TResult
+  >;
 }
 
 export function createModelGetters<

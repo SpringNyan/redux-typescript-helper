@@ -176,13 +176,13 @@ describe("redux-typescript-helper", () => {
     .build();
 
   const storeHelperFactory = createStoreHelperFactory(
-    rootModel,
     {
       system: {
         env: "test",
         hash: (str: string) => str
       }
     },
+    rootModel,
     {
       epicErrorHandler: (_err, caught) => caught
     }
