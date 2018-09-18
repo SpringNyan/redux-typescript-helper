@@ -5,7 +5,7 @@ import { switchMap, delay } from "rxjs/operators";
 import { createStore, applyMiddleware } from "redux";
 import { createEpicMiddleware } from "redux-observable";
 
-import { createModelBuilderCreator, createStoreHelperFactory } from "../lib";
+import { createModelBuilder, createStoreHelperFactory } from "../lib";
 
 describe("redux-typescript-helper", () => {
   interface SystemService {
@@ -26,15 +26,18 @@ describe("redux-typescript-helper", () => {
   const delayTime = 50;
   const waitTime = delayTime + 10;
 
-  const createModelBuilder = createModelBuilderCreator<Dependencies>();
+  const defaultModelBuilder = createModelBuilder()
+    .dependencies<Dependencies>()
+    .freeze();
 
-  const userModel = createModelBuilder(() => ({
-    id: 0,
-    username: "",
-    token: "",
-    about: "",
-    isLogin: false
-  }))
+  const userModel = defaultModelBuilder
+    .state(() => ({
+      id: 0,
+      username: "",
+      token: "",
+      about: "",
+      isLogin: false
+    }))
     .selectors({
       id({ dependencies }): number {
         return (dependencies.$storeHelper as typeof storeHelper).$child("user")
@@ -98,10 +101,11 @@ describe("redux-typescript-helper", () => {
     })
     .build();
 
-  const entitiesModel = createModelBuilder({
-    itemById: {} as { [id: number]: Item },
-    count: 0
-  })
+  const entitiesModel = defaultModelBuilder
+    .state({
+      itemById: {} as { [id: number]: Item },
+      count: 0
+    })
     .dynamicModels<{ temp: typeof userModel }>()
     .selectors((createSelector) => ({
       allItems: createSelector(
@@ -154,7 +158,8 @@ describe("redux-typescript-helper", () => {
     })
     .build();
 
-  const rootModel = createModelBuilder({})
+  const rootModel = defaultModelBuilder
+    .state({})
     .models({
       user: userModel,
       entities: entitiesModel

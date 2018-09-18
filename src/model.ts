@@ -1,5 +1,3 @@
-import produce from "immer";
-
 import { StateFactory } from "./state";
 import { Selectors, SelectorCreator, SelectorsFactory } from "./selector";
 import { Reducers } from "./reducer";
@@ -60,11 +58,11 @@ export type ExtractDynamicModels<T extends Model> = T extends Model<
 export class ModelBuilder<
   TDependencies,
   TState,
-  TSelectors extends Selectors<TDependencies, TState>,
-  TReducers extends Reducers<TDependencies, TState>,
-  TEffects extends Effects<TDependencies, TState>,
-  TModels extends Models<TDependencies>,
-  TDynamicModels extends Models<TDependencies>
+  TSelectors extends Selectors,
+  TReducers extends Reducers,
+  TEffects extends Effects,
+  TModels extends Models,
+  TDynamicModels extends Models
 > {
   private readonly _model: Model;
   private _isFrozen: boolean = false;
@@ -83,11 +81,27 @@ export class ModelBuilder<
     this._model = cloneModel(model);
   }
 
-  public state(
-    state: TState | ((s: TState) => void | TState)
+  public dependencies<T>(): ModelBuilder<
+    TDependencies & T,
+    TState,
+    TSelectors,
+    TReducers,
+    TEffects,
+    TModels,
+    TDynamicModels
+  > {
+    if (this._isFrozen) {
+      return this.clone().dependencies<T>();
+    }
+
+    return this as any;
+  }
+
+  public state<T>(
+    state: T | StateFactory<T, TDependencies>
   ): ModelBuilder<
     TDependencies,
-    TState,
+    TState & T,
     TSelectors,
     TReducers,
     TEffects,
@@ -98,11 +112,16 @@ export class ModelBuilder<
       return this.clone().state(state);
     }
 
-    const oldState = this._model.state;
-    const newState = toFactoryIfNeeded(state);
+    const oldState: StateFactory = this._model.state;
+    const newState: StateFactory = toFactoryIfNeeded(state);
 
-    this._model.state = (dependencies) =>
-      produce(oldState(dependencies), (draft) => newState(draft));
+    this._model.state =
+      oldState == null
+        ? newState
+        : (dependencies) => ({
+            ...oldState(dependencies),
+            ...newState(dependencies)
+          });
 
     return this as any;
   }
@@ -298,6 +317,10 @@ export class ModelBuilder<
     TModels,
     TDynamicModels
   > {
+    if (this._model.state == null) {
+      throw new Error("state is not defined");
+    }
+
     return cloneModel(this._model) as Model<
       TDependencies,
       TState,
@@ -349,35 +372,23 @@ function toFactoryIfNeeded<T, U extends any[]>(
   return typeof obj === "function" ? obj : () => obj;
 }
 
-function createModel<TDependencies, TState>(
-  state: TState | StateFactory<TState, TDependencies>
-): Model<TDependencies, TState, {}, {}, {}, {}, {}> {
-  return {
-    state: toFactoryIfNeeded(state),
+export function createModelBuilder(): ModelBuilder<
+  unknown,
+  unknown,
+  {},
+  {},
+  {},
+  {},
+  {}
+> {
+  return new ModelBuilder<unknown, unknown, {}, {}, {}, {}, {}>({
+    state: undefined!,
     selectors: () => ({}),
     reducers: {},
     effects: {},
     epics: [],
     models: {}
-  };
-}
-
-function createModelBuilder<TDependencies, TState>(
-  state: TState | StateFactory<TState, TDependencies>
-): ModelBuilder<TDependencies, TState, {}, {}, {}, {}, {}> {
-  return new ModelBuilder<TDependencies, TState, {}, {}, {}, {}, {}>(
-    createModel(state)
-  );
-}
-
-export type ModelBuilderCreator<TDependencies> = <TState>(
-  state: TState | StateFactory<TState, TDependencies>
-) => ModelBuilder<TDependencies, TState, {}, {}, {}, {}, {}>;
-
-export function createModelBuilderCreator<TDependencies>(): ModelBuilderCreator<
-  TDependencies
-> {
-  return createModelBuilder;
+  });
 }
 
 export function cloneModel<TModel extends Model>(model: TModel): TModel {
