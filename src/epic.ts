@@ -190,7 +190,7 @@ export type ReduxObservableEpicErrorHandler = (
   caught: Observable<ReduxAction>
 ) => Observable<ReduxAction>;
 
-export function toAction$(
+export function toActionObservable(
   asyncFn: (dispatch: Dispatch<ReduxAction>) => Promise<void>
 ): Observable<ReduxAction> {
   return new Observable((subscribe) => {
@@ -317,7 +317,7 @@ function invokeModelEpics<TDependencies, TModel extends Model<TDependencies>>(
           payload
         );
 
-        return isObservable(result) ? result : toAction$(result);
+        return isObservable(result) ? result : toActionObservable(result);
       })
     );
 

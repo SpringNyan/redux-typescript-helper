@@ -30,5 +30,5 @@ export interface Effects<TDependencies = any, TState = any, TSelectors extends S
 }
 export declare type ExtractEffects<T extends Model> = T extends Model<any, any, any, any, infer TEffects, any, any> ? TEffects : never;
 export declare type ReduxObservableEpicErrorHandler = (err: any, caught: Observable<ReduxAction>) => Observable<ReduxAction>;
-export declare function toAction$(asyncFn: (dispatch: Dispatch<ReduxAction>) => Promise<void>): Observable<ReduxAction>;
+export declare function toActionObservable(asyncFn: (dispatch: Dispatch<ReduxAction>) => Promise<void>): Observable<ReduxAction>;
 export declare function createModelEpic<TDependencies, TModel extends Model<TDependencies>>(model: TModel, dependencies: StoreHelperDependencies<TDependencies>, errorHandler: ReduxObservableEpicErrorHandler | null, namespaces: string[]): ReduxObservableEpic<ReduxAction, ReduxAction>;
