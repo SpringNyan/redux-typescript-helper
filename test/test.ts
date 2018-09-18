@@ -1,15 +1,11 @@
 import { expect } from "chai";
 
-import { of, from, timer, empty } from "rxjs";
-import { delay, switchMap } from "rxjs/operators";
+import { of, timer } from "rxjs";
+import { switchMap, delay } from "rxjs/operators";
 import { createStore, applyMiddleware } from "redux";
 import { createEpicMiddleware } from "redux-observable";
 
-import {
-  createModelBuilderCreator,
-  createStoreHelperFactory,
-  asyncEffect
-} from "../lib";
+import { createModelBuilderCreator, createStoreHelperFactory } from "../lib";
 
 describe("redux-typescript-helper", () => {
   interface SystemService {
@@ -96,8 +92,8 @@ describe("redux-typescript-helper", () => {
         },
         switchMap
       ],
-      setDefaultAbout({ actions, getters }) {
-        return of(actions.editAbout(getters.idAndName));
+      setDefaultAbout: ({ actions, getters }) => async (dispatch) => {
+        await dispatch(actions.editAbout(getters.idAndName));
       }
     })
     .build();
@@ -137,27 +133,23 @@ describe("redux-typescript-helper", () => {
       }
     })
     .effects({
-      fetchItems({ actions }) {
-        return from([
-          actions.clearItems({}),
-          actions.addItem({ id: 1, title: "abc", done: false }),
-          actions.addItem({ id: 2, title: "def", done: true })
-        ]).pipe(delay(delayTime));
+      fetchItems: ({ actions }) => async (dispatch) => {
+        await timer(delayTime).toPromise();
+
+        await dispatch(actions.clearItems({}));
+        await dispatch(actions.addItem({ id: 1, title: "abc", done: false }));
+        await dispatch(actions.addItem({ id: 2, title: "def", done: true }));
       },
-      addItemAsync({ actions }, payload: Item) {
-        return asyncEffect(async (dispatch) => {
-          await timer(delayTime);
-          dispatch(actions.addItem(payload));
-        });
+      addItemAsync: ({ actions }, payload: Item) => async (dispatch) => {
+        await timer(delayTime);
+        dispatch(actions.addItem(payload));
       },
-      increaseWithError({ actions }) {
-        return asyncEffect(async (dispatch) => {
-          dispatch(actions.increaseCount({}));
-          if (0 === 0) {
-            throw new Error("error!");
-          }
-          dispatch(actions.increaseCount({}));
-        });
+      increaseWithError: ({ actions }) => async (dispatch) => {
+        dispatch(actions.increaseCount({}));
+        if (0 === 0) {
+          throw new Error("error!");
+        }
+        dispatch(actions.increaseCount({}));
       }
     })
     .build();
@@ -171,7 +163,9 @@ describe("redux-typescript-helper", () => {
       username: ({ state }) => state.user.username
     })
     .effects({
-      increaseCount: ({ actions }) => of(actions.entities.increaseCount({}))
+      increaseCount: ({ actions }) => async (dispatch) => {
+        await dispatch(actions.entities.increaseCount({}));
+      }
     })
     .build();
 
@@ -184,7 +178,7 @@ describe("redux-typescript-helper", () => {
       }
     },
     {
-      epicErrorHandler: (err) => empty()
+      epicErrorHandler: (_err, caught) => caught
     }
   );
 
