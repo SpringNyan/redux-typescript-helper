@@ -5,5 +5,5 @@ export declare type ExtractState<T extends StateFactory | Model> = T extends Sta
 export declare type DeepState<TState, TModels extends Models> = TState & ModelsState<TModels>;
 export declare type ModelState<TModel extends Model> = DeepState<ExtractState<TModel>, ExtractModels<TModel>>;
 export declare type ModelsState<TModels extends Models> = {
-    [K in keyof TModels]: TModels[K] extends Model ? ModelState<TModels[K]> : never;
+    [K in Extract<keyof TModels, string>]: TModels[K] extends Model ? ModelState<TModels[K]> : never;
 };

@@ -17,7 +17,7 @@ export declare type SelectorsFactory<TSelectors extends Selectors = Selectors, T
 export declare type ExtractSelectors<T extends SelectorsFactory | Model> = T extends SelectorsFactory<infer TSelectors, any> | Model<any, any, infer TSelectors, any, any, any, any> ? TSelectors : never;
 export declare type ExtractSelectorResult<T extends Selector> = T extends Selector<any, any, any, any, any, infer TResult> ? TResult : never;
 export declare type Getters<T extends Selectors> = {
-    [K in keyof T]: ExtractSelectorResult<T[K]>;
+    [K in Extract<keyof T, string>]: ExtractSelectorResult<T[K]>;
 };
 export declare type DeepGetters<TState, TSelectors extends Selectors, TModels extends Models, TDynamicModels extends Models> = Getters<TSelectors> & ModelsGetters<TModels> & {
     state: TState;
@@ -32,7 +32,7 @@ export interface DeepGettersChild<TModels extends Models, TDynamicModels extends
 }
 export declare type ModelGetters<TModel extends Model> = DeepGetters<ModelState<TModel>, ExtractSelectors<TModel>, ExtractModels<TModel>, ExtractDynamicModels<TModel>>;
 export declare type ModelsGetters<TModels extends Models> = {
-    [K in keyof TModels]: TModels[K] extends Model ? ModelGetters<TModels[K]> : never;
+    [K in Extract<keyof TModels, string>]: TModels[K] extends Model ? ModelGetters<TModels[K]> : never;
 };
 export interface SelectorCreator<TDependencies = any, TState = any, TSelectors extends Selectors<TDependencies, TState> = any, TModels extends Models<TDependencies> = any, TDynamicModels extends Models<TDependencies> = any> {
     <T1, TResult>(selector1: Selector<TDependencies, TState, TSelectors, TModels, TDynamicModels, T1>, combiner: (res1: T1) => TResult): Selector<TDependencies, TState, TSelectors, TModels, TDynamicModels, TResult>;

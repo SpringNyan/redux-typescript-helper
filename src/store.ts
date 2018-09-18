@@ -37,7 +37,11 @@ interface StoreHelperInternal<TModel extends Model> {
 }
 
 export type StoreHelper<TModel extends Model> = StoreHelperInternal<TModel> &
-  { [K in keyof ExtractModels<TModel>]: StoreHelper<ExtractModels<TModel>[K]> };
+  {
+    [K in Extract<keyof ExtractModels<TModel>, string>]: StoreHelper<
+      ExtractModels<TModel>[K]
+    >
+  };
 
 export interface StoreHelperChild<
   TModels extends Models,
@@ -252,18 +256,18 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
 
     const namespaces = [...this._namespaces, namespace];
 
-    this._actions[namespace] = createModelActionHelpers(
+    (this._actions as any)[namespace] = createModelActionHelpers(
       model,
       namespaces,
       this._actions
-    ) as any;
+    );
 
-    this._getters[namespace] = createModelGetters(
+    (this._getters as any)[namespace] = createModelGetters(
       model,
       this._dependencies,
       namespaces,
       this._getters
-    ) as any;
+    );
 
     this._registerSubStoreHelper(namespace);
 
@@ -295,8 +299,8 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     });
 
     this._unregisterSubStoreHelper(namespace);
-    delete this._actions[namespace];
-    delete this._getters[namespace];
+    delete (this._actions as any)[namespace];
+    delete (this._getters as any)[namespace];
 
     this._store.dispatch({
       type: `${namespaces.join("/")}/${actionTypes.unregister}`
@@ -314,8 +318,8 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
       this._model.models[namespace],
       this._dependencies,
       this._options,
-      this._actions[namespace],
-      this._getters[namespace],
+      (this._actions as any)[namespace],
+      (this._getters as any)[namespace],
       this._addEpic,
       [...this._namespaces, namespace],
       this as any

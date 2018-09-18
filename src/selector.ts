@@ -77,7 +77,7 @@ export type ExtractSelectorResult<T extends Selector> = T extends Selector<
   : never;
 
 export type Getters<T extends Selectors> = {
-  [K in keyof T]: ExtractSelectorResult<T[K]>
+  [K in Extract<keyof T, string>]: ExtractSelectorResult<T[K]>
 };
 
 export type DeepGetters<
@@ -115,7 +115,7 @@ export type ModelGetters<TModel extends Model> = DeepGetters<
 >;
 
 export type ModelsGetters<TModels extends Models> = {
-  [K in keyof TModels]: TModels[K] extends Model
+  [K in Extract<keyof TModels, string>]: TModels[K] extends Model
     ? ModelGetters<TModels[K]>
     : never
 };
@@ -457,7 +457,7 @@ export function createModelGetters<
   } as ModelGetters<TModel>;
 
   getters.$root = parent != null ? parent.$root : getters;
-  getters.$child = (namespace: string) => getters[namespace];
+  getters.$child = (namespace: string) => (getters as any)[namespace];
 
   const selectors = model.selectors(createSelector);
   for (const key of Object.keys(selectors)) {
@@ -481,12 +481,12 @@ export function createModelGetters<
   }
 
   for (const key of Object.keys(model.models)) {
-    getters[key] = createModelGetters(
+    (getters as any)[key] = createModelGetters(
       model.models[key],
       dependencies,
       [...namespaces, key],
       getters
-    ) as any;
+    );
   }
 
   return getters;

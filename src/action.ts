@@ -23,32 +23,18 @@ export type ExtractActionPayload<
   ? TPayload
   : never;
 
+export type ExtractActionPayloads<T extends Reducers | Effects> = {
+  [K in Extract<keyof T, string>]: ExtractActionPayload<T[K]>
+};
+
 export interface ActionHelper<TPayload = any> {
   (payload: TPayload): Action<TPayload>;
   type: string;
   is(action: any): action is Action<TPayload>;
 }
 
-function isAction(this: ActionHelper, action: any): action is Action {
-  return action != null && action.type === this.type;
-}
-
-export function createActionHelper<TPayload>(
-  type: string
-): ActionHelper<TPayload> {
-  const actionHelper = ((payload: TPayload) => ({
-    type,
-    payload
-  })) as ActionHelper<TPayload>;
-
-  actionHelper.type = type;
-  actionHelper.is = isAction;
-
-  return actionHelper;
-}
-
-export type ActionHelpers<T extends Reducers | Effects> = {
-  [K in keyof T]: ActionHelper<ExtractActionPayload<T[K]>>
+export type ActionHelpers<T> = {
+  [K in Extract<keyof T, string>]: ActionHelper<T[K]>
 };
 
 export type DeepActionHelpers<
@@ -56,8 +42,9 @@ export type DeepActionHelpers<
   TEffects extends Effects,
   TModels extends Models,
   TDynamicModels extends Models
-> = ActionHelpers<TReducers> &
-  ActionHelpers<TEffects> &
+> = ActionHelpers<
+  ExtractActionPayloads<TReducers> & ExtractActionPayloads<TEffects>
+> &
   ModelsActionHelpers<TModels> & {
     $namespace: string;
     $parent: DeepActionHelpers<{}, {}, {}, {}> | null;
@@ -85,10 +72,28 @@ export type ModelActionHelpers<TModel extends Model> = DeepActionHelpers<
 >;
 
 export type ModelsActionHelpers<TModels extends Models> = {
-  [K in keyof TModels]: TModels[K] extends Model
+  [K in Extract<keyof TModels, string>]: TModels[K] extends Model
     ? ModelActionHelpers<TModels[K]>
     : never
 };
+
+function isAction(this: ActionHelper, action: any): action is Action {
+  return action != null && action.type === this.type;
+}
+
+export function createActionHelper<TPayload>(
+  type: string
+): ActionHelper<TPayload> {
+  const actionHelper = ((payload: TPayload) => ({
+    type,
+    payload
+  })) as ActionHelper<TPayload>;
+
+  actionHelper.type = type;
+  actionHelper.is = isAction;
+
+  return actionHelper;
+}
 
 export function createModelActionHelpers<TModel extends Model>(
   model: TModel,
@@ -101,21 +106,21 @@ export function createModelActionHelpers<TModel extends Model>(
   } as ModelActionHelpers<TModel>;
 
   actions.$root = parent != null ? parent.$root : actions;
-  actions.$child = (namespace: string) => actions[namespace];
+  actions.$child = (namespace: string) => (actions as any)[namespace];
 
   for (const key of [
     ...Object.keys(model.reducers),
     ...Object.keys(model.effects)
   ]) {
-    actions[key] = createActionHelper([...namespaces, key].join("/")) as any;
+    (actions as any)[key] = createActionHelper([...namespaces, key].join("/"));
   }
 
   for (const key of Object.keys(model.models)) {
-    actions[key] = createModelActionHelpers(
+    (actions as any)[key] = createModelActionHelpers(
       model.models[key],
       [...namespaces, key],
       actions
-    ) as any;
+    );
   }
 
   return actions;

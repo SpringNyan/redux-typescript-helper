@@ -17,7 +17,7 @@ interface StoreHelperInternal<TModel extends Model> {
     $unregisterModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(namespace: K): void;
 }
 export declare type StoreHelper<TModel extends Model> = StoreHelperInternal<TModel> & {
-    [K in keyof ExtractModels<TModel>]: StoreHelper<ExtractModels<TModel>[K]>;
+    [K in Extract<keyof ExtractModels<TModel>, string>]: StoreHelper<ExtractModels<TModel>[K]>;
 };
 export interface StoreHelperChild<TModels extends Models, TDynamicModels extends Models> {
     <K extends Extract<keyof TModels, string>>(namespace: K): StoreHelper<TModels[K]>;

@@ -77,6 +77,7 @@ describe("redux-typescript-helper", () => {
       }
     })
     .effects({
+      login: ({}, payload: { additional: string }) => async () => {},
       loginRequest: [
         (
           { actions, dependencies },
@@ -260,7 +261,8 @@ describe("redux-typescript-helper", () => {
         id: 10000,
         username: "wow",
         token: "",
-        about: ""
+        about: "",
+        additional: ""
       })
     );
     expect(tempHelper.state.username).eq("wow");
