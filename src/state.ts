@@ -1,4 +1,4 @@
-import { Model, Models } from "./model";
+import { Model, Models, ExtractModels } from "./model";
 import { StoreHelperDependencies } from "./store";
 
 export type StateFactory<TState = any, TDependencies = any> = (
@@ -16,11 +16,11 @@ export type DeepState<TState, TModels extends Models> = TState &
 
 export type ModelState<TModel extends Model> = DeepState<
   ExtractState<TModel>,
-  TModel["models"]
+  ExtractModels<TModel>
 >;
 
 export type ModelsState<TModels extends Models> = {
-  [K in keyof TModels]: TModels[K] extends Model
+  [K in Extract<keyof TModels, string>]: TModels[K] extends Model
     ? ModelState<TModels[K]>
     : never
 };

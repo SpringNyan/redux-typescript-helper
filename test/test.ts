@@ -1,15 +1,11 @@
 import { expect } from "chai";
 
-import { of, from, timer, empty } from "rxjs";
-import { delay, switchMap } from "rxjs/operators";
+import { of, timer } from "rxjs";
+import { switchMap, delay } from "rxjs/operators";
 import { createStore, applyMiddleware } from "redux";
 import { createEpicMiddleware } from "redux-observable";
 
-import {
-  createModelBuilderCreator,
-  createStoreHelperFactory,
-  asyncEffect
-} from "../lib";
+import { createModelBuilder, createStoreHelperFactory } from "../lib";
 
 describe("redux-typescript-helper", () => {
   interface SystemService {
@@ -30,15 +26,18 @@ describe("redux-typescript-helper", () => {
   const delayTime = 50;
   const waitTime = delayTime + 10;
 
-  const createModelBuilder = createModelBuilderCreator<Dependencies>();
+  const defaultModelBuilder = createModelBuilder()
+    .dependencies<Dependencies>()
+    .freeze();
 
-  const userModel = createModelBuilder(() => ({
-    id: 0,
-    username: "",
-    token: "",
-    about: "",
-    isLogin: false
-  }))
+  const userModel = defaultModelBuilder
+    .state(() => ({
+      id: 0,
+      username: "",
+      token: "",
+      about: "",
+      isLogin: false
+    }))
     .selectors({
       id({ dependencies }): number {
         return (dependencies.$storeHelper as typeof storeHelper).$child("user")
@@ -78,6 +77,7 @@ describe("redux-typescript-helper", () => {
       }
     })
     .effects({
+      login: ({}, payload: { additional: string }) => async () => {},
       loginRequest: [
         (
           { actions, dependencies },
@@ -96,16 +96,17 @@ describe("redux-typescript-helper", () => {
         },
         switchMap
       ],
-      setDefaultAbout({ actions, getters }) {
-        return of(actions.editAbout(getters.idAndName));
+      setDefaultAbout: ({ actions, getters }) => async (dispatch) => {
+        await dispatch(actions.editAbout(getters.idAndName));
       }
     })
     .build();
 
-  const entitiesModel = createModelBuilder({
-    itemById: {} as { [id: number]: Item },
-    count: 0
-  })
+  const entitiesModel = defaultModelBuilder
+    .state({
+      itemById: {} as { [id: number]: Item },
+      count: 0
+    })
     .dynamicModels<{ temp: typeof userModel }>()
     .selectors((createSelector) => ({
       allItems: createSelector(
@@ -137,32 +138,29 @@ describe("redux-typescript-helper", () => {
       }
     })
     .effects({
-      fetchItems({ actions }) {
-        return from([
-          actions.clearItems({}),
-          actions.addItem({ id: 1, title: "abc", done: false }),
-          actions.addItem({ id: 2, title: "def", done: true })
-        ]).pipe(delay(delayTime));
+      fetchItems: ({ actions }) => async (dispatch) => {
+        await timer(delayTime).toPromise();
+
+        await dispatch(actions.clearItems({}));
+        await dispatch(actions.addItem({ id: 1, title: "abc", done: false }));
+        await dispatch(actions.addItem({ id: 2, title: "def", done: true }));
       },
-      addItemAsync({ actions }, payload: Item) {
-        return asyncEffect(async (dispatch) => {
-          await timer(delayTime);
-          dispatch(actions.addItem(payload));
-        });
+      addItemAsync: ({ actions }, payload: Item) => async (dispatch) => {
+        await timer(delayTime);
+        dispatch(actions.addItem(payload));
       },
-      increaseWithError({ actions }) {
-        return asyncEffect(async (dispatch) => {
-          dispatch(actions.increaseCount({}));
-          if (0 === 0) {
-            throw new Error("error!");
-          }
-          dispatch(actions.increaseCount({}));
-        });
+      increaseWithError: ({ actions }) => async (dispatch) => {
+        dispatch(actions.increaseCount({}));
+        if (0 === 0) {
+          throw new Error("error!");
+        }
+        dispatch(actions.increaseCount({}));
       }
     })
     .build();
 
-  const rootModel = createModelBuilder({})
+  const rootModel = defaultModelBuilder
+    .state({})
     .models({
       user: userModel,
       entities: entitiesModel
@@ -171,20 +169,22 @@ describe("redux-typescript-helper", () => {
       username: ({ state }) => state.user.username
     })
     .effects({
-      increaseCount: ({ actions }) => of(actions.entities.increaseCount({}))
+      increaseCount: ({ actions }) => async (dispatch) => {
+        await dispatch(actions.entities.increaseCount({}));
+      }
     })
     .build();
 
   const storeHelperFactory = createStoreHelperFactory(
-    rootModel,
     {
       system: {
         env: "test",
         hash: (str: string) => str
       }
     },
+    rootModel,
     {
-      epicErrorHandler: (err) => empty()
+      epicErrorHandler: (_err, caught) => caught
     }
   );
 
@@ -261,7 +261,8 @@ describe("redux-typescript-helper", () => {
         id: 10000,
         username: "wow",
         token: "",
-        about: ""
+        about: "",
+        additional: ""
       })
     );
     expect(tempHelper.state.username).eq("wow");

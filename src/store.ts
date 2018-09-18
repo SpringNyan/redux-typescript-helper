@@ -12,7 +12,7 @@ import {
 import { createModelReducer } from "./reducer";
 import { ModelGetters, createModelGetters } from "./selector";
 import { ReduxObservableEpicErrorHandler, createModelEpic } from "./epic";
-import { Model, Models, ExtractDynamicModels } from "./model";
+import { Model, Models, ExtractModels, ExtractDynamicModels } from "./model";
 import { getIn } from "./util";
 
 interface StoreHelperInternal<TModel extends Model> {
@@ -23,7 +23,7 @@ interface StoreHelperInternal<TModel extends Model> {
   $namespace: string;
   $parent: StoreHelper<Model<unknown, unknown, {}, {}, {}, {}, {}>> | null;
   $root: StoreHelper<Model<unknown, unknown, {}, {}, {}, {}, {}>>;
-  $child: StoreHelperChild<TModel["models"], ExtractDynamicModels<TModel>>;
+  $child: StoreHelperChild<ExtractModels<TModel>, ExtractDynamicModels<TModel>>;
 
   $registerModel<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
     namespace: K,
@@ -37,7 +37,11 @@ interface StoreHelperInternal<TModel extends Model> {
 }
 
 export type StoreHelper<TModel extends Model> = StoreHelperInternal<TModel> &
-  { [K in keyof TModel["models"]]: StoreHelper<TModel["models"][K]> };
+  {
+    [K in Extract<keyof ExtractModels<TModel>, string>]: StoreHelper<
+      ExtractModels<TModel>[K]
+    >
+  };
 
 export interface StoreHelperChild<
   TModels extends Models,
@@ -78,8 +82,8 @@ export class StoreHelperFactory<
   private _store?: Store;
 
   constructor(
-    model: TModel,
     dependencies: TDependencies,
+    model: TModel,
     options: StoreHelperOptions
   ) {
     this._model = model;
@@ -156,15 +160,15 @@ export function createStoreHelperFactory<
   TDependencies,
   TModel extends Model<TDependencies>
 >(
-  model: TModel,
   dependencies: TDependencies,
+  model: TModel,
   options?: StoreHelperOptions
 ): StoreHelperFactory<TDependencies, TModel> {
   if (options == null) {
     options = {};
   }
 
-  return new StoreHelperFactory(model, dependencies, options);
+  return new StoreHelperFactory(dependencies, model, options);
 }
 
 class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
@@ -228,9 +232,9 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     Model<unknown, unknown, {}, {}, {}, {}, {}>
   >;
 
-  public $child<K extends Extract<keyof TModel["models"], string>>(
+  public $child<K extends Extract<keyof ExtractModels<TModel>, string>>(
     namespace: K
-  ): StoreHelper<TModel["models"][K]>;
+  ): StoreHelper<ExtractModels<TModel>[K]>;
   public $child<K extends Extract<keyof ExtractDynamicModels<TModel>, string>>(
     namespace: K
   ): StoreHelper<ExtractDynamicModels<TModel>[K]> | null;
@@ -252,18 +256,18 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
 
     const namespaces = [...this._namespaces, namespace];
 
-    this._actions[namespace] = createModelActionHelpers(
+    (this._actions as any)[namespace] = createModelActionHelpers(
       model,
       namespaces,
       this._actions
-    ) as any;
+    );
 
-    this._getters[namespace] = createModelGetters(
+    (this._getters as any)[namespace] = createModelGetters(
       model,
       this._dependencies,
       namespaces,
       this._getters
-    ) as any;
+    );
 
     this._registerSubStoreHelper(namespace);
 
@@ -295,8 +299,8 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     });
 
     this._unregisterSubStoreHelper(namespace);
-    delete this._actions[namespace];
-    delete this._getters[namespace];
+    delete (this._actions as any)[namespace];
+    delete (this._getters as any)[namespace];
 
     this._store.dispatch({
       type: `${namespaces.join("/")}/${actionTypes.unregister}`
@@ -314,8 +318,8 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
       this._model.models[namespace],
       this._dependencies,
       this._options,
-      this._actions[namespace],
-      this._getters[namespace],
+      (this._actions as any)[namespace],
+      (this._getters as any)[namespace],
       this._addEpic,
       [...this._namespaces, namespace],
       this as any

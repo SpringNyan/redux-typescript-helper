@@ -1,4 +1,4 @@
-import { Observable, OperatorFunction, merge } from "rxjs";
+import { Observable, OperatorFunction, merge, isObservable } from "rxjs";
 import {
   map,
   filter,
@@ -115,7 +115,9 @@ export interface Effect<
       TDynamicModels
     >,
     payload: TPayload
-  ): Observable<ReduxAction>;
+  ):
+    | Observable<ReduxAction>
+    | ((dispatch: Dispatch<ReduxAction>) => Promise<void>);
 }
 
 export type EffectWithOperator<
@@ -171,12 +173,24 @@ export interface Effects<
       >;
 }
 
+export type ExtractEffects<T extends Model> = T extends Model<
+  any,
+  any,
+  any,
+  any,
+  infer TEffects,
+  any,
+  any
+>
+  ? TEffects
+  : never;
+
 export type ReduxObservableEpicErrorHandler = (
   err: any,
   caught: Observable<ReduxAction>
 ) => Observable<ReduxAction>;
 
-export function asyncEffect(
+export function toAction$(
   asyncFn: (dispatch: Dispatch<ReduxAction>) => Promise<void>
 ): Observable<ReduxAction> {
   return new Observable((subscribe) => {
@@ -288,7 +302,7 @@ function invokeModelEpics<TDependencies, TModel extends Model<TDependencies>>(
     const output$ = action$.pipe(
       operator((action) => {
         const payload = action.payload;
-        return effect(
+        const result = effect(
           {
             action$,
             rootAction$,
@@ -302,6 +316,8 @@ function invokeModelEpics<TDependencies, TModel extends Model<TDependencies>>(
           },
           payload
         );
+
+        return isObservable(result) ? result : toAction$(result);
       })
     );
 
