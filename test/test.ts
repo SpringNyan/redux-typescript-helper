@@ -72,8 +72,8 @@ describe("redux-typescript-helper", () => {
         state.username = "";
         state.about = "";
       },
-      editAbout(state, payload: string, dependencies) {
-        state.about = `${dependencies.system.env} - ${payload}`;
+      editAbout(state, payload: string, originalState) {
+        state.about = `${originalState.id} - ${payload}`;
       }
     })
     .effects({
@@ -214,12 +214,12 @@ describe("redux-typescript-helper", () => {
 
     expect(storeHelper.state.user.about).eq("");
     store.dispatch(storeHelper.actions.user.editAbout("zzz"));
-    expect(storeHelper.state.user.about).eq("test - zzz");
+    expect(storeHelper.state.user.about).eq("233 - zzz");
 
     store.dispatch(storeHelper.actions.user.setDefaultAbout({}));
-    expect(storeHelper.state.user.about).eq("test - 233 - nyan");
+    expect(storeHelper.state.user.about).eq("233 - 233 - nyan");
     expect(storeHelper.getters.user.idAndNameAndAbout).eq(
-      "233 - nyan - test - 233 - nyan"
+      "233 - nyan - 233 - 233 - nyan"
     );
 
     expect(storeHelper.getters.user.id).eq(storeHelper.state.user.id);

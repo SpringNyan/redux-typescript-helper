@@ -8,11 +8,7 @@ import { StoreHelperDependencies } from "./store";
 import { getIn } from "./util";
 
 export interface Reducer<TDependencies = any, TState = any, TPayload = any> {
-  (
-    state: TState,
-    payload: TPayload,
-    dependencies: StoreHelperDependencies<TDependencies>
-  ): void | TState;
+  (state: TState, payload: TPayload, originalState: TState): void | TState;
 }
 
 export interface Reducers<TDependencies = any, TState = any> {
@@ -77,10 +73,15 @@ export function createModelReducer<
           throw new Error("state not found");
         }
 
+        const originalTargetState = getIn(
+          rootState,
+          namespaces.slice(0, namespaces.length - 1)
+        );
+
         const nextTargetState = targetReducer(
           targetState,
           (action as Action).payload,
-          dependencies
+          originalTargetState
         );
 
         if (nextTargetState !== undefined) {
