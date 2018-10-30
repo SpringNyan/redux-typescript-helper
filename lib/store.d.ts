@@ -3,12 +3,13 @@ import { Epic as ReduxObservableEpic } from "redux-observable";
 import { ModelState } from "./state";
 import { ModelActionHelpers } from "./action";
 import { ModelGetters } from "./selector";
-import { ReduxObservableEpicErrorHandler } from "./epic";
+import { ModelActionDispatchers, ReduxObservableEpicErrorHandler } from "./epic";
 import { Model, Models, ExtractModels, ExtractDynamicModels } from "./model";
 interface StoreHelperInternal<TModel extends Model> {
     state: ModelState<TModel>;
     actions: ModelActionHelpers<TModel>;
     getters: ModelGetters<TModel>;
+    dispatch: ModelActionDispatchers<TModel>;
     $namespace: string;
     $parent: StoreHelper<Model<unknown, unknown, {}, {}, {}, {}, {}>> | null;
     $root: StoreHelper<Model<unknown, unknown, {}, {}, {}, {}, {}>>;
@@ -36,6 +37,7 @@ export declare class StoreHelperFactory<TDependencies, TModel extends Model<TDep
     private readonly _reducer;
     private readonly _actions;
     private readonly _getters;
+    private readonly _dispatchers;
     private readonly _epic;
     private readonly _addEpic$;
     private readonly _options;

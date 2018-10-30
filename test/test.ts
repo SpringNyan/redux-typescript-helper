@@ -92,6 +92,8 @@ describe("redux-typescript-helper", () => {
             about: ""
           })
         );
+
+        return payload.username;
       },
       setDefaultAbout: ({ actions, getters }) => async (dispatch) => {
         await dispatch(actions.editAbout(getters.idAndName));
@@ -198,13 +200,22 @@ describe("redux-typescript-helper", () => {
 
   it("test", async () => {
     expect(userHelper.state.isLogin).eq(false);
+
+    const username = await userHelper.dispatch.loginRequest({
+      username: "abc",
+      password: "xyz"
+    });
+    expect(userHelper.state.isLogin).eq(true);
+    expect(username).eq("abc");
+    expect(userHelper.state.username).eq("abc");
+
     store.dispatch(
       userHelper.actions.loginRequest({
         username: "nyan",
         password: "meow"
       })
     );
-    expect(userHelper.state.isLogin).eq(false);
+    expect(userHelper.state.username).eq("abc");
     await timer(waitTime).toPromise();
     expect(userHelper.state.isLogin).eq(true);
     expect(userHelper.state.username).eq("nyan");

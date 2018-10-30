@@ -11,7 +11,12 @@ import {
 } from "./action";
 import { createModelReducer } from "./reducer";
 import { ModelGetters, createModelGetters } from "./selector";
-import { ReduxObservableEpicErrorHandler, createModelEpic } from "./epic";
+import {
+  ModelActionDispatchers,
+  ReduxObservableEpicErrorHandler,
+  createModelEpic,
+  createModelActionDispatchers
+} from "./epic";
 import { Model, Models, ExtractModels, ExtractDynamicModels } from "./model";
 import { getIn } from "./util";
 
@@ -19,6 +24,7 @@ interface StoreHelperInternal<TModel extends Model> {
   state: ModelState<TModel>;
   actions: ModelActionHelpers<TModel>;
   getters: ModelGetters<TModel>;
+  dispatch: ModelActionDispatchers<TModel>;
 
   $namespace: string;
   $parent: StoreHelper<Model<unknown, unknown, {}, {}, {}, {}, {}>> | null;
@@ -67,6 +73,7 @@ export class StoreHelperFactory<
   private readonly _reducer: ReduxReducer;
   private readonly _actions: ModelActionHelpers<TModel>;
   private readonly _getters: ModelGetters<TModel>;
+  private readonly _dispatchers: ModelActionDispatchers<TModel>;
   private readonly _epic: ReduxObservableEpic;
   private readonly _addEpic$: BehaviorSubject<ReduxObservableEpic>;
   private readonly _options: StoreHelperOptions;
@@ -103,12 +110,20 @@ export class StoreHelperFactory<
       null
     );
 
+    this._dispatchers = createModelActionDispatchers(
+      this._model,
+      this._dependencies,
+      [],
+      null
+    );
+
     this._storeHelper = new _StoreHelper(
       this._model,
       this._dependencies,
       this._options,
       this._actions,
       this._getters,
+      this._dispatchers,
       (epic) => this._addEpic$.next(epic),
       [],
       null
@@ -172,6 +187,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
   private readonly _options: StoreHelperOptions;
   private readonly _actions: ModelActionHelpers<TModel>;
   private readonly _getters: ModelGetters<TModel>;
+  private readonly _dispatchers: ModelActionDispatchers<TModel>;
   private readonly _addEpic: (epic: ReduxObservableEpic) => void;
   private readonly _namespaces: string[];
 
@@ -185,6 +201,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     options: StoreHelperOptions,
     actions: ModelActionHelpers<TModel>,
     getters: ModelGetters<TModel>,
+    dispatchers: ModelActionDispatchers<TModel>,
     addEpic: (epic: ReduxObservableEpic) => void,
     namespaces: string[],
     parent: StoreHelper<Model> | null
@@ -194,6 +211,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
     this._options = options;
     this._actions = actions;
     this._getters = getters;
+    this._dispatchers = dispatchers;
     this._addEpic = addEpic;
     this._namespaces = namespaces;
 
@@ -216,6 +234,10 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
 
   public get getters(): ModelGetters<TModel> {
     return this._getters;
+  }
+
+  public get dispatch(): ModelActionDispatchers<TModel> {
+    return this._dispatchers;
   }
 
   public readonly $namespace: string;
@@ -314,6 +336,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
       this._options,
       this._actions[namespace],
       this._getters[namespace],
+      this._dispatchers[namespace],
       this._addEpic,
       [...this._namespaces, namespace],
       this as any
