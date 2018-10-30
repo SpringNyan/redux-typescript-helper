@@ -22,7 +22,7 @@ export interface Epic<TDependencies = any, TState = any, TSelectors extends Sele
 }
 export declare type Epics<TDependencies = any, TState = any, TSelectors extends Selectors<TDependencies, TState> = any, TReducers extends Reducers<TDependencies, TState> = any, TEffects extends Effects<TDependencies, TState> = any, TModels extends Models<TDependencies> = any, TDynamicModels extends Models<TDependencies> = any> = Array<Epic<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>>;
 export interface Effect<TDependencies = any, TState = any, TSelectors extends Selectors<TDependencies, TState> = any, TReducers extends Reducers<TDependencies, TState> = any, TEffects extends Effects<TDependencies, TState> = any, TModels extends Models<TDependencies> = any, TDynamicModels extends Models<TDependencies> = any, TPayload = any> {
-    (context: EpicContext<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>, payload: TPayload): Observable<ReduxAction> | ((dispatch: Dispatch<ReduxAction>) => Promise<void>);
+    (context: EpicContext<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>, payload: TPayload): (dispatch: Dispatch<ReduxAction>) => Promise<void>;
 }
 export interface Effects<TDependencies = any, TState = any, TSelectors extends Selectors<TDependencies, TState> = any, TReducers extends Reducers<TDependencies, TState> = any, TEffects extends Effects<TDependencies, TState> = any, TModels extends Models<TDependencies> = any, TDynamicModels extends Models<TDependencies> = any> {
     [type: string]: Effect<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>;

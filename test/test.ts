@@ -1,7 +1,6 @@
 import { expect } from "chai";
 
-import { of, timer } from "rxjs";
-import { switchMap, delay } from "rxjs/operators";
+import { timer } from "rxjs";
 import { createStore, applyMiddleware } from "redux";
 import { createEpicMiddleware } from "redux-observable";
 
@@ -81,17 +80,18 @@ describe("redux-typescript-helper", () => {
       loginRequest: (
         { actions, dependencies },
         payload: { username: string; password: string }
-      ) => {
+      ) => async (dispatch) => {
         expect(actions.$namespace).eq("user");
 
-        return of(
+        await timer(delayTime).toPromise();
+        await dispatch(
           actions.login({
             id: 233,
             username: payload.username,
             token: dependencies.system.hash(payload.password),
             about: ""
           })
-        ).pipe(delay(delayTime));
+        );
       },
       setDefaultAbout: ({ actions, getters }) => async (dispatch) => {
         await dispatch(actions.editAbout(getters.idAndName));

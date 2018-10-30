@@ -1,4 +1,4 @@
-import { Observable, OperatorFunction, merge, isObservable } from "rxjs";
+import { Observable, merge } from "rxjs";
 import {
   map,
   filter,
@@ -115,9 +115,7 @@ export interface Effect<
       TDynamicModels
     >,
     payload: TPayload
-  ):
-    | Observable<ReduxAction>
-    | ((dispatch: Dispatch<ReduxAction>) => Promise<void>);
+  ): (dispatch: Dispatch<ReduxAction>) => Promise<void>;
 }
 
 export interface Effects<
@@ -254,20 +252,11 @@ function invokeModelEpics<TDependencies, TModel extends Model<TDependencies>>(
   const getters = helper.getters;
 
   for (const key of Object.keys(model.effects)) {
-    let effect: Effect;
-    let operator = mergeMap;
-
-    const effectWithOperator = model.effects[key];
-    if (Array.isArray(effectWithOperator)) {
-      [effect, operator] = effectWithOperator;
-    } else {
-      effect = effectWithOperator;
-    }
-
+    const effect = model.effects[key];
     const action$ = rootAction$.ofType<Action>([...namespaces, key].join("/"));
 
     const output$ = action$.pipe(
-      operator((action) => {
+      mergeMap((action) => {
         const payload = action.payload;
         const result = effect(
           {
@@ -284,7 +273,7 @@ function invokeModelEpics<TDependencies, TModel extends Model<TDependencies>>(
           payload
         );
 
-        return isObservable(result) ? result : toActionObservable(result);
+        return toActionObservable(result);
       })
     );
 
