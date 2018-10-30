@@ -78,24 +78,21 @@ describe("redux-typescript-helper", () => {
     })
     .effects({
       login: ({}, payload: { additional: string }) => async () => {},
-      loginRequest: [
-        (
-          { actions, dependencies },
-          payload: { username: string; password: string }
-        ) => {
-          expect(actions.$namespace).eq("user");
+      loginRequest: (
+        { actions, dependencies },
+        payload: { username: string; password: string }
+      ) => {
+        expect(actions.$namespace).eq("user");
 
-          return of(
-            actions.login({
-              id: 233,
-              username: payload.username,
-              token: dependencies.system.hash(payload.password),
-              about: ""
-            })
-          ).pipe(delay(delayTime));
-        },
-        switchMap
-      ],
+        return of(
+          actions.login({
+            id: 233,
+            username: payload.username,
+            token: dependencies.system.hash(payload.password),
+            about: ""
+          })
+        ).pipe(delay(delayTime));
+      },
       setDefaultAbout: ({ actions, getters }) => async (dispatch) => {
         await dispatch(actions.editAbout(getters.idAndName));
       }

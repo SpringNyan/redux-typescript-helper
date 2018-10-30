@@ -120,29 +120,6 @@ export interface Effect<
     | ((dispatch: Dispatch<ReduxAction>) => Promise<void>);
 }
 
-export type EffectWithOperator<
-  TDependencies = any,
-  TState = any,
-  TSelectors extends Selectors<TDependencies, TState> = any,
-  TReducers extends Reducers<TDependencies, TState> = any,
-  TEffects extends Effects<TDependencies, TState> = any,
-  TModels extends Models<TDependencies> = any,
-  TDynamicModels extends Models<TDependencies> = any,
-  TPayload = any
-> = [
-  Effect<
-    TDependencies,
-    TState,
-    TSelectors,
-    TReducers,
-    TEffects,
-    TModels,
-    TDynamicModels,
-    TPayload
-  >,
-  (...args: any[]) => OperatorFunction<Action<TPayload>, Action<TPayload>>
-];
-
 export interface Effects<
   TDependencies = any,
   TState = any,
@@ -152,25 +129,15 @@ export interface Effects<
   TModels extends Models<TDependencies> = any,
   TDynamicModels extends Models<TDependencies> = any
 > {
-  [type: string]:
-    | Effect<
-        TDependencies,
-        TState,
-        TSelectors,
-        TReducers,
-        TEffects,
-        TModels,
-        TDynamicModels
-      >
-    | EffectWithOperator<
-        TDependencies,
-        TState,
-        TSelectors,
-        TReducers,
-        TEffects,
-        TModels,
-        TDynamicModels
-      >;
+  [type: string]: Effect<
+    TDependencies,
+    TState,
+    TSelectors,
+    TReducers,
+    TEffects,
+    TModels,
+    TDynamicModels
+  >;
 }
 
 export type ExtractEffects<T extends Model> = T extends Model<

@@ -1,5 +1,5 @@
 import { Reducer, Reducers, ExtractReducers } from "./reducer";
-import { Effect, EffectWithOperator, Effects, ExtractEffects } from "./epic";
+import { Effect, Effects, ExtractEffects } from "./epic";
 import { Model, Models, ExtractModels, ExtractDynamicModels } from "./model";
 
 export const actionTypes = {
@@ -14,12 +14,11 @@ export interface Action<TPayload = any> {
 }
 
 export type ExtractActionPayload<
-  T extends Action | Reducer | Effect | EffectWithOperator
+  T extends Action | Reducer | Effect
 > = T extends
   | Action<infer TPayload>
   | Reducer<any, any, infer TPayload>
   | Effect<any, any, any, any, any, any, any, infer TPayload>
-  | EffectWithOperator<any, any, any, any, any, any, any, infer TPayload>
   ? TPayload
   : never;
 
