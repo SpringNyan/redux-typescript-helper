@@ -94,7 +94,12 @@ export class StoreHelperFactory<
       });
     }
 
-    this._actions = createModelActionHelpers(this._model, [], null);
+    this._actions = createModelActionHelpers(
+      this._model,
+      this._dependencies,
+      [],
+      null
+    );
 
     this._getters = createModelGetters(
       this._model,
@@ -252,6 +257,7 @@ class _StoreHelper<TDependencies, TModel extends Model<TDependencies>>
 
     this._actions[namespace] = createModelActionHelpers(
       model,
+      this._dependencies,
       namespaces,
       this._actions
     ) as any;

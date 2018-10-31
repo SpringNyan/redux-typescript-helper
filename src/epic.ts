@@ -1,4 +1,4 @@
-import { Observable, OperatorFunction, merge, isObservable } from "rxjs";
+import { Observable, merge } from "rxjs";
 import {
   map,
   filter,
@@ -15,7 +15,12 @@ import {
 } from "redux-observable";
 
 import { DeepState } from "./state";
-import { Action, DeepActionHelpers, actionTypes } from "./action";
+import {
+  Action,
+  DeepActionHelpers,
+  actionTypes,
+  actionDispatchCallback
+} from "./action";
 import { Selectors, DeepGetters } from "./selector";
 import { Reducers } from "./reducer";
 import { Model, Models } from "./model";
@@ -115,33 +120,8 @@ export interface Effect<
       TDynamicModels
     >,
     payload: TPayload
-  ):
-    | Observable<ReduxAction>
-    | ((dispatch: Dispatch<ReduxAction>) => Promise<void>);
+  ): (dispatch: Dispatch<ReduxAction>) => Promise<void>;
 }
-
-export type EffectWithOperator<
-  TDependencies = any,
-  TState = any,
-  TSelectors extends Selectors<TDependencies, TState> = any,
-  TReducers extends Reducers<TDependencies, TState> = any,
-  TEffects extends Effects<TDependencies, TState> = any,
-  TModels extends Models<TDependencies> = any,
-  TDynamicModels extends Models<TDependencies> = any,
-  TPayload = any
-> = [
-  Effect<
-    TDependencies,
-    TState,
-    TSelectors,
-    TReducers,
-    TEffects,
-    TModels,
-    TDynamicModels,
-    TPayload
-  >,
-  (...args: any[]) => OperatorFunction<Action<TPayload>, Action<TPayload>>
-];
 
 export interface Effects<
   TDependencies = any,
@@ -152,25 +132,15 @@ export interface Effects<
   TModels extends Models<TDependencies> = any,
   TDynamicModels extends Models<TDependencies> = any
 > {
-  [type: string]:
-    | Effect<
-        TDependencies,
-        TState,
-        TSelectors,
-        TReducers,
-        TEffects,
-        TModels,
-        TDynamicModels
-      >
-    | EffectWithOperator<
-        TDependencies,
-        TState,
-        TSelectors,
-        TReducers,
-        TEffects,
-        TModels,
-        TDynamicModels
-      >;
+  [type: string]: Effect<
+    TDependencies,
+    TState,
+    TSelectors,
+    TReducers,
+    TEffects,
+    TModels,
+    TDynamicModels
+  >;
 }
 
 export type ExtractEffects<T extends Model> = T extends Model<
@@ -191,14 +161,14 @@ export type ReduxObservableEpicErrorHandler = (
 ) => Observable<ReduxAction>;
 
 export function toActionObservable(
-  asyncFn: (dispatch: Dispatch<ReduxAction>) => Promise<void>
+  asyncEffect: (dispatch: Dispatch<ReduxAction>) => Promise<void>
 ): Observable<ReduxAction> {
   return new Observable((subscribe) => {
     const dispatch: Dispatch<ReduxAction> = (action) => {
       subscribe.next(action);
       return action;
     };
-    asyncFn(dispatch).then(
+    asyncEffect(dispatch).then(
       () => subscribe.complete(),
       (reason) => subscribe.error(reason)
     );
@@ -287,22 +257,15 @@ function invokeModelEpics<TDependencies, TModel extends Model<TDependencies>>(
   const getters = helper.getters;
 
   for (const key of Object.keys(model.effects)) {
-    let effect: Effect;
-    let operator = mergeMap;
-
-    const effectWithOperator = model.effects[key];
-    if (Array.isArray(effectWithOperator)) {
-      [effect, operator] = effectWithOperator;
-    } else {
-      effect = effectWithOperator;
-    }
-
+    const effect = model.effects[key];
     const action$ = rootAction$.ofType<Action>([...namespaces, key].join("/"));
 
     const output$ = action$.pipe(
-      operator((action) => {
+      mergeMap((action) => {
+        actionDispatchCallback.setDispatched(action);
+
         const payload = action.payload;
-        const result = effect(
+        const asyncEffect = effect(
           {
             action$,
             rootAction$,
@@ -316,8 +279,20 @@ function invokeModelEpics<TDependencies, TModel extends Model<TDependencies>>(
           },
           payload
         );
+        const wrappedAsyncEffect = (dispatch: Dispatch) => {
+          const promise = asyncEffect(dispatch);
+          promise.then(
+            () => {
+              actionDispatchCallback.resolve(action);
+            },
+            (err) => {
+              actionDispatchCallback.reject(action, err);
+            }
+          );
+          return promise;
+        };
 
-        return isObservable(result) ? result : toActionObservable(result);
+        return toActionObservable(wrappedAsyncEffect);
       })
     );
 

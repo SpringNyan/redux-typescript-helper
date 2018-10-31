@@ -1,7 +1,6 @@
 import { expect } from "chai";
 
-import { of, timer } from "rxjs";
-import { switchMap, delay } from "rxjs/operators";
+import { timer } from "rxjs";
 import { createStore, applyMiddleware } from "redux";
 import { createEpicMiddleware } from "redux-observable";
 
@@ -78,24 +77,22 @@ describe("redux-typescript-helper", () => {
     })
     .effects({
       login: ({}, payload: { additional: string }) => async () => {},
-      loginRequest: [
-        (
-          { actions, dependencies },
-          payload: { username: string; password: string }
-        ) => {
-          expect(actions.$namespace).eq("user");
+      loginRequest: (
+        { actions, dependencies },
+        payload: { username: string; password: string }
+      ) => async (dispatch) => {
+        expect(actions.$namespace).eq("user");
 
-          return of(
-            actions.login({
-              id: 233,
-              username: payload.username,
-              token: dependencies.system.hash(payload.password),
-              about: ""
-            })
-          ).pipe(delay(delayTime));
-        },
-        switchMap
-      ],
+        await timer(delayTime).toPromise();
+        await dispatch(
+          actions.login({
+            id: 233,
+            username: payload.username,
+            token: dependencies.system.hash(payload.password),
+            about: ""
+          })
+        );
+      },
       setDefaultAbout: ({ actions, getters }) => async (dispatch) => {
         await dispatch(actions.editAbout(getters.idAndName));
       }
@@ -201,13 +198,21 @@ describe("redux-typescript-helper", () => {
 
   it("test", async () => {
     expect(userHelper.state.isLogin).eq(false);
+
+    await userHelper.actions.loginRequest.dispatch({
+      username: "abc",
+      password: "xyz"
+    });
+    expect(userHelper.state.isLogin).eq(true);
+    expect(userHelper.state.username).eq("abc");
+
     store.dispatch(
       userHelper.actions.loginRequest({
         username: "nyan",
         password: "meow"
       })
     );
-    expect(userHelper.state.isLogin).eq(false);
+    expect(userHelper.state.username).eq("abc");
     await timer(waitTime).toPromise();
     expect(userHelper.state.isLogin).eq(true);
     expect(userHelper.state.username).eq("nyan");
