@@ -153,9 +153,11 @@ export function createActionHelper<TPayload>(
 
     (dispatch || defaultDispatch)(action);
 
-    if (!actionDispatchCallback.hasDispatched(action)) {
-      actionDispatchCallback.resolve(action);
-    }
+    Promise.resolve().then(() => {
+      if (!actionDispatchCallback.hasDispatched(action)) {
+        actionDispatchCallback.resolve(action);
+      }
+    });
 
     return promise;
   };
