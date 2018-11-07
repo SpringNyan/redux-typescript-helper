@@ -143,6 +143,8 @@ export class ModelBuilder<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels
     >
@@ -155,6 +157,8 @@ export class ModelBuilder<
             TDependencies,
             TState,
             TSelectors,
+            TReducers,
+            TEffects,
             TModels,
             TDynamicModels
           >

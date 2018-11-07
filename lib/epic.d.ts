@@ -7,7 +7,7 @@ import { Selectors, DeepGetters } from "./selector";
 import { Reducers } from "./reducer";
 import { Model, Models } from "./model";
 import { StoreHelper, StoreHelperDependencies } from "./store";
-export interface EpicContext<TDependencies, TState, TSelectors extends Selectors<TDependencies, TState>, TReducers extends Reducers<TDependencies, TState>, TEffects extends Effects<TDependencies, TState>, TModels extends Models<TDependencies>, TDynamicModels extends Models<TDependencies>> {
+export interface EpicContext<TDependencies = any, TState = any, TSelectors extends Selectors<TDependencies, TState> = any, TReducers extends Reducers<TDependencies, TState> = any, TEffects extends Effects<TDependencies, TState> = any, TModels extends Models<TDependencies> = any, TDynamicModels extends Models<TDependencies> = any> {
     action$: ActionsObservable<Action<unknown>>;
     rootAction$: ActionsObservable<ReduxAction>;
     state$: StateObservable<DeepState<TState, TModels>>;

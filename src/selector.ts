@@ -1,20 +1,35 @@
-import { createSelector } from "reselect";
-
 import { ModelState, DeepState } from "./state";
+import { DeepActionHelpers } from "./action";
+import { Reducers } from "./reducer";
+import { Effects } from "./epic";
 import { Model, Models, ExtractModels, ExtractDynamicModels } from "./model";
-import { StoreHelperDependencies } from "./store";
+import { StoreHelperDependencies, StoreHelper } from "./store";
 import { getIn } from "./util";
 
 export interface SelectorContext<
-  TDependencies,
-  TState,
-  TSelectors extends Selectors<TDependencies, TState>,
-  TModels extends Models<TDependencies>,
-  TDynamicModels extends Models<TDependencies>
+  TDependencies = any,
+  TState = any,
+  TSelectors extends Selectors<TDependencies, TState> = any,
+  TReducers extends Reducers<TDependencies, TState> = any,
+  TEffects extends Effects<TDependencies, TState> = any,
+  TModels extends Models<TDependencies> = any,
+  TDynamicModels extends Models<TDependencies> = any
 > {
   state: DeepState<TState, TModels>;
   rootState: unknown;
 
+  helper: StoreHelper<
+    Model<
+      TDependencies,
+      TState,
+      TSelectors,
+      TReducers,
+      TEffects,
+      TModels,
+      TDynamicModels
+    >
+  >;
+  actions: DeepActionHelpers<TReducers, TEffects, TModels, TDynamicModels>;
   getters: DeepGetters<TState, TSelectors, TModels, TDynamicModels>;
   dependencies: StoreHelperDependencies<TDependencies>;
 }
@@ -23,6 +38,8 @@ export interface Selector<
   TDependencies = any,
   TState = any,
   TSelectors extends Selectors<TDependencies, TState> = any,
+  TReducers extends Reducers<TDependencies, TState> = any,
+  TEffects extends Effects<TDependencies, TState> = any,
   TModels extends Models<TDependencies> = any,
   TDynamicModels extends Models<TDependencies> = any,
   TResult = any
@@ -32,6 +49,8 @@ export interface Selector<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels
     >
@@ -42,6 +61,8 @@ export interface Selectors<
   TDependencies = any,
   TState = any,
   TSelectors extends Selectors<TDependencies, TState> = any,
+  TReducers extends Reducers<TDependencies, TState> = any,
+  TEffects extends Effects<TDependencies, TState> = any,
   TModels extends Models<TDependencies> = any,
   TDynamicModels extends Models<TDependencies> = any
 > {
@@ -49,6 +70,8 @@ export interface Selectors<
     TDependencies,
     TState,
     TSelectors,
+    TReducers,
+    TEffects,
     TModels,
     TDynamicModels
   >;
@@ -66,6 +89,8 @@ export type ExtractSelectors<T extends SelectorsFactory | Model> = T extends
   : never;
 
 export type ExtractSelectorResult<T extends Selector> = T extends Selector<
+  any,
+  any,
   any,
   any,
   any,
@@ -122,6 +147,8 @@ export interface SelectorCreator<
   TDependencies = any,
   TState = any,
   TSelectors extends Selectors<TDependencies, TState> = any,
+  TReducers extends Reducers<TDependencies, TState> = any,
+  TEffects extends Effects<TDependencies, TState> = any,
   TModels extends Models<TDependencies> = any,
   TDynamicModels extends Models<TDependencies> = any
 > {
@@ -130,15 +157,30 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T1
     >,
-    combiner: (res1: T1) => TResult
+    combiner: (
+      res1: T1,
+      context: SelectorContext<
+        TDependencies,
+        TState,
+        TSelectors,
+        TReducers,
+        TEffects,
+        TModels,
+        TDynamicModels
+      >
+    ) => TResult
   ): Selector<
     TDependencies,
     TState,
     TSelectors,
+    TReducers,
+    TEffects,
     TModels,
     TDynamicModels,
     TResult
@@ -148,6 +190,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T1
@@ -156,15 +200,31 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T2
     >,
-    combiner: (res1: T1, res2: T2) => TResult
+    combiner: (
+      res1: T1,
+      res2: T2,
+      context: SelectorContext<
+        TDependencies,
+        TState,
+        TSelectors,
+        TReducers,
+        TEffects,
+        TModels,
+        TDynamicModels
+      >
+    ) => TResult
   ): Selector<
     TDependencies,
     TState,
     TSelectors,
+    TReducers,
+    TEffects,
     TModels,
     TDynamicModels,
     TResult
@@ -174,6 +234,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T1
@@ -182,6 +244,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T2
@@ -190,15 +254,32 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T3
     >,
-    combiner: (res1: T1, res2: T2, res3: T3) => TResult
+    combiner: (
+      res1: T1,
+      res2: T2,
+      res3: T3,
+      context: SelectorContext<
+        TDependencies,
+        TState,
+        TSelectors,
+        TReducers,
+        TEffects,
+        TModels,
+        TDynamicModels
+      >
+    ) => TResult
   ): Selector<
     TDependencies,
     TState,
     TSelectors,
+    TReducers,
+    TEffects,
     TModels,
     TDynamicModels,
     TResult
@@ -208,6 +289,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T1
@@ -216,6 +299,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T2
@@ -224,6 +309,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T3
@@ -232,15 +319,33 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T4
     >,
-    combiner: (res1: T1, res2: T2, res3: T3, res4: T4) => TResult
+    combiner: (
+      res1: T1,
+      res2: T2,
+      res3: T3,
+      res4: T4,
+      context: SelectorContext<
+        TDependencies,
+        TState,
+        TSelectors,
+        TReducers,
+        TEffects,
+        TModels,
+        TDynamicModels
+      >
+    ) => TResult
   ): Selector<
     TDependencies,
     TState,
     TSelectors,
+    TReducers,
+    TEffects,
     TModels,
     TDynamicModels,
     TResult
@@ -250,6 +355,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T1
@@ -258,6 +365,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T2
@@ -266,6 +375,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T3
@@ -274,6 +385,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T4
@@ -282,15 +395,34 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T5
     >,
-    combiner: (res1: T1, res2: T2, res3: T3, res4: T4, res5: T5) => TResult
+    combiner: (
+      res1: T1,
+      res2: T2,
+      res3: T3,
+      res4: T4,
+      res5: T5,
+      context: SelectorContext<
+        TDependencies,
+        TState,
+        TSelectors,
+        TReducers,
+        TEffects,
+        TModels,
+        TDynamicModels
+      >
+    ) => TResult
   ): Selector<
     TDependencies,
     TState,
     TSelectors,
+    TReducers,
+    TEffects,
     TModels,
     TDynamicModels,
     TResult
@@ -300,6 +432,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T1
@@ -308,6 +442,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T2
@@ -316,6 +452,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T3
@@ -324,6 +462,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T4
@@ -332,6 +472,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T5
@@ -340,6 +482,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T6
@@ -350,12 +494,23 @@ export interface SelectorCreator<
       res3: T3,
       res4: T4,
       res5: T5,
-      res6: T6
+      res6: T6,
+      context: SelectorContext<
+        TDependencies,
+        TState,
+        TSelectors,
+        TReducers,
+        TEffects,
+        TModels,
+        TDynamicModels
+      >
     ) => TResult
   ): Selector<
     TDependencies,
     TState,
     TSelectors,
+    TReducers,
+    TEffects,
     TModels,
     TDynamicModels,
     TResult
@@ -365,6 +520,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T1
@@ -373,6 +530,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T2
@@ -381,6 +540,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T3
@@ -389,6 +550,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T4
@@ -397,6 +560,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T5
@@ -405,6 +570,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T6
@@ -413,6 +580,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T7
@@ -424,12 +593,23 @@ export interface SelectorCreator<
       res4: T4,
       res5: T5,
       res6: T6,
-      res7: T7
+      res7: T7,
+      context: SelectorContext<
+        TDependencies,
+        TState,
+        TSelectors,
+        TReducers,
+        TEffects,
+        TModels,
+        TDynamicModels
+      >
     ) => TResult
   ): Selector<
     TDependencies,
     TState,
     TSelectors,
+    TReducers,
+    TEffects,
     TModels,
     TDynamicModels,
     TResult
@@ -439,6 +619,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T1
@@ -447,6 +629,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T2
@@ -455,6 +639,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T3
@@ -463,6 +649,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T4
@@ -471,6 +659,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T5
@@ -479,6 +669,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T6
@@ -487,6 +679,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T7
@@ -495,6 +689,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T8
@@ -507,12 +703,23 @@ export interface SelectorCreator<
       res5: T5,
       res6: T6,
       res7: T7,
-      res8: T8
+      res8: T8,
+      context: SelectorContext<
+        TDependencies,
+        TState,
+        TSelectors,
+        TReducers,
+        TEffects,
+        TModels,
+        TDynamicModels
+      >
     ) => TResult
   ): Selector<
     TDependencies,
     TState,
     TSelectors,
+    TReducers,
+    TEffects,
     TModels,
     TDynamicModels,
     TResult
@@ -522,6 +729,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T1
@@ -530,6 +739,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T2
@@ -538,6 +749,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T3
@@ -546,6 +759,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T4
@@ -554,6 +769,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T5
@@ -562,6 +779,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T6
@@ -570,6 +789,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T7
@@ -578,6 +799,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T8
@@ -586,6 +809,8 @@ export interface SelectorCreator<
       TDependencies,
       TState,
       TSelectors,
+      TReducers,
+      TEffects,
       TModels,
       TDynamicModels,
       T9
@@ -599,17 +824,55 @@ export interface SelectorCreator<
       res6: T6,
       res7: T7,
       res8: T8,
-      res9: T9
+      res9: T9,
+      context: SelectorContext<
+        TDependencies,
+        TState,
+        TSelectors,
+        TReducers,
+        TEffects,
+        TModels,
+        TDynamicModels
+      >
     ) => TResult
   ): Selector<
     TDependencies,
     TState,
     TSelectors,
+    TReducers,
+    TEffects,
     TModels,
     TDynamicModels,
     TResult
   >;
 }
+
+const createSelector: SelectorCreator = (...args: Function[]) => {
+  const selectors = args.slice(0, args.length - 1);
+  const combiner = args[args.length - 1];
+
+  let lastDependencies: any[] | undefined;
+  let lastValue: any;
+
+  return (context: SelectorContext) => {
+    let needEvaluate = false;
+
+    const dependencies = selectors.map((selector) => selector(context));
+    if (
+      lastDependencies == null ||
+      dependencies.some((dep, index) => dep !== lastDependencies![index])
+    ) {
+      needEvaluate = true;
+    }
+
+    lastDependencies = dependencies;
+    if (needEvaluate) {
+      lastValue = combiner(...dependencies, context);
+    }
+
+    return lastValue;
+  };
+};
 
 export function createModelGetters<
   TDependencies,
@@ -636,15 +899,19 @@ export function createModelGetters<
   for (const key of Object.keys(selectors)) {
     Object.defineProperty(getters, key, {
       get() {
-        return selectors[key]({
-          get state() {
-            return getters.state;
-          },
-          get rootState() {
-            return getters.$root.state;
-          },
+        const helper = getIn(
+          dependencies.$storeHelper as StoreHelper<Model>,
+          namespaces,
+          (obj, key) => obj.$child(key)
+        )!;
 
-          getters,
+        return selectors[key]({
+          state: helper.state,
+          rootState: helper.$root.state,
+
+          helper,
+          actions: helper.actions,
+          getters: helper.getters,
           dependencies
         });
       },

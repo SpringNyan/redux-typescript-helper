@@ -23,7 +23,7 @@ export declare class ModelBuilder<TDependencies, TState, TSelectors extends Sele
     constructor(model: Model<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>);
     dependencies<T>(): ModelBuilder<TDependencies & T, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>;
     state<T>(state: T | StateFactory<T, TDependencies>): ModelBuilder<TDependencies, TState & T, TSelectors, TReducers, TEffects, TModels, TDynamicModels>;
-    selectors<T extends Selectors<TDependencies, TState, TSelectors, TModels, TDynamicModels>>(selectors: T | SelectorsFactory<T, SelectorCreator<TDependencies, TState, TSelectors, TModels, TDynamicModels>>): ModelBuilder<TDependencies, TState, TSelectors & T, TReducers, TEffects, TModels, TDynamicModels>;
+    selectors<T extends Selectors<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>>(selectors: T | SelectorsFactory<T, SelectorCreator<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>>): ModelBuilder<TDependencies, TState, TSelectors & T, TReducers, TEffects, TModels, TDynamicModels>;
     reducers<T extends Reducers<TDependencies, TState>>(reducers: T): ModelBuilder<TDependencies, TState, TSelectors, TReducers & T, TEffects, TModels, TDynamicModels>;
     effects<T extends Effects<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>>(effects: T): ModelBuilder<TDependencies, TState, TSelectors, TReducers, TEffects & T, TModels, TDynamicModels>;
     epics(epics: Epics<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>): ModelBuilder<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>;
