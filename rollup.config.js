@@ -2,7 +2,7 @@ export default {
   input: "./lib/index.js",
   output: {
     file: "./dist/redux-typescript-helper.js",
-    format: "esm"
+    format: "cjs"
   },
   external: ["redux", "redux-observable", "immer", "rxjs", "rxjs/operators"],
   onwarn(warning, warn) {

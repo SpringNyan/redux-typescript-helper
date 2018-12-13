@@ -1,7 +1,13 @@
-import { ActionsObservable, StateObservable } from 'redux-observable';
-import produce from 'immer';
-import { Observable, merge, BehaviorSubject } from 'rxjs';
-import { map, filter, mergeMap, catchError, takeUntil, distinctUntilChanged } from 'rxjs/operators';
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+
+var reduxObservable = require('redux-observable');
+var produce = _interopDefault(require('immer'));
+var rxjs = require('rxjs');
+var operators = require('rxjs/operators');
 
 var ActionDispatchCallback = /** @class */ (function () {
     function ActionDispatchCallback() {
@@ -97,9 +103,9 @@ function createModelActionHelpers(model, dependencies, namespaces, parent) {
     return actions;
 }
 
-function getIn(obj, paths, map$$1) {
+function getIn(obj, paths, map) {
     return paths.reduce(function (o, path) {
-        return o != null ? (map$$1 ? map$$1(o, path) : o[path]) : undefined;
+        return o != null ? (map ? map(o, path) : o[path]) : undefined;
     }, obj);
 }
 function startsWith(str, test) {
@@ -121,7 +127,7 @@ function endsWith(str, test) {
 }
 
 function toActionObservable(asyncEffect) {
-    return new Observable(function (subscribe) {
+    return new rxjs.Observable(function (subscribe) {
         var dispatch = function (action) {
             subscribe.next(action);
             return action;
@@ -133,14 +139,14 @@ function createModelEpic(model, dependencies, errorHandler, namespaces) {
     return function (rootAction$, rootState$) {
         var namespacePrefix = namespaces.join("/");
         var unregisterSuffix = "/" + actionTypes.unregister;
-        var takeUntil$ = rootAction$.pipe(filter(function (action) {
+        var takeUntil$ = rootAction$.pipe(operators.filter(function (action) {
             return typeof action.type === "string" &&
                 endsWith(action.type, unregisterSuffix) &&
                 startsWith(namespacePrefix, action.type.substring(0, action.type.length - unregisterSuffix.length));
         }));
-        return merge.apply(void 0, invokeModelEpics(model, dependencies, rootAction$, rootState$, namespaces).map(function (epic) {
-            return errorHandler != null ? epic.pipe(catchError(errorHandler)) : epic;
-        })).pipe(takeUntil(takeUntil$));
+        return rxjs.merge.apply(void 0, invokeModelEpics(model, dependencies, rootAction$, rootState$, namespaces).map(function (epic) {
+            return errorHandler != null ? epic.pipe(operators.catchError(errorHandler)) : epic;
+        })).pipe(operators.takeUntil(takeUntil$));
     };
 }
 function invokeModelEpics(model, dependencies, rootAction$, rootState$, namespaces) {
@@ -151,14 +157,14 @@ function invokeModelEpics(model, dependencies, rootAction$, rootState$, namespac
         var subOutputs = invokeModelEpics(subModel, dependencies, rootAction$, rootState$, namespaces.concat([key]));
         outputs.push.apply(outputs, subOutputs);
     }
-    var state$ = new StateObservable(rootState$.pipe(map(function (state) { return getIn(state, namespaces); }), distinctUntilChanged()), getIn(rootState$.value, namespaces));
+    var state$ = new reduxObservable.StateObservable(rootState$.pipe(operators.map(function (state) { return getIn(state, namespaces); }), operators.distinctUntilChanged()), getIn(rootState$.value, namespaces));
     var helper = getIn(dependencies.$storeHelper, namespaces, function (obj, key) { return obj.$child(key); });
     var actions = helper.actions;
     var getters = helper.getters;
     var _loop_1 = function (key) {
         var effect = model.effects[key];
         var action$ = rootAction$.ofType(namespaces.concat([key]).join("/"));
-        var output$ = action$.pipe(mergeMap(function (action) {
+        var output$ = action$.pipe(operators.mergeMap(function (action) {
             actionDispatchCallback.setDispatched(action);
             var payload = action.payload;
             var asyncEffect = effect({
@@ -191,7 +197,7 @@ function invokeModelEpics(model, dependencies, rootAction$, rootState$, namespac
     var namespacePrefix = namespaces.join("/") + "/";
     for (var _d = 0, _e = model.epics; _d < _e.length; _d++) {
         var epic = _e[_d];
-        var action$ = new ActionsObservable(rootAction$.pipe(filter(function (action) {
+        var action$ = new reduxObservable.ActionsObservable(rootAction$.pipe(operators.filter(function (action) {
             return typeof action.type === "string" &&
                 startsWith(action.type, namespacePrefix);
         })));
@@ -479,9 +485,9 @@ var StoreHelperFactory = /** @class */ (function () {
         this._dependencies.$storeHelper = this._storeHelper;
         this._reducer = createModelReducer(this._model, this._dependencies);
         var initialEpic = createModelEpic(model, this._dependencies, this._options.epicErrorHandler || null, []);
-        this._addEpic$ = new BehaviorSubject(initialEpic);
+        this._addEpic$ = new rxjs.BehaviorSubject(initialEpic);
         this._epic = function (action$, state$, epicDependencies) {
-            return _this._addEpic$.pipe(mergeMap(function (epic) { return epic(action$, state$, epicDependencies); }));
+            return _this._addEpic$.pipe(operators.mergeMap(function (epic) { return epic(action$, state$, epicDependencies); }));
         };
     }
     Object.defineProperty(StoreHelperFactory.prototype, "reducer", {
@@ -612,4 +618,16 @@ var _StoreHelper = /** @class */ (function () {
     return _StoreHelper;
 }());
 
-export { actionDispatchCallback, actionTypes, createActionHelper, createModelActionHelpers, toActionObservable, createModelEpic, ModelBuilder, createModelBuilder, cloneModel, createModelReducer, createModelGetters, StoreHelperFactory, createStoreHelperFactory };
+exports.actionDispatchCallback = actionDispatchCallback;
+exports.actionTypes = actionTypes;
+exports.createActionHelper = createActionHelper;
+exports.createModelActionHelpers = createModelActionHelpers;
+exports.toActionObservable = toActionObservable;
+exports.createModelEpic = createModelEpic;
+exports.ModelBuilder = ModelBuilder;
+exports.createModelBuilder = createModelBuilder;
+exports.cloneModel = cloneModel;
+exports.createModelReducer = createModelReducer;
+exports.createModelGetters = createModelGetters;
+exports.StoreHelperFactory = StoreHelperFactory;
+exports.createStoreHelperFactory = createStoreHelperFactory;
