@@ -46,7 +46,7 @@ export interface DeepActionHelpersChild<TModels extends Models, TDynamicModels e
 }
 export declare type ModelActionHelpers<TModel extends Model> = DeepActionHelpers<ExtractReducers<TModel>, ExtractEffects<TModel>, ExtractModels<TModel>, ExtractDynamicModels<TModel>>;
 export declare type ModelsActionHelpers<TModels extends Models> = {
-    [K in keyof TModels]: TModels[K] extends Model ? ModelActionHelpers<TModels[K]> : never;
+    [K in keyof TModels]: ModelActionHelpers<TModels[K]>;
 };
 export declare function createActionHelper<TPayload>(type: string, defaultDispatch: Dispatch): ActionHelper<TPayload>;
 export declare function createModelActionHelpers<TDependencies, TModel extends Model<TDependencies>>(model: TModel, dependencies: StoreHelperDependencies<TDependencies>, namespaces: string[], parent: ModelActionHelpers<Model> | null): ModelActionHelpers<TModel>;

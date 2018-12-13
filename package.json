@@ -1,6 +1,6 @@
 {
   "name": "redux-typescript-helper",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Helper for Redux with TypeScript",
   "authors": "SpringNyan",
   "license": "MIT",
@@ -18,17 +18,18 @@
     "@types/chai": "^4.1.7",
     "@types/mocha": "^5.2.5",
     "chai": "^4.2.0",
-    "immer": "^1.7.4",
+    "immer": "^1.8.2",
     "mocha": "^5.2.0",
     "redux": "^4.0.1",
     "redux-observable": "^1.0.0",
+    "rollup": "^0.67.4",
     "rxjs": "^6.3.3",
-    "typescript": "^3.1.6",
-    "webpack": "^4.24.0",
+    "typescript": "~3.1.6",
+    "webpack": "^4.27.1",
     "webpack-cli": "^3.1.2"
   },
   "scripts": {
-    "build": "tsc -p . && webpack",
+    "build": "tsc -p . && rollup -c",
     "test": "npm run build && tsc -p test && webpack --config test/webpack.config.js && mocha test/test.build.js"
   }
 }

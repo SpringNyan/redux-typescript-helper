@@ -138,9 +138,7 @@ export type ModelGetters<TModel extends Model> = DeepGetters<
 >;
 
 export type ModelsGetters<TModels extends Models> = {
-  [K in keyof TModels]: TModels[K] extends Model
-    ? ModelGetters<TModels[K]>
-    : never
+  [K in keyof TModels]: ModelGetters<TModels[K]>
 };
 
 export interface SelectorCreator<

@@ -37,7 +37,7 @@ export interface DeepGettersChild<TModels extends Models, TDynamicModels extends
 }
 export declare type ModelGetters<TModel extends Model> = DeepGetters<ModelState<TModel>, ExtractSelectors<TModel>, ExtractModels<TModel>, ExtractDynamicModels<TModel>>;
 export declare type ModelsGetters<TModels extends Models> = {
-    [K in keyof TModels]: TModels[K] extends Model ? ModelGetters<TModels[K]> : never;
+    [K in keyof TModels]: ModelGetters<TModels[K]>;
 };
 export interface SelectorCreator<TDependencies = any, TState = any, TSelectors extends Selectors<TDependencies, TState> = any, TReducers extends Reducers<TDependencies, TState> = any, TEffects extends Effects<TDependencies, TState> = any, TModels extends Models<TDependencies> = any, TDynamicModels extends Models<TDependencies> = any> {
     <T1, TResult>(selector1: Selector<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels, T1>, combiner: (res1: T1, context: SelectorContext<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels>) => TResult): Selector<TDependencies, TState, TSelectors, TReducers, TEffects, TModels, TDynamicModels, TResult>;

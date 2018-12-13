@@ -20,7 +20,5 @@ export type ModelState<TModel extends Model> = DeepState<
 >;
 
 export type ModelsState<TModels extends Models> = {
-  [K in keyof TModels]: TModels[K] extends Model
-    ? ModelState<TModels[K]>
-    : never
+  [K in keyof TModels]: ModelState<TModels[K]>
 };

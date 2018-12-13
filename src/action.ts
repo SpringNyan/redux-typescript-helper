@@ -127,9 +127,7 @@ export type ModelActionHelpers<TModel extends Model> = DeepActionHelpers<
 >;
 
 export type ModelsActionHelpers<TModels extends Models> = {
-  [K in keyof TModels]: TModels[K] extends Model
-    ? ModelActionHelpers<TModels[K]>
-    : never
+  [K in keyof TModels]: ModelActionHelpers<TModels[K]>
 };
 
 function isAction(this: ActionHelper, action: any): action is Action {
